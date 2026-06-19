@@ -1,0 +1,125 @@
+/**
+ * @file Demo-only host CSS.
+ *
+ * Reproduces the relevant subset of each app's brand tokens (NOT a copy of
+ * the apps themselves; just the variables that the alias files reference)
+ * and then loads the alias file scoped to that host's section. Because each
+ * alias only redeclares --ds-* names, scoping is achieved by re-declaring
+ * the alias rules under a class selector.
+ */
+
+/* ---- status_server_webui host: dark, mono ---- */
+.host--status-webui {
+  --bg-primary: #000000;
+  --bg-card: #0c0c0c;
+  --bg-inset: #181818;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #737373;
+  --border: #2a2a2a;
+  --status-running: #22c55e;
+  --status-stopped: #737373;
+  --status-failed: #ef4444;
+  --status-warning: #eab308;
+  --status-info: #a3a3a3;
+  --font-mono: "SF Mono", "Fira Code", Consolas, monospace;
+  --radius-md: 8px;
+  --shadow-card: none;
+
+  --ds-surface: var(--bg-card);
+  --ds-surface-inset: var(--bg-inset);
+  --ds-border: var(--border);
+  --ds-text: var(--text-primary);
+  --ds-text-muted: var(--text-muted);
+  --ds-tone-success-fg: var(--status-running);
+  --ds-tone-success-bg: rgba(34, 197, 94, 0.1);
+  --ds-tone-warning-fg: var(--status-warning);
+  --ds-tone-warning-bg: rgba(234, 179, 8, 0.1);
+  --ds-tone-danger-fg: var(--status-failed);
+  --ds-tone-danger-bg: rgba(239, 68, 68, 0.1);
+  --ds-tone-info-fg: var(--status-info);
+  --ds-tone-info-bg: rgba(163, 163, 163, 0.1);
+  --ds-tone-neutral-fg: var(--text-muted);
+  --ds-tone-neutral-bg: rgba(82, 82, 82, 0.1);
+  --ds-radius-card: var(--radius-md);
+  --ds-radius-pill: 100px;
+  --ds-shadow-card: var(--shadow-card);
+  --ds-font-mono: var(--font-mono);
+
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ---- @omks-robo/web host: light, sans ---- */
+.host--omks-web {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #040607;
+  --color-text-muted: #64748b;
+  --color-on-ink-muted: #e2e8f0;
+  --color-primary: #0d44da;
+  --color-primary-soft: #f0f0ff;
+  --color-success: #16a34a;
+  --color-success-soft: #ecfdf5;
+  --color-warning: #d97706;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+  --radius-card: 10px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 5%);
+
+  --ds-surface: var(--color-surface);
+  --ds-surface-inset: var(--color-bg);
+  --ds-border: var(--color-border);
+  --ds-text: var(--color-text);
+  --ds-text-muted: var(--color-text-muted);
+  --ds-tone-success-fg: var(--color-success);
+  --ds-tone-success-bg: var(--color-success-soft);
+  --ds-tone-warning-fg: var(--color-warning);
+  --ds-tone-warning-bg: var(--color-warning-soft);
+  --ds-tone-danger-fg: var(--color-danger);
+  --ds-tone-danger-bg: var(--color-danger-soft);
+  --ds-tone-info-fg: var(--color-primary);
+  --ds-tone-info-bg: var(--color-primary-soft);
+  --ds-tone-neutral-fg: var(--color-text-muted);
+  --ds-tone-neutral-bg: var(--color-on-ink-muted);
+  --ds-radius-card: var(--radius-card);
+  --ds-radius-pill: 999px;
+  --ds-shadow-card: var(--shadow-card);
+  --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.harness {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+.host {
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.host h1 {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-inset);
+  color: var(--ds-text);
+  cursor: pointer;
+  font: inherit;
+}

@@ -1,0 +1,32 @@
+/**
+ * @file Neutral design-system tokens consumed by every component CSS module.
+ *
+ * Components refer ONLY to --ds-* names. Each consuming app is expected to
+ * provide a small alias CSS file that maps its existing tokens onto these
+ * names (see ../aliases/). The library itself ships sane fallbacks below
+ * so a host that forgets to alias a token still renders a plausible UI.
+ */
+:root {
+  --ds-surface: #ffffff;
+  --ds-surface-inset: #f5f5f5;
+  --ds-border: #d4d4d4;
+  --ds-text: #111111;
+  --ds-text-muted: #666666;
+
+  --ds-tone-success-fg: #16a34a;
+  --ds-tone-success-bg: rgba(22, 163, 74, 0.12);
+  --ds-tone-warning-fg: #d97706;
+  --ds-tone-warning-bg: rgba(217, 119, 6, 0.12);
+  --ds-tone-danger-fg: #dc2626;
+  --ds-tone-danger-bg: rgba(220, 38, 38, 0.12);
+  --ds-tone-info-fg: #2563eb;
+  --ds-tone-info-bg: rgba(37, 99, 235, 0.12);
+  --ds-tone-neutral-fg: #525252;
+  --ds-tone-neutral-bg: rgba(82, 82, 82, 0.10);
+
+  --ds-radius-card: 8px;
+  --ds-radius-pill: 999px;
+  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}

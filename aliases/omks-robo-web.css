@@ -1,0 +1,34 @@
+/**
+ * @file Alias map: @omks-robo/web tokens → --ds-* tokens.
+ *
+ * Drop this once after the brand cssVariables block injected by
+ * source/packages/web/src/brand/tokens.ts. Library components read --ds-*
+ * and resolve through these aliases without touching the app's brand SoT.
+ *
+ * NOTE: --color-on-ink-muted is reused as a soft neutral surface; the brand
+ * SoT does not currently expose a mono font, so a plain CSS fallback keeps
+ * the badge usable.
+ */
+:root {
+  --ds-surface: var(--color-surface);
+  --ds-surface-inset: var(--color-bg);
+  --ds-border: var(--color-border);
+  --ds-text: var(--color-text);
+  --ds-text-muted: var(--color-text-muted);
+
+  --ds-tone-success-fg: var(--color-success);
+  --ds-tone-success-bg: var(--color-success-soft);
+  --ds-tone-warning-fg: var(--color-warning);
+  --ds-tone-warning-bg: var(--color-warning-soft);
+  --ds-tone-danger-fg: var(--color-danger);
+  --ds-tone-danger-bg: var(--color-danger-soft);
+  --ds-tone-info-fg: var(--color-primary);
+  --ds-tone-info-bg: var(--color-primary-soft);
+  --ds-tone-neutral-fg: var(--color-text-muted);
+  --ds-tone-neutral-bg: var(--color-on-ink-muted);
+
+  --ds-radius-card: var(--radius-card);
+  --ds-radius-pill: 999px;
+  --ds-shadow-card: var(--shadow-card);
+  --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}

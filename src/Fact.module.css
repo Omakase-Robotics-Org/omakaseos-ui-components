@@ -1,0 +1,40 @@
+.fact {
+  display: flex;
+  gap: 12px;
+}
+
+.fact[data-direction="row"] {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fact[data-direction="column"] {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  color: var(--ds-text-muted);
+}
+
+.fact[data-direction="column"] > .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.value {
+  color: var(--ds-text);
+  font-weight: 600;
+}
+
+.fact[data-direction="column"] > .value {
+  font-size: 13px;
+  font-family: var(--ds-font-mono);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

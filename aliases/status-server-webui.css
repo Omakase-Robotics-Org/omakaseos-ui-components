@@ -1,0 +1,30 @@
+/**
+ * @file Alias map: status_server_webui tokens → --ds-* tokens.
+ *
+ * Drop this once into the consuming app, AFTER its own variables.css. It
+ * keeps the app's existing brand tokens authoritative; the shared library
+ * components read --ds-* and inherit through these definitions.
+ */
+:root {
+  --ds-surface: var(--bg-card);
+  --ds-surface-inset: var(--bg-inset);
+  --ds-border: var(--border);
+  --ds-text: var(--text-primary);
+  --ds-text-muted: var(--text-muted);
+
+  --ds-tone-success-fg: var(--status-running);
+  --ds-tone-success-bg: rgba(34, 197, 94, 0.1);
+  --ds-tone-warning-fg: var(--status-warning);
+  --ds-tone-warning-bg: rgba(234, 179, 8, 0.1);
+  --ds-tone-danger-fg: var(--status-failed);
+  --ds-tone-danger-bg: rgba(239, 68, 68, 0.1);
+  --ds-tone-info-fg: var(--status-info);
+  --ds-tone-info-bg: rgba(163, 163, 163, 0.1);
+  --ds-tone-neutral-fg: var(--text-muted);
+  --ds-tone-neutral-bg: rgba(82, 82, 82, 0.1);
+
+  --ds-radius-card: var(--radius-md);
+  --ds-radius-pill: 100px;
+  --ds-shadow-card: var(--shadow-card);
+  --ds-font-mono: var(--font-mono);
+}

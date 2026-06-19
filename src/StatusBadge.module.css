@@ -1,0 +1,59 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--ds-radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--ds-font-mono);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge[data-size="sm"] {
+  font-size: 11px;
+  padding: 1px 8px;
+}
+
+.badge[data-tone="success"] {
+  color: var(--ds-tone-success-fg);
+  background: var(--ds-tone-success-bg);
+}
+
+.badge[data-tone="warning"] {
+  color: var(--ds-tone-warning-fg);
+  background: var(--ds-tone-warning-bg);
+}
+
+.badge[data-tone="danger"] {
+  color: var(--ds-tone-danger-fg);
+  background: var(--ds-tone-danger-bg);
+}
+
+.badge[data-tone="info"] {
+  color: var(--ds-tone-info-fg);
+  background: var(--ds-tone-info-bg);
+}
+
+.badge[data-tone="neutral"] {
+  color: var(--ds-tone-neutral-fg);
+  background: var(--ds-tone-neutral-bg);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.dot[data-pulse="true"] {
+  animation: ds-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ds-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
