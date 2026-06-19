@@ -19,6 +19,12 @@ describe("Card + CardHeader", () => {
     expect(screen.getByText("R")).toBeInTheDocument();
   });
 
+  it("accepts a title shorthand (omks-robo/web shape)", () => {
+    render(<Card title="Robot State">body</Card>);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Robot State");
+    expect(screen.getByText("body")).toBeInTheDocument();
+  });
+
   it("omits hint and right when not given", () => {
     render(
       <Card>

@@ -24,6 +24,21 @@ describe("StatusBadge", () => {
     expect(container.querySelector('[data-pulse="true"]')).not.toBeNull();
   });
 
+  it("accepts label= as an alternative to children (omks-robo/web shape)", () => {
+    render(<StatusBadge tone="info" label="Live" />);
+    expect(screen.getByText("Live")).toBeInTheDocument();
+  });
+
+  it("prefers children over label when both are provided", () => {
+    render(
+      <StatusBadge tone="info" label="from-label">
+        from-children
+      </StatusBadge>,
+    );
+    expect(screen.getByText("from-children")).toBeInTheDocument();
+    expect(screen.queryByText("from-label")).toBeNull();
+  });
+
   it("propagates the size attribute only for sm", () => {
     const { rerender, container } = render(
       <StatusBadge tone="neutral" size="md">

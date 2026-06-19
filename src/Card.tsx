@@ -1,8 +1,10 @@
 /**
  * @file Card + CardHeader — bordered surface with an optional titled header.
  *
- * Two-piece API (status_server_webui style). The `Card title="..."` shorthand
- * from source/packages/web is recovered as <Card><CardHeader title="..."/></Card>.
+ * Two call shapes are accepted:
+ *   <Card title="Foo">…</Card>                                  // omks-robo/web shorthand
+ *   <Card><CardHeader title="Foo" hint? right?/>…</Card>        // status_server_webui style
+ * The shorthand is implemented as <Card><CardHeader title=…/>…</Card>.
  */
 import type { ReactNode } from "react";
 import styles from "./Card.module.css";
@@ -10,11 +12,13 @@ import styles from "./Card.module.css";
 export type CardProps = {
   children: ReactNode;
   className?: string;
+  title?: string;
 };
 
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, title }: CardProps) {
   return (
     <section className={className ? `${styles.card} ${className}` : styles.card}>
+      {title === undefined ? null : <CardHeader title={title} />}
       {children}
     </section>
   );

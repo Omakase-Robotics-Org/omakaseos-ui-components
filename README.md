@@ -56,6 +56,25 @@ If your app speaks a domain vocabulary like `"running" | "stopped" | "failed"`,
 write a 5-line in-app adapter that maps to the semantic tone — see the
 status_server_webui migration sketch.
 
+### Backwards-compatible call shapes
+
+The `Card` and `StatusBadge` surfaces accept both call shapes used by the
+two consuming apps, so neither app pays a per-call-site cost for adopting
+the library:
+
+```tsx
+// Both compile, both render the same DOM:
+<StatusBadge tone="success" label="Live" />
+<StatusBadge tone="success">Live</StatusBadge>
+
+<Card title="Robot State">…</Card>
+<Card><CardHeader title="Robot State"/>…</Card>
+```
+
+`children` wins over `label` when both are given. The `title` shorthand
+on `Card` is implemented as `<CardHeader title=…/>` internally — no
+behavioral difference.
+
 ## Why these five components
 
 These are the L1 (visual primitive) intersection between the two consuming
