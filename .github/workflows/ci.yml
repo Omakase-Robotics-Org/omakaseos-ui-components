@@ -1,0 +1,56 @@
+# CI for @omakase-robotics/ui-components.
+#
+# Runs on every push to main and on every pull request. Mirrors the
+# locally-runnable gate sequence: typecheck → lint (none — flat ESLint
+# is in the consuming apps, not this repo's responsibility) → vitest →
+# Playwright e2e → demo build → Storybook build.
+#
+# Note: the Storybook build runs in CI as a regression gate. The actual
+# Pages deployment is in pages.yml so it only fires on main.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: typecheck / vitest / e2e / build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Vitest (unit)
+        run: bun run test
+
+      - name: Install Playwright chromium
+        run: bun x playwright install --with-deps chromium
+
+      - name: Playwright E2E (real chromium against demo)
+        run: bun run test:e2e
+
+      - name: Build demo harness
+        run: bun run build
+
+      - name: Build Storybook (static export)
+        run: bun run build-storybook

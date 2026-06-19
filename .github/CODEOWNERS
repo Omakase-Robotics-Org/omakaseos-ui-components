@@ -1,0 +1,8 @@
+# CODEOWNERS — required reviewers for any change to this repo.
+#
+# All paths default to the omakase-robotics org. The catch-all line
+# matches every file; later, more-specific lines override for areas
+# that need a specialized reviewer (none yet — add when needed).
+#
+# Reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/customizing-your-repository/about-code-owners
+*       @omakase-robotics/admins

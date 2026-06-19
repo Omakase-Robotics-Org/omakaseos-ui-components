@@ -1,0 +1,67 @@
+# Storybook → GitHub Pages deployment.
+#
+# Triggered on pushes to main and on tag pushes. Builds Storybook into
+# `storybook-static/`, uploads it as a Pages artifact, and deploys.
+#
+# The repository's Pages settings must be configured once with
+# "Source: GitHub Actions". After the first successful run the URL
+# is published at:
+#   https://omakase-robotics.github.io/omakaseos-ui-components/
+#
+# This workflow does NOT re-run the test gate — that lives in ci.yml.
+# Keeping concerns split lets a Pages re-deploy not be blocked by a
+# transient e2e flake (and conversely, a CI re-run does not redeploy
+# Pages unnecessarily).
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Storybook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Build Storybook
+        run: bun run build-storybook
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: storybook-static
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

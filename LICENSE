@@ -1,0 +1,13 @@
+All Rights Reserved
+
+Copyright (c) Omakase Robotics
+
+This repository contains proprietary code of Omakase Robotics. No part
+of this repository may be copied, modified, distributed, or otherwise
+used outside of the omakase-robotics organization's products and tooling
+without prior written permission from Omakase Robotics.
+
+The repository is consumed by Omakase Robotics' own web applications via
+git+ssh URL pinning (see README.md for the public surface and
+versioning policy). The license posture may be revisited in the future
+if a public release is decided.

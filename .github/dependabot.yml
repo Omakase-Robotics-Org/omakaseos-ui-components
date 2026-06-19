@@ -1,0 +1,41 @@
+# Weekly dependency updates.
+#
+# Both ecosystems consumed by this repo are covered: npm (the bun
+# lockfile is npm-compatible enough that Dependabot's npm ecosystem
+# updates package.json correctly) and github-actions for workflow pins.
+#
+# Updates are grouped so a single PR carries all related deps for one
+# ecosystem in a week.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      storybook:
+        patterns:
+          - "storybook"
+          - "@storybook/*"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "playwright"
+          - "jsdom"
+      types:
+        patterns:
+          - "@types/*"
+          - "typescript"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
