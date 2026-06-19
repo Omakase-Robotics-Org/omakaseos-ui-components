@@ -145,4 +145,32 @@
    * enough not to read as an error indicator. */
   --ds-caret-color: #6b7280;
   --ds-caret-blink-duration: 1.1s;
+
+  /* ----------------------------------------------------------------
+   * Live conversation primitives (v0.5)
+   *
+   * The stage is the realtime, "happening now" surface — a 1:n participant
+   * grid (Google Meet style) with an optional caption strip. The bubble
+   * vocabulary above (--ds-bubble-*) describes the past-tense log; the
+   * stage vocabulary below describes the live view. They share role
+   * accents so a tile and a bubble for the same speaker read consistent.
+   *
+   * Defaults assume a dark stage (operator's room aesthetic). Light hosts
+   * override via aliases. */
+  --ds-stage-bg: #0c0c0c;
+  --ds-stage-grid-gap: 8px;
+
+  /* Tile background, name strip, and avatar slot. */
+  --ds-stage-tile-bg: #181818;
+  --ds-stage-tile-avatar-bg: #1f1f1f;
+  --ds-stage-tile-name-bg: rgba(0, 0, 0, 0.35);
+  --ds-stage-tile-radius: 12px;
+
+  /* Speaking ring — stage default, role overrides take precedence. */
+  --ds-stage-speaking-ring: var(--ds-accent);
+
+  /* Live caption strip. */
+  --ds-caption-bg: rgba(0, 0, 0, 0.85);
+  --ds-caption-fg: #ffffff;
+  --ds-caption-speaker-fg: #b3b3b3;
 }

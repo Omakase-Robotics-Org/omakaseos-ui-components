@@ -58,6 +58,16 @@
   --ds-bubble-meta-fg: var(--text-muted);
   --ds-caret-color: var(--text-muted);
 
+  /* v0.5 stage bindings — match aliases/status-server-webui.css. */
+  --ds-stage-bg: var(--bg-primary);
+  --ds-stage-tile-bg: var(--bg-card);
+  --ds-stage-tile-avatar-bg: var(--bg-inset);
+  --ds-stage-tile-name-bg: rgba(0, 0, 0, 0.35);
+  --ds-stage-speaking-ring: var(--status-running);
+  --ds-caption-bg: rgba(0, 0, 0, 0.85);
+  --ds-caption-fg: var(--text-primary);
+  --ds-caption-speaker-fg: var(--text-secondary);
+
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -112,6 +122,16 @@
   --ds-bubble-fg-tool: var(--color-text);
   --ds-bubble-meta-fg: var(--color-text-muted);
   --ds-caret-color: var(--color-text-muted);
+
+  /* v0.5 stage bindings — match aliases/omks-robo-web.css. */
+  --ds-stage-bg: var(--color-bg);
+  --ds-stage-tile-bg: var(--color-surface);
+  --ds-stage-tile-avatar-bg: var(--color-bg);
+  --ds-stage-tile-name-bg: var(--color-surface);
+  --ds-stage-speaking-ring: var(--color-primary);
+  --ds-caption-bg: var(--color-text);
+  --ds-caption-fg: var(--color-surface);
+  --ds-caption-speaker-fg: color-mix(in srgb, var(--color-surface) 70%, transparent);
 
   background: var(--color-bg);
   color: var(--color-text);

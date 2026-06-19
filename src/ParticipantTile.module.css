@@ -1,0 +1,108 @@
+/* ParticipantTile — one participant in a live 1:n conversation.
+ *
+ * Visual: dark-card aspect-ratio surface with avatar above name strip.
+ * The "speaking" ring is drawn as an outline so it does not change the
+ * tile's box; "connected=false" desaturates the tile and the dot.
+ */
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--ds-stage-tile-bg);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-stage-tile-radius);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  overflow: hidden;
+  /* aspect ratio kept by the avatar's flex; tile fills its grid cell. */
+  min-width: 0;
+  min-height: 0;
+  transition: outline-color var(--ds-transition-fast);
+}
+
+/* Speaking ring — drawn as an outline so the tile box doesn't reflow. The
+ * ring color follows the role accent; a non-role tile picks up the host's
+ * accent. */
+.tile[data-speaking="true"] {
+  outline-color: var(--ds-stage-speaking-ring);
+}
+
+.tile[data-role="user"][data-speaking="true"] {
+  outline-color: var(--ds-bubble-fg-user, var(--ds-stage-speaking-ring));
+}
+
+.tile[data-role="assistant"][data-speaking="true"] {
+  outline-color: var(--ds-accent);
+}
+
+.tile[data-role="tool"][data-speaking="true"] {
+  outline-color: var(--ds-tone-warning-fg);
+}
+
+.tile[data-connected="false"] {
+  filter: grayscale(0.65);
+  opacity: 0.7;
+}
+
+.avatar {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ds-stage-tile-avatar-bg);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-size-heading-2);
+  /* Reserve a deterministic minimum height so an empty slot still draws as
+   * a tile (Google Meet shows initials in this case). */
+  min-height: 96px;
+  overflow: hidden;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-sm);
+  padding: var(--ds-space-sm) var(--ds-space-md);
+  background: var(--ds-stage-tile-name-bg);
+  color: var(--ds-text);
+  font-size: var(--ds-font-size-control);
+  min-width: 0;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ds-tone-success-fg);
+  box-shadow: 0 0 0 2px var(--ds-tone-success-bg);
+}
+
+.tile[data-connected="false"] > .nameRow > .dot {
+  background: var(--ds-tone-neutral-fg);
+  box-shadow: 0 0 0 2px var(--ds-tone-neutral-bg);
+}
+
+.tile[data-role="assistant"] > .nameRow > .dot {
+  background: var(--ds-accent);
+  box-shadow: 0 0 0 2px var(--ds-accent-soft);
+}
+
+.tile[data-role="tool"] > .nameRow > .dot {
+  background: var(--ds-tone-warning-fg);
+  box-shadow: 0 0 0 2px var(--ds-tone-warning-bg);
+}
+
+.name {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.hint {
+  flex-shrink: 0;
+  font-size: var(--ds-font-size-label);
+  color: var(--ds-text-muted);
+}

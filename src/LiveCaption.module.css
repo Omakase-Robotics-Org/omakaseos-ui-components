@@ -1,0 +1,63 @@
+.caption {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--ds-space-md);
+  padding: var(--ds-space-md) var(--ds-space-lg);
+  background: var(--ds-caption-bg);
+  color: var(--ds-caption-fg);
+  border-radius: var(--ds-radius-control);
+  /* Cap to two visual lines; longer text scrolls within the bottom of
+   * the box (Meet's caption strip does the same). */
+  max-height: calc(2 * var(--ds-line-height-text) * var(--ds-font-size-body) + 2 * var(--ds-space-md));
+  overflow: hidden;
+  min-width: 0;
+}
+
+.speaker {
+  flex-shrink: 0;
+  font-size: var(--ds-font-size-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-caption-speaker-fg);
+}
+
+.caption[data-role="assistant"] > .speaker {
+  color: var(--ds-accent);
+}
+
+.caption[data-role="tool"] > .speaker {
+  color: var(--ds-tone-warning-fg);
+}
+
+.caption[data-role="system"] > .speaker {
+  color: var(--ds-text-muted);
+}
+
+.text {
+  flex: 1 1 auto;
+  font-size: var(--ds-font-size-body);
+  line-height: var(--ds-line-height-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--ds-caret-color);
+  animation: ds-bubble-caret-blink var(--ds-caret-blink-duration) steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+    opacity: 1;
+  }
+}

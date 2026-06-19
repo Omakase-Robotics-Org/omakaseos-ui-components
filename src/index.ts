@@ -4,8 +4,13 @@
  * v0.1–v0.2: status-monitor primitives (StatusBadge, Card, Fact, ButtonRow).
  * v0.3:      basic form & layout primitives (Input, Select, Textarea,
  *            Heading, Toolbar, Button, Checkbox, Switch, Slider).
- * v0.4:      OpenAI Realtime API chat primitives (MessageBubble, Transcript,
- *            TypingIndicator, ToolCallTrace, RealtimeEventLog).
+ * v0.4:      Conversation-log primitives (MessageBubble, Transcript,
+ *            TypingIndicator, ToolCallTrace, RealtimeEventLog) — past-tense
+ *            transcript view of OpenAI Realtime API events.
+ * v0.5:      Live-conversation primitives (ConversationStage, ParticipantTile,
+ *            LiveCaption) — Google Meet 1:n in-progress stage view.
+ *            Distinct from v0.4: a Transcript renders what was said; a
+ *            ConversationStage renders who is in the room right now.
  *
  * L2 (BatteryBadge, ConnectionBadge, SignalBars) and L3 (RobotStatePanel,
  * ServicePanel) remain deferred until the contract is proven across both
@@ -55,7 +60,9 @@ export type { SwitchProps } from "./Switch";
 export { Slider } from "./Slider";
 export type { SliderProps } from "./Slider";
 
-// Realtime chat primitives (v0.4)
+// Conversation log primitives (v0.4) — past-tense transcript.
+// Use these when rendering a sequence of finalized utterances the user
+// can scroll through. For the LIVE 1:n stage, see v0.5 below.
 export { MessageBubble } from "./MessageBubble";
 export type {
   MessageBubbleProps,
@@ -80,5 +87,18 @@ export type {
   RealtimeEventLogProps,
   RealtimeEventEntry,
 } from "./RealtimeEventLog";
+
+// Live conversation primitives (v0.5) — Google Meet 1:n live stage.
+// Use these when the surface represents the IN-PROGRESS conversation
+// (participant grid, speaking indicators, live caption). For the
+// past-tense log, see v0.4 above.
+export { ConversationStage, pickStageColumns } from "./ConversationStage";
+export type { ConversationStageProps } from "./ConversationStage";
+
+export { ParticipantTile } from "./ParticipantTile";
+export type { ParticipantTileProps } from "./ParticipantTile";
+
+export { LiveCaption } from "./LiveCaption";
+export type { LiveCaptionProps } from "./LiveCaption";
 
 import "./tokens.css";

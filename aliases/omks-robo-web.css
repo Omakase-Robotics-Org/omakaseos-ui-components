@@ -70,4 +70,18 @@
   --ds-bubble-fg-tool: var(--color-text);
   --ds-bubble-meta-fg: var(--color-text-muted);
   --ds-caret-color: var(--color-text-muted);
+
+  /* Stage primitives (v0.5) — light host. The dashboard's stage sits
+   * inside the existing card surfaces, so we use the brand inset bg
+   * instead of a near-black fixed value, and the tile name strip uses
+   * the same low-alpha overlay tone the rest of the dashboard uses. */
+  --ds-stage-bg: var(--color-bg);
+  --ds-stage-tile-bg: var(--color-surface);
+  --ds-stage-tile-avatar-bg: var(--color-bg);
+  --ds-stage-tile-name-bg: var(--color-surface);
+  --ds-stage-speaking-ring: var(--color-primary);
+
+  --ds-caption-bg: var(--color-text);
+  --ds-caption-fg: var(--color-surface);
+  --ds-caption-speaker-fg: color-mix(in srgb, var(--color-surface) 70%, transparent);
 }

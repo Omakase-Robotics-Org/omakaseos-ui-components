@@ -1,7 +1,7 @@
 {
   "name": "@omakase-robotics/ui-components",
-  "version": "0.4.0",
-  "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1–v0.2 status primitives, v0.3 form & layout primitives, v0.4 OpenAI Realtime API chat primitives.",
+  "version": "0.5.0",
+  "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1–v0.2 status primitives, v0.3 form & layout primitives, v0.4 conversation-log primitives, v0.5 live-conversation primitives (Google Meet 1:n stage).",
   "type": "module",
   "main": "src/index.ts",
   "module": "src/index.ts",

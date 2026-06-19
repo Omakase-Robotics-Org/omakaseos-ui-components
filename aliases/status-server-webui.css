@@ -65,4 +65,18 @@
   --ds-bubble-fg-tool: var(--text-primary);
   --ds-bubble-meta-fg: var(--text-muted);
   --ds-caret-color: var(--text-muted);
+
+  /* Stage primitives (v0.5) — operator-facing dark stage. Tiles sit on
+   * --bg-card for parity with other dashboard surfaces; the avatar slot
+   * reuses --bg-inset; the speaking ring picks up the host's running
+   * green so it visually agrees with the rest of the operator UI. */
+  --ds-stage-bg: var(--bg-primary);
+  --ds-stage-tile-bg: var(--bg-card);
+  --ds-stage-tile-avatar-bg: var(--bg-inset);
+  --ds-stage-tile-name-bg: rgba(0, 0, 0, 0.35);
+  --ds-stage-speaking-ring: var(--status-running);
+
+  --ds-caption-bg: rgba(0, 0, 0, 0.85);
+  --ds-caption-fg: var(--text-primary);
+  --ds-caption-speaker-fg: var(--text-secondary);
 }

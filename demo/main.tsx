@@ -24,11 +24,14 @@ import {
   Card,
   CardHeader,
   Checkbox,
+  ConversationStage,
   Fact,
   FactList,
   Heading,
   Input,
+  LiveCaption,
   MessageBubble,
+  ParticipantTile,
   RealtimeEventLog,
   Select,
   Slider,
@@ -237,6 +240,69 @@ function RealtimeChatPanel() {
   );
 }
 
+function LiveStagePanel() {
+  // 1:n live conversation — Google Meet aesthetic. 4 participants so the
+  // grid lands on a 2-col layout (pickStageColumns(4) === 2). The "Bot"
+  // participant is the speaker; the operator is also connected; one robot
+  // is connected; one is dropped (data-connected=false).
+  return (
+    <Card>
+      <CardHeader title="Live conversation (v0.5)" hint="Google Meet 1:n stage" />
+      <ConversationStage
+        ariaLabel="demo-live-stage"
+        tileCount={4}
+        data-testid="demo-stage"
+        tiles={[
+          <ParticipantTile
+            key="op"
+            name="Operator"
+            role="user"
+            connected
+            avatar={<span style={{ fontSize: 28, fontWeight: 600 }}>OP</span>}
+            data-testid="tile-operator"
+          />,
+          <ParticipantTile
+            key="bot"
+            name="Robotics Agent"
+            role="assistant"
+            speaking
+            connected
+            avatar={<span style={{ fontSize: 28, fontWeight: 600 }}>RA</span>}
+            data-testid="tile-bot"
+          />,
+          <ParticipantTile
+            key="g1"
+            name="G1-042"
+            role="tool"
+            connected
+            avatar={<span style={{ fontSize: 28, fontWeight: 600 }}>G1</span>}
+            hint={<>online</>}
+            data-testid="tile-robot"
+          />,
+          <ParticipantTile
+            key="g2"
+            name="G1-043 (dropped)"
+            role="tool"
+            connected={false}
+            avatar={<span style={{ fontSize: 28, fontWeight: 600 }}>G1</span>}
+            hint={<>reconnecting</>}
+            data-testid="tile-robot-dropped"
+          />,
+        ]}
+        caption={
+          <LiveCaption
+            speaker="Robotics Agent"
+            role="assistant"
+            text="Looking up the manual for G1-042 and the operator can also see it on their tablet now."
+            streaming
+            data-testid="demo-caption"
+          />
+        }
+      />
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -245,12 +311,14 @@ function App() {
         <MonitorPanel />
         <BasicsPanel />
         <RealtimeChatPanel />
+        <LiveStagePanel />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
         <MonitorPanel />
         <BasicsPanel />
         <RealtimeChatPanel />
+        <LiveStagePanel />
       </section>
     </div>
   );

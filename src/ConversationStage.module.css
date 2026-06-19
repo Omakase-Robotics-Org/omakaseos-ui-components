@@ -1,0 +1,47 @@
+/* ConversationStage — Google Meet 1:n live stage layout.
+ *
+ * The stage is a vertical flex with three rows: optional toolbar, the tile
+ * grid, and the optional caption strip. The grid is a CSS Grid whose
+ * column count is set inline by the React component (data-columns is the
+ * authoritative axis for tests / styling overrides).
+ */
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-md);
+  padding: var(--ds-space-md);
+  background: var(--ds-stage-bg);
+  border-radius: var(--ds-radius-card);
+  min-width: 0;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--ds-space-md);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  /* gridTemplateColumns is set inline by ConversationStage based on tile
+   * count (pickStageColumns). gap and padding stay token-driven so a host
+   * can shift density without touching component CSS. */
+  gap: var(--ds-stage-grid-gap);
+  min-width: 0;
+  min-height: 0;
+  /* When there are very few tiles, give them a comfortable height so the
+   * stage does not collapse to the natural height of the name strips. */
+  align-items: stretch;
+  align-content: start;
+}
+
+.caption {
+  /* The caption strip sits at the bottom of the stage. It already has its
+   * own background; the stage just gives it a margin-top equivalent via
+   * the parent gap. */
+  min-width: 0;
+}
