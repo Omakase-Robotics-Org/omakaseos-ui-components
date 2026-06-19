@@ -7,15 +7,24 @@
  *
  * NOTE: --color-on-ink-muted is reused as a soft neutral surface; the brand
  * SoT does not currently expose a mono font, so a plain CSS fallback keeps
- * the badge usable.
+ * the badge usable. Control sizing (height, padding) and spacing scale are
+ * NOT redefined here — the brand SoT does not own them, so the library
+ * fallbacks in tokens.css apply.
  */
 :root {
+  /* Surfaces & foreground — directly from brand SoT. */
   --ds-surface: var(--color-surface);
   --ds-surface-inset: var(--color-bg);
+  --ds-surface-hover: var(--color-control-bg-hover, var(--color-bg));
+  --ds-surface-active: var(--color-control-bg-hover, var(--color-bg));
   --ds-border: var(--color-border);
+  --ds-border-strong: var(--color-text-subtle, var(--color-text-muted));
   --ds-text: var(--color-text);
   --ds-text-muted: var(--color-text-muted);
+  --ds-text-disabled: var(--color-text-subtle, var(--color-text-muted));
+  --ds-text-on-accent: var(--color-on-primary, #ffffff);
 
+  /* Tones */
   --ds-tone-success-fg: var(--color-success);
   --ds-tone-success-bg: var(--color-success-soft);
   --ds-tone-warning-fg: var(--color-warning);
@@ -27,8 +36,20 @@
   --ds-tone-neutral-fg: var(--color-text-muted);
   --ds-tone-neutral-bg: var(--color-on-ink-muted);
 
+  /* Accent — primary action. */
+  --ds-accent: var(--color-primary);
+  --ds-accent-hover: var(--color-ink, var(--color-primary));
+  --ds-accent-soft: var(--color-primary-soft);
+
+  /* Focus ring — keep the brand primary's hue but lower its alpha so the
+   * ring reads as a halo, not a solid stroke. */
+  --ds-focus-ring-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+
+  /* Radii — defer to the brand SoT for the card radius, library fallback
+   * for control radius (the SoT does not yet own a control radius token). */
   --ds-radius-card: var(--radius-card);
   --ds-radius-pill: 999px;
+
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }

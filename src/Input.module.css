@@ -1,0 +1,64 @@
+.input {
+  display: inline-block;
+  /* width: 100% so an Input dropped into a flex/grid parent fills its slot;
+   * min-width: 0 so a long placeholder/value does not push siblings. */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  font-family: inherit;
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-control);
+  transition: border-color var(--ds-transition-fast),
+              box-shadow var(--ds-transition-fast);
+}
+
+.input[data-size="sm"] {
+  height: var(--ds-control-height-sm);
+  padding: 0 var(--ds-control-padding-x-sm);
+  font-size: var(--ds-font-size-label);
+}
+
+.input[data-size="md"] {
+  height: var(--ds-control-height-md);
+  padding: 0 var(--ds-control-padding-x-md);
+}
+
+.input[data-size="lg"] {
+  height: var(--ds-control-height-lg);
+  padding: 0 var(--ds-control-padding-x-lg);
+  font-size: var(--ds-font-size-body);
+}
+
+.input::placeholder {
+  color: var(--ds-text-muted);
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--ds-border-strong);
+}
+
+.input:focus-visible,
+.input:focus {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+
+.input[data-invalid="true"] {
+  border-color: var(--ds-tone-danger-fg);
+}
+.input[data-invalid="true"]:focus-visible,
+.input[data-invalid="true"]:focus {
+  box-shadow: 0 0 0 var(--ds-focus-ring-width)
+              color-mix(in srgb, var(--ds-tone-danger-fg) 35%, transparent);
+}
+
+.input:disabled {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+  background: var(--ds-surface-inset);
+}

@@ -1,18 +1,30 @@
 /**
  * @file Neutral design-system tokens consumed by every component CSS module.
  *
- * Components refer ONLY to --ds-* names. Each consuming app is expected to
- * provide a small alias CSS file that maps its existing tokens onto these
- * names (see ../aliases/). The library itself ships sane fallbacks below
- * so a host that forgets to alias a token still renders a plausible UI.
+ * Components refer ONLY to --ds-* names. Each consuming app provides a small
+ * alias CSS file that maps its existing tokens onto these names (see
+ * ../aliases/). This file ships sane fallbacks so a host that forgets to
+ * alias still renders a plausible UI (and wide-net consumer apps that have
+ * not yet wired aliases can still demo the library).
+ *
+ * Vocabulary is organized by purpose, not by raw value. Bind to the purpose
+ * (--ds-control-height-md), not to the appearance (32px), so a host theme
+ * can shift the whole density without touching component CSS.
  */
 :root {
+  /* Surface & foreground */
   --ds-surface: #ffffff;
   --ds-surface-inset: #f5f5f5;
+  --ds-surface-hover: #ececec;
+  --ds-surface-active: #e0e0e0;
   --ds-border: #d4d4d4;
+  --ds-border-strong: #9ca3af;
   --ds-text: #111111;
-  --ds-text-muted: #666666;
+  --ds-text-muted: #6b7280;
+  --ds-text-disabled: #9ca3af;
+  --ds-text-on-accent: #ffffff;
 
+  /* Semantic tones (used by StatusBadge, also by destructive Button) */
   --ds-tone-success-fg: #16a34a;
   --ds-tone-success-bg: rgba(22, 163, 74, 0.12);
   --ds-tone-warning-fg: #d97706;
@@ -24,9 +36,62 @@
   --ds-tone-neutral-fg: #525252;
   --ds-tone-neutral-bg: rgba(82, 82, 82, 0.10);
 
+  /* Accent (primary action, switch ON, slider track-fill, checked checkbox) */
+  --ds-accent: #2563eb;
+  --ds-accent-hover: #1d4ed8;
+  --ds-accent-soft: rgba(37, 99, 235, 0.12);
+
+  /* Focus ring — wraps all interactive controls. Color is a soft accent so
+   * it composes with both light and dark accent surfaces; width is 2px to
+   * remain visible on hairline borders. Inset styles are picked per-control
+   * to avoid clipping inside parents that have overflow: hidden. */
+  --ds-focus-ring-color: rgba(37, 99, 235, 0.45);
+  --ds-focus-ring-width: 2px;
+
+  /* Spacing scale (4-based). */
+  --ds-space-2xs: 2px;
+  --ds-space-xs: 4px;
+  --ds-space-sm: 6px;
+  --ds-space-md: 8px;
+  --ds-space-lg: 12px;
+  --ds-space-xl: 16px;
+  --ds-space-2xl: 24px;
+
+  /* Control sizing — every form control (Input, Select, Textarea single-line,
+   * Button, Switch) picks one of these for height; padding follows. */
+  --ds-control-height-sm: 24px;
+  --ds-control-height-md: 32px;
+  --ds-control-height-lg: 40px;
+  --ds-control-padding-x-sm: 8px;
+  --ds-control-padding-x-md: 10px;
+  --ds-control-padding-x-lg: 12px;
+
+  /* Radii — purpose-bound. */
+  --ds-radius-control: 6px;
   --ds-radius-card: 8px;
   --ds-radius-pill: 999px;
-  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
 
+  /* Shadow */
+  --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --ds-shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Typography — purpose-bound, not t-shirt. */
+  --ds-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --ds-font-size-label: 12px;
+  --ds-font-size-control: 13px;
+  --ds-font-size-body: 14px;
+  --ds-font-size-heading-4: 14px;
+  --ds-font-size-heading-3: 16px;
+  --ds-font-size-heading-2: 20px;
+  --ds-font-size-heading-1: 24px;
+  --ds-line-height-control: 1.4;
+  --ds-line-height-text: 1.5;
+
+  /* Disabled opacity — applied as `opacity` on the host element so the
+   * control retains its layout but reads as inert. */
+  --ds-disabled-opacity: 0.55;
+
+  /* Transition speed for hover/focus/checked transitions. */
+  --ds-transition-fast: 120ms ease-out;
 }

@@ -1,0 +1,86 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  font-family: inherit;
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-control);
+  /* Reserve room for the chevron on the right. */
+  padding-right: 28px;
+  /* Truncate long option labels in the closed state instead of expanding the
+   * box past its parent. The native dropdown still shows the full label. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--ds-transition-fast),
+              box-shadow var(--ds-transition-fast);
+}
+
+.wrap[data-size="sm"] .select {
+  height: var(--ds-control-height-sm);
+  padding-left: var(--ds-control-padding-x-sm);
+  font-size: var(--ds-font-size-label);
+}
+
+.wrap[data-size="md"] .select {
+  height: var(--ds-control-height-md);
+  padding-left: var(--ds-control-padding-x-md);
+}
+
+.wrap[data-size="lg"] .select {
+  height: var(--ds-control-height-lg);
+  padding-left: var(--ds-control-padding-x-lg);
+  font-size: var(--ds-font-size-body);
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--ds-border-strong);
+}
+
+.select:focus-visible,
+.select:focus {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+
+.wrap[data-invalid="true"] .select {
+  border-color: var(--ds-tone-danger-fg);
+}
+
+.select:disabled {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+  background: var(--ds-surface-inset);
+}
+
+/* Chevron — rendered via SVG so it inherits currentColor. */
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--ds-space-md);
+  width: 10px;
+  height: 6px;
+  pointer-events: none;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+  transform: translateY(-50%);
+  color: var(--ds-text-muted);
+}

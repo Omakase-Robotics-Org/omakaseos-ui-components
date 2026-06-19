@@ -5,16 +5,35 @@
  * via `--ds-*` tokens, can sit inside two visually distinct host environments
  * — status_server_webui (dark, mono, dense) and source/packages/web (light,
  * sans, airy) — without per-host code branches.
+ *
+ * The basics demo (BasicsPanel) places every v0.3 control under deliberately
+ * adverse layout conditions:
+ *   - Toolbar with a flex-grow Input next to fixed-width Buttons + Switch
+ *   - Heading with a long unbroken token to verify it wraps inside a
+ *     narrow parent rather than overflowing
+ *   - Select with a long option label to verify ellipsis in the closed state
+ *   - Checkbox / Switch / Slider with labels longer than their flex cell
+ *     to verify min-width: 0 + ellipsis truncate the LABEL, not push the
+ *     control out of view
  */
-import { StrictMode } from "react";
+import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  Button,
   ButtonRow,
   Card,
   CardHeader,
+  Checkbox,
   Fact,
   FactList,
+  Heading,
+  Input,
+  Select,
+  Slider,
   StatusBadge,
+  Switch,
+  Textarea,
+  Toolbar,
 } from "../src/index";
 
 import "./hosts.css";
@@ -39,11 +58,114 @@ function MonitorPanel() {
         </Fact>
         <Fact label="Posture">Standing</Fact>
       </FactList>
+    </Card>
+  );
+}
+
+const LONG_VALUE =
+  "a-very-long-search-query-that-would-otherwise-overflow-the-toolbar-and-push-the-buttons-out-of-view-and-also-keep-going";
+
+const LONG_HEADING =
+  "Robot configuration for THIS_IS_A_VERY_LONG_UNBROKEN_IDENTIFIER_THAT_SHOULD_WRAP_INSIDE_THE_CARD";
+
+const LONG_OPTION =
+  "Option with a label far longer than the select control width — must ellipsize";
+
+function BasicsPanel() {
+  const [searchValue, setSearchValue] = useState(LONG_VALUE);
+  const [textareaValue, setTextareaValue] = useState(
+    "Multi-line note. Long line below to verify wrap, not horizontal overflow:\nLOREMIPSUMDOLORSITAMETCONSECTETURADIPISCINGELITSEDDOEIUSMODTEMPOR",
+  );
+  const [accept, setAccept] = useState(true);
+  const [autosave, setAutosave] = useState(false);
+  const [volume, setVolume] = useState(60);
+  const [region, setRegion] = useState("ja");
+
+  return (
+    <Card>
+      <CardHeader title="Form basics (v0.3)" hint="overflow stress test" />
+      <Heading level={2} data-testid="long-heading">
+        {LONG_HEADING}
+      </Heading>
+      <Toolbar
+        ariaLabel="filters"
+        align="start"
+      >
+        <div data-grow="true" data-testid="toolbar-grow">
+          <Input
+            aria-label="search"
+            placeholder="search…"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+        </div>
+        <Button variant="primary" data-testid="toolbar-primary">Apply</Button>
+        <Button>Clear</Button>
+        <Switch
+          id="autosave"
+          label="Autosave"
+          checked={autosave}
+          onChange={(e) => setAutosave(e.target.checked)}
+        />
+      </Toolbar>
+
+      <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+        <span style={{ display: "grid", gap: 4 }}>
+          <label style={{ fontSize: 12, color: "var(--ds-text-muted)" }} htmlFor="region">
+            Region
+          </label>
+          <Select
+            id="region"
+            aria-label="region"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            data-testid="long-option-select-inner"
+          >
+            <option value="jp">日本</option>
+            <option value="us">United States</option>
+            <option value="long">{LONG_OPTION}</option>
+          </Select>
+        </span>
+
+        <span style={{ display: "grid", gap: 4 }}>
+          <label style={{ fontSize: 12, color: "var(--ds-text-muted)" }} htmlFor="notes">
+            Notes
+          </label>
+          <Textarea
+            id="notes"
+            value={textareaValue}
+            onChange={(e) => setTextareaValue(e.target.value)}
+          />
+        </span>
+
+        <div data-testid="long-checkbox">
+          <Checkbox
+            id="accept"
+            label="I accept the terms (with a long label that will truncate inside narrow parents)"
+            checked={accept}
+            onChange={(e) => setAccept(e.target.checked)}
+          />
+        </div>
+
+        <Slider
+          id="vol"
+          label="Volume"
+          min={0}
+          max={100}
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+        />
+        <span style={{ fontSize: 12, color: "var(--ds-text-muted)" }}>
+          {volume}%
+        </span>
+      </div>
+
       <hr style={{ border: 0, borderTop: "1px solid var(--ds-border)", margin: "16px 0" }} />
       <ButtonRow>
-        <button>Restart</button>
-        <button>Stop</button>
-        <button>Refresh</button>
+        <Button variant="primary">Save</Button>
+        <Button>Cancel</Button>
+        <Button variant="ghost">Reset</Button>
+        <Button variant="danger">Delete</Button>
       </ButtonRow>
     </Card>
   );
@@ -55,10 +177,12 @@ function App() {
       <section className="host host--status-webui" data-theme="dark">
         <h1>host: status_server_webui (dark)</h1>
         <MonitorPanel />
+        <BasicsPanel />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
         <MonitorPanel />
+        <BasicsPanel />
       </section>
     </div>
   );

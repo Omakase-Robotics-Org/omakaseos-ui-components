@@ -1,0 +1,101 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-sm);
+  border-radius: var(--ds-radius-control);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-control);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--ds-transition-fast),
+              border-color var(--ds-transition-fast),
+              color var(--ds-transition-fast);
+  /* Constrain to parent width when a parent caps us — without min-width: 0
+   * the button would push out of a flex parent rather than truncate. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.button[data-size="sm"] {
+  height: var(--ds-control-height-sm);
+  padding: 0 var(--ds-control-padding-x-sm);
+  font-size: var(--ds-font-size-label);
+}
+
+.button[data-size="md"] {
+  height: var(--ds-control-height-md);
+  padding: 0 var(--ds-control-padding-x-md);
+}
+
+.button[data-size="lg"] {
+  height: var(--ds-control-height-lg);
+  padding: 0 var(--ds-control-padding-x-lg);
+  font-size: var(--ds-font-size-body);
+}
+
+/* Label — owns the ellipsis logic so the button's own flex items (icons in
+ * children) keep their intrinsic size while only the text shrinks. */
+.label {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.button[data-truncate="true"] .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Variants */
+.button[data-variant="primary"] {
+  background: var(--ds-accent);
+  color: var(--ds-text-on-accent);
+  border-color: var(--ds-accent);
+}
+.button[data-variant="primary"]:hover {
+  background: var(--ds-accent-hover);
+  border-color: var(--ds-accent-hover);
+}
+
+.button[data-variant="secondary"] {
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  border-color: var(--ds-border);
+}
+.button[data-variant="secondary"]:hover {
+  background: var(--ds-surface-hover);
+}
+
+.button[data-variant="ghost"] {
+  background: transparent;
+  color: var(--ds-text);
+  border-color: transparent;
+}
+.button[data-variant="ghost"]:hover {
+  background: var(--ds-surface-hover);
+}
+
+.button[data-variant="danger"] {
+  background: var(--ds-tone-danger-bg);
+  color: var(--ds-tone-danger-fg);
+  border-color: transparent;
+}
+.button[data-variant="danger"]:hover {
+  background: var(--ds-tone-danger-fg);
+  color: var(--ds-text-on-accent);
+}
+
+.button:focus-visible {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: 1px;
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+  pointer-events: none;
+}

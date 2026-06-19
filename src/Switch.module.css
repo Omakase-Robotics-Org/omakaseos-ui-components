@@ -1,0 +1,78 @@
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-md);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  background: var(--ds-border);
+  border-radius: var(--ds-radius-pill);
+  transition: background-color var(--ds-transition-fast);
+}
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--ds-surface);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform var(--ds-transition-fast),
+              background-color var(--ds-transition-fast);
+}
+
+.input:checked + .track {
+  background: var(--ds-accent);
+}
+
+.input:checked + .track > .thumb {
+  transform: translateX(16px);
+}
+
+.input:focus-visible + .track {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: 2px;
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+.input:disabled + .track {
+  opacity: var(--ds-disabled-opacity);
+}
+
+.label {
+  color: var(--ds-text);
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-control);
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

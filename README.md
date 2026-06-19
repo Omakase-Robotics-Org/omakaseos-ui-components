@@ -15,10 +15,22 @@ library's neutral `--ds-*` token names.
 ```
 src/
 ├── tokens.css        # neutral --ds-* tokens with sane fallbacks
+│                     # (v0.3: control sizing, spacing scale, accent,
+│                     #  focus ring, typography scale, transition)
 ├── StatusBadge.tsx   # tone × pulse × size, semantic vocabulary
-├── Card.tsx          # Card + CardHeader (two-piece)
+├── Card.tsx          # Card + CardHeader (two-piece, with title= shorthand)
 ├── Fact.tsx          # Fact + FactList, row/column direction
 ├── ButtonRow.tsx     # margin-free flex group
+│
+├── Button.tsx        # primary | secondary | ghost | danger; sm/md/lg
+├── Input.tsx         # native <input> shell, sm/md/lg, invalid
+├── Select.tsx        # native <select> with chevron + ellipsis closed state
+├── Textarea.tsx      # native <textarea>, vertical resize, invalid
+├── Heading.tsx       # h1..h4 bound to typographic level + truncate?
+├── Toolbar.tsx       # role=toolbar; first child grows; min-width: 0
+├── Checkbox.tsx      # native checkbox + tri-state + optional label
+├── Switch.tsx        # role=switch; styled track+thumb
+├── Slider.tsx        # native range + custom track-fill via --ds-slider-fill
 └── index.ts          # public surface
 
 aliases/
@@ -26,16 +38,30 @@ aliases/
 └── omks-robo-web.css         # for @omks-robo/web hosts
 
 demo/                  # standalone harness rendering both themes side by side
+spec/                  # Playwright e2e: overflow / focus / role contracts
+scripts/run-e2e.sh     # demo harness e2e runner (parity with source/scripts/wt-e2e.sh)
 ```
 
 ## Public API
 
 ```ts
 import {
+  // status primitives (v0.1–v0.2)
   StatusBadge,           // <StatusBadge tone size? pulse?>{label}</StatusBadge>
   Card, CardHeader,      // <Card><CardHeader title hint? right?/>...</Card>
   Fact, FactList,        // <FactList><Fact label direction?>value</Fact>...</FactList>
   ButtonRow,             // <ButtonRow>{...buttons}</ButtonRow>
+
+  // basic primitives (v0.3)
+  Button,                // <Button variant size? truncate?>label</Button>
+  Input,                 // <Input inputSize? invalid? type?/>
+  Select,                // <Select selectSize?><option/>...</Select>
+  Textarea,              // <Textarea rows? invalid?/>
+  Heading,               // <Heading level={1..4} truncate?>title</Heading>
+  Toolbar,               // <Toolbar align? ariaLabel?>{...}</Toolbar>
+  Checkbox,              // <Checkbox label? indeterminate?/>
+  Switch,                // <Switch label?/>  (role=switch)
+  Slider,                // <Slider min max value label?/>
 } from "@omakase-robotics/ui-components";
 
 // Bring in the neutral tokens once, OR provide your own alias file.
@@ -91,13 +117,21 @@ plausibly.
 
 | `--ds-*` | what it means |
 |---|---|
-| `--ds-surface`, `--ds-surface-inset` | card background, inset tile background |
-| `--ds-border` | card / chip border |
-| `--ds-text`, `--ds-text-muted` | foreground, secondary foreground |
+| `--ds-surface`, `--ds-surface-inset`, `--ds-surface-hover`, `--ds-surface-active` | layered surfaces for cards, tiles, hover/active feedback |
+| `--ds-border`, `--ds-border-strong` | hairline border / hover-emphasized border |
+| `--ds-text`, `--ds-text-muted`, `--ds-text-disabled`, `--ds-text-on-accent` | foreground variants |
 | `--ds-tone-{success,warning,danger,info,neutral}-{fg,bg}` | badge fg / soft bg per tone |
-| `--ds-radius-card`, `--ds-radius-pill` | radii |
-| `--ds-shadow-card` | card shadow (host theme decides) |
-| `--ds-font-mono` | monospace stack for badge label etc. |
+| `--ds-accent`, `--ds-accent-hover`, `--ds-accent-soft` | primary action color (Button primary, Switch on, Slider fill, Checkbox checked) |
+| `--ds-focus-ring-color`, `--ds-focus-ring-width` | focus ring around all interactive controls |
+| `--ds-space-{2xs..2xl}` | gap / padding scale (4-based) |
+| `--ds-control-height-{sm,md,lg}`, `--ds-control-padding-x-{sm,md,lg}` | size variants for Input / Select / Button / Switch |
+| `--ds-radius-control`, `--ds-radius-card`, `--ds-radius-pill` | purpose-bound radii |
+| `--ds-shadow-card`, `--ds-shadow-overlay` | card / overlay shadow |
+| `--ds-font-sans`, `--ds-font-mono` | font stacks |
+| `--ds-font-size-{label,control,body,heading-1..4}` | typographic scale (purpose-bound) |
+| `--ds-line-height-{control,text}` | line-height for controls vs prose |
+| `--ds-disabled-opacity` | opacity for disabled controls |
+| `--ds-transition-fast` | transition duration for hover/focus/checked |
 
 The brand SoT in each consuming app stays authoritative; the alias CSS just
 forwards the names.
@@ -132,13 +166,20 @@ tags in dependent apps.
 ```bash
 bun install
 bun run typecheck   # tsc --noEmit
-bun run test        # vitest --run (11 tests)
-bun run dev         # http://localhost:5173 — themed harness (both apps)
+bun run test        # vitest --run (49 tests across 12 files)
+bun run test:e2e    # vite + Playwright; verifies overflow/focus/role
+                    # in a real chromium (the things jsdom cannot show)
+bun run dev         # http://localhost:5198 — themed harness (both apps)
 bun run build       # demo/dist
 ```
 
 ## Origin
 
-Started life as a PoC inside `omksos_web/reports/shared-status-components-poc/`.
-That report retains the historical motivation, API delta tables, and the
-two migration sketches.
+- v0.1–v0.2 status primitives: PoC at `omksos_web/reports/shared-status-components-poc/`,
+  shipped to dashboard at `source/packages/web` (commit `d236683`).
+- v0.3 basic primitives: PoC at `omksos_web/reports/shared-ui-components-basics-poc/`.
+  Library consumed in dashboard separately; status_server_webui consumes the
+  same contract once it joins.
+
+Both reports retain the API delta tables, token vocabulary rationale, and
+the gates that drove the PoC red→green.

@@ -1,0 +1,36 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-md);
+  /* Allow the toolbar itself to shrink below its intrinsic content width
+   * when its parent caps it (a Card body, a panel header). Without
+   * min-width: 0 the toolbar would clip out of a constrained Card and
+   * overflow horizontally. */
+  min-width: 0;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* Allow every direct child to shrink below its intrinsic width so that a
+ * grow-flagged Input with a long value does not push fixed-width Buttons
+ * out of view. The :where() keeps specificity at 0 so callers can still
+ * override on a specific child. */
+.toolbar :where(> *) {
+  min-width: 0;
+}
+
+/* The first child by convention is the flexible one (search Input,
+ * page-title heading). Consumers that want a different child to grow can
+ * wrap it in a <div data-grow="true"> — see below. */
+.toolbar > [data-grow="true"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toolbar[data-align="end"] {
+  justify-content: flex-end;
+}
+
+.toolbar[data-align="between"] {
+  justify-content: space-between;
+}

@@ -1,0 +1,89 @@
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-md);
+  width: 100%;
+  min-width: 0;
+}
+
+.label {
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-size-label);
+  line-height: var(--ds-line-height-control);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  /* Custom property set inline by the React component to drive the fill. */
+  --ds-slider-fill: 0%;
+}
+
+/* WebKit / Blink */
+.input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--ds-radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--ds-accent) 0%,
+    var(--ds-accent) var(--ds-slider-fill),
+    var(--ds-border) var(--ds-slider-fill),
+    var(--ds-border) 100%
+  );
+}
+
+.input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--ds-surface);
+  border: 2px solid var(--ds-accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform var(--ds-transition-fast);
+}
+
+.input:focus-visible::-webkit-slider-thumb {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: 2px;
+}
+
+/* Firefox */
+.input::-moz-range-track {
+  height: 4px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-border);
+}
+.input::-moz-range-progress {
+  height: 4px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-accent);
+}
+.input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ds-surface);
+  border: 2px solid var(--ds-accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input:disabled {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+}

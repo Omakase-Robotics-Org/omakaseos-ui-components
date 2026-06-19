@@ -1,0 +1,50 @@
+.textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  padding: var(--ds-space-md) var(--ds-control-padding-x-md);
+  font-family: inherit;
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-text);
+  /* Vertical resize only — horizontal would let users push past the parent
+   * and break dialog/card layouts. Disable entirely with resize: none if
+   * the consumer wants. */
+  resize: vertical;
+  transition: border-color var(--ds-transition-fast),
+              box-shadow var(--ds-transition-fast);
+}
+
+.textarea::placeholder {
+  color: var(--ds-text-muted);
+}
+
+.textarea:hover:not(:disabled) {
+  border-color: var(--ds-border-strong);
+}
+
+.textarea:focus-visible,
+.textarea:focus {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+
+.textarea[data-invalid="true"] {
+  border-color: var(--ds-tone-danger-fg);
+}
+.textarea[data-invalid="true"]:focus-visible,
+.textarea[data-invalid="true"]:focus {
+  box-shadow: 0 0 0 var(--ds-focus-ring-width)
+              color-mix(in srgb, var(--ds-tone-danger-fg) 35%, transparent);
+}
+
+.textarea:disabled {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+  background: var(--ds-surface-inset);
+}
