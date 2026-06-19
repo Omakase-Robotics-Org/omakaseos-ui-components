@@ -1,6 +1,6 @@
 {
   "name": "@omakase-robotics/ui-components",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Shared L1 React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui).",
   "type": "module",
   "main": "src/index.ts",

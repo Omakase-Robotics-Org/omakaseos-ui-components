@@ -27,6 +27,15 @@ describe("Button", () => {
     expect(btn?.getAttribute("data-size")).toBe("lg");
   });
 
+  it("supports the dashboard's accent / warning / neutral variants", () => {
+    const { container, rerender } = render(<Button variant="accent">A</Button>);
+    expect(container.querySelector("button")?.getAttribute("data-variant")).toBe("accent");
+    rerender(<Button variant="warning">W</Button>);
+    expect(container.querySelector("button")?.getAttribute("data-variant")).toBe("warning");
+    rerender(<Button variant="neutral">N</Button>);
+    expect(container.querySelector("button")?.getAttribute("data-variant")).toBe("neutral");
+  });
+
   it("truncates by default and opts out via truncate={false}", () => {
     const { container, rerender } = render(<Button>label</Button>);
     expect(container.querySelector('[data-truncate="true"]')).not.toBeNull();

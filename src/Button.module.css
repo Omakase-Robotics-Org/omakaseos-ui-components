@@ -60,12 +60,17 @@
   border-color: var(--ds-accent-hover);
 }
 
-.button[data-variant="secondary"] {
+/* secondary and neutral are visual aliases — the dashboard's older code
+ * speaks "neutral", newer code speaks "secondary"; both render the same
+ * bordered-surface look. */
+.button[data-variant="secondary"],
+.button[data-variant="neutral"] {
   background: var(--ds-surface);
   color: var(--ds-text);
   border-color: var(--ds-border);
 }
-.button[data-variant="secondary"]:hover {
+.button[data-variant="secondary"]:hover,
+.button[data-variant="neutral"]:hover {
   background: var(--ds-surface-hover);
 }
 
@@ -76,6 +81,30 @@
 }
 .button[data-variant="ghost"]:hover {
   background: var(--ds-surface-hover);
+}
+
+/* accent — low-emphasis CTA (soft-filled accent). Used for "open library /
+ * open dialog" buttons in the dashboard. */
+.button[data-variant="accent"] {
+  background: var(--ds-accent-soft);
+  color: var(--ds-accent);
+  border-color: transparent;
+}
+.button[data-variant="accent"]:hover {
+  background: var(--ds-accent-soft);
+  filter: brightness(0.95);
+}
+
+/* warning — soft-filled warning tone (reversible-but-consequential
+ * actions like service restart). */
+.button[data-variant="warning"] {
+  background: var(--ds-tone-warning-bg);
+  color: var(--ds-tone-warning-fg);
+  border-color: transparent;
+}
+.button[data-variant="warning"]:hover {
+  background: var(--ds-tone-warning-bg);
+  filter: brightness(0.95);
 }
 
 .button[data-variant="danger"] {

@@ -38,6 +38,9 @@ export type { TextareaProps } from "./Textarea";
 export { Heading } from "./Heading";
 export type { HeadingProps, HeadingLevel } from "./Heading";
 
+export { Field } from "./Field";
+export type { FieldProps } from "./Field";
+
 export { Toolbar } from "./Toolbar";
 export type { ToolbarProps, ToolbarAlign } from "./Toolbar";
 
