@@ -1,0 +1,148 @@
+/* MessageBubble — one chat turn.
+ *
+ * The row is a flex container that places the bubble on left, right, or
+ * full-width via flex-justify based on data-align. The bubble itself caps
+ * its width and lets the body wrap naturally — `overflow-wrap: anywhere`
+ * so a long unbroken token does not overflow the container.
+ */
+.row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.row[data-align="left"] {
+  justify-content: flex-start;
+}
+
+.row[data-align="right"] {
+  justify-content: flex-end;
+}
+
+.row[data-align="full"] {
+  justify-content: stretch;
+}
+
+.bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--ds-bubble-pad-y) var(--ds-bubble-pad-x);
+  border-radius: var(--ds-bubble-radius);
+  border: 1px solid transparent;
+  max-width: var(--ds-bubble-max-width);
+  min-width: 0;
+  /* Keep long unbroken tokens from blowing the bubble out. The transcript's
+   * Card / Toolbar parents already give us min-width: 0; this just makes the
+   * inside word-wrap correctly. */
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.row[data-align="full"] > .bubble {
+  /* Full-width turns (system / tool) ignore max-width so the line takes up
+   * the full row — they're status / lifecycle messages, not utterances. */
+  max-width: 100%;
+  width: 100%;
+}
+
+.row[data-role="user"] > .bubble {
+  background: var(--ds-bubble-bg-user);
+  color: var(--ds-bubble-fg-user);
+}
+
+.row[data-role="assistant"] > .bubble {
+  background: var(--ds-bubble-bg-assistant);
+  color: var(--ds-bubble-fg-assistant);
+}
+
+.row[data-role="system"] > .bubble {
+  background: var(--ds-bubble-bg-system);
+  color: var(--ds-bubble-fg-system);
+  font-style: italic;
+}
+
+.row[data-role="tool"] > .bubble {
+  background: var(--ds-bubble-bg-tool);
+  color: var(--ds-bubble-fg-tool);
+  font-family: var(--ds-font-mono);
+}
+
+/* Tone overlays — drawn as a colored border so the bubble bg keeps role
+ * identity. The overlay is inset 1px so it does not cause layout shift. */
+.row[data-tone="warning"] > .bubble {
+  border-color: var(--ds-tone-warning-fg);
+}
+
+.row[data-tone="danger"] > .bubble {
+  border-color: var(--ds-tone-danger-fg);
+}
+
+.row[data-tone="success"] > .bubble {
+  border-color: var(--ds-tone-success-fg);
+}
+
+.row[data-tone="info"] > .bubble {
+  border-color: var(--ds-tone-info-fg);
+}
+
+.row[data-tone="neutral"] > .bubble {
+  border-color: var(--ds-border);
+}
+
+.meta {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--ds-space-md);
+  font-size: var(--ds-bubble-meta-size);
+  color: var(--ds-bubble-meta-fg);
+  min-width: 0;
+}
+
+.role {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.timestamp {
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  font-size: var(--ds-font-size-body);
+  line-height: var(--ds-line-height-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--ds-caret-color);
+  animation: ds-bubble-caret-blink var(--ds-caret-blink-duration) steps(1, end) infinite;
+}
+
+@keyframes ds-bubble-caret-blink {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  60.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+    opacity: 1;
+  }
+}

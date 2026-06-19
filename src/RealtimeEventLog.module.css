@@ -1,0 +1,54 @@
+.log {
+  list-style: none;
+  margin: 0;
+  padding: var(--ds-space-sm) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-font-size-label);
+  color: var(--ds-text-muted);
+  background: var(--ds-surface-inset);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  /* Hard ceiling so a very long event stream doesn't push the rest of the
+   * page out of view. The list scrolls inside this box. */
+  max-height: 18em;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--ds-space-md);
+  padding: 2px var(--ds-space-md);
+  min-width: 0;
+}
+
+.type {
+  color: var(--ds-text);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.at {
+  color: var(--ds-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.summary {
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Highlight error events visually so they don't get lost in the firehose. */
+.entry[data-event-type="error"] > .type {
+  color: var(--ds-tone-danger-fg);
+  font-weight: 600;
+}

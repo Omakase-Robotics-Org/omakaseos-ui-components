@@ -49,4 +49,20 @@
 
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: var(--font-mono);
+
+  /* Chat bubbles (v0.4) — operator-facing, dark theme. The "running" green
+   * is the host accent so it is reused for the user (operator) bubble in
+   * a low-alpha tint; assistant lands on the inset surface so the operator's
+   * side stays the visual focus. system / tool inherit muted neutrals from
+   * the host, keeping the realtime event log readable on dark. */
+  --ds-bubble-bg-user: rgba(34, 197, 94, 0.12);
+  --ds-bubble-fg-user: var(--text-primary);
+  --ds-bubble-bg-assistant: var(--bg-inset);
+  --ds-bubble-fg-assistant: var(--text-primary);
+  --ds-bubble-bg-system: rgba(163, 163, 163, 0.08);
+  --ds-bubble-fg-system: var(--text-secondary);
+  --ds-bubble-bg-tool: rgba(234, 179, 8, 0.12);
+  --ds-bubble-fg-tool: var(--text-primary);
+  --ds-bubble-meta-fg: var(--text-muted);
+  --ds-caret-color: var(--text-muted);
 }

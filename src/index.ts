@@ -4,6 +4,8 @@
  * v0.1–v0.2: status-monitor primitives (StatusBadge, Card, Fact, ButtonRow).
  * v0.3:      basic form & layout primitives (Input, Select, Textarea,
  *            Heading, Toolbar, Button, Checkbox, Switch, Slider).
+ * v0.4:      OpenAI Realtime API chat primitives (MessageBubble, Transcript,
+ *            TypingIndicator, ToolCallTrace, RealtimeEventLog).
  *
  * L2 (BatteryBadge, ConnectionBadge, SignalBars) and L3 (RobotStatePanel,
  * ServicePanel) remain deferred until the contract is proven across both
@@ -52,5 +54,31 @@ export type { SwitchProps } from "./Switch";
 
 export { Slider } from "./Slider";
 export type { SliderProps } from "./Slider";
+
+// Realtime chat primitives (v0.4)
+export { MessageBubble } from "./MessageBubble";
+export type {
+  MessageBubbleProps,
+  MessageRole,
+  MessageAlign,
+} from "./MessageBubble";
+
+export { Transcript } from "./Transcript";
+export type { TranscriptProps } from "./Transcript";
+
+export { TypingIndicator } from "./TypingIndicator";
+export type { TypingIndicatorProps } from "./TypingIndicator";
+
+export { ToolCallTrace } from "./ToolCallTrace";
+export type {
+  ToolCallTraceProps,
+  ToolCallStatus,
+} from "./ToolCallTrace";
+
+export { RealtimeEventLog } from "./RealtimeEventLog";
+export type {
+  RealtimeEventLogProps,
+  RealtimeEventEntry,
+} from "./RealtimeEventLog";
 
 import "./tokens.css";

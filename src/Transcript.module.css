@@ -1,0 +1,14 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-bubble-gap);
+  min-width: 0;
+}
+
+.item {
+  margin: 0;
+  min-width: 0;
+}

@@ -28,13 +28,19 @@ import {
   FactList,
   Heading,
   Input,
+  MessageBubble,
+  RealtimeEventLog,
   Select,
   Slider,
   StatusBadge,
   Switch,
   Textarea,
+  ToolCallTrace,
   Toolbar,
+  Transcript,
+  TypingIndicator,
 } from "../src/index";
+import type { RealtimeEventEntry } from "../src/index";
 
 import "./hosts.css";
 
@@ -171,6 +177,66 @@ function BasicsPanel() {
   );
 }
 
+const LONG_ASSISTANT_TEXT =
+  "Sure — to summarize: SUPERCALIFRAGILISTICEXPIALIDOCIOUS_BUT_WITH_AN_EVEN_LONGER_UNBROKEN_TOKEN_THAT_MUST_WRAP_INSIDE_THE_BUBBLE rather than overflow it. Also: line breaks\nshould be preserved.";
+
+const REALTIME_EVENTS: RealtimeEventEntry[] = [
+  { id: "evt-1", type: "session.created", at: "12:00:00.001" },
+  { id: "evt-2", type: "conversation.item.added", at: "12:00:00.123", summary: "user: where's the manual?" },
+  { id: "evt-3", type: "response.created", at: "12:00:00.130" },
+  { id: "evt-4", type: "response.output_text.delta", at: "12:00:00.150", summary: '"Sure"' },
+  { id: "evt-5", type: "response.output_text.delta", at: "12:00:00.180", summary: '" — to"' },
+  { id: "evt-6", type: "response.output_audio_transcript.delta", at: "12:00:00.200" },
+  { id: "evt-7", type: "response.function_call_arguments.delta", at: "12:00:00.260", summary: "search_inventory({" },
+  { id: "evt-8", type: "response.function_call_arguments.done", at: "12:00:00.310", summary: "search_inventory(...) finalized" },
+  { id: "evt-9", type: "response.done", at: "12:00:00.420" },
+  { id: "evt-10", type: "error", at: "12:00:01.000", summary: "rate_limit_exceeded — see retry-after" },
+];
+
+function RealtimeChatPanel() {
+  return (
+    <Card>
+      <CardHeader title="Realtime conversation (v0.4)" hint="OpenAI Realtime event stream" />
+      <Transcript ariaLabel="conversation" data-testid="realtime-transcript">
+        <MessageBubble role="system" timestamp="12:00:00.001" data-testid="bubble-system">
+          Session started — model gpt-4o-realtime
+        </MessageBubble>
+        <MessageBubble role="user" timestamp="12:00:00.123" data-testid="bubble-user">
+          Where is the operator manual for G1-042?
+        </MessageBubble>
+        <MessageBubble role="assistant" timestamp="12:00:00.420" data-testid="bubble-assistant-long">
+          {LONG_ASSISTANT_TEXT}
+        </MessageBubble>
+        <MessageBubble role="assistant" streaming data-testid="bubble-streaming">
+          The model is mid-utterance and will append more
+        </MessageBubble>
+        <ToolCallTrace
+          name="search_inventory"
+          args={{ q: "manual G1-042", limit: 3 }}
+          status="succeeded"
+          result={<span>found 3 documents</span>}
+          data-testid="tool-trace"
+        />
+        <MessageBubble role="tool" timestamp="12:00:00.500" data-testid="bubble-tool">
+          tool_result: 3 docs returned, top match score 0.91
+        </MessageBubble>
+        <MessageBubble role="system" tone="danger" data-testid="bubble-error">
+          error: rate_limit_exceeded — retry after 1.5s
+        </MessageBubble>
+      </Transcript>
+      <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 12, color: "var(--ds-text-muted)" }}>
+          assistant is preparing:
+        </span>
+        <TypingIndicator role="assistant" data-testid="typing" />
+      </div>
+      <hr style={{ border: 0, borderTop: "1px solid var(--ds-border)", margin: "16px 0" }} />
+      <Heading level={3}>Event log</Heading>
+      <RealtimeEventLog entries={REALTIME_EVENTS} data-testid="event-log" />
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -178,11 +244,13 @@ function App() {
         <h1>host: status_server_webui (dark)</h1>
         <MonitorPanel />
         <BasicsPanel />
+        <RealtimeChatPanel />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
         <MonitorPanel />
         <BasicsPanel />
+        <RealtimeChatPanel />
       </section>
     </div>
   );

@@ -1,0 +1,63 @@
+.trace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-sm);
+  padding: var(--ds-bubble-pad-y) var(--ds-bubble-pad-x);
+  background: var(--ds-bubble-bg-tool);
+  color: var(--ds-bubble-fg-tool);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-bubble-radius);
+  min-width: 0;
+}
+
+.trace[data-status="failed"] {
+  border-color: var(--ds-tone-danger-fg);
+}
+
+.trace[data-status="succeeded"] {
+  border-color: var(--ds-tone-success-fg);
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-md);
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-font-size-control);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.args {
+  margin: 0;
+  padding: var(--ds-space-sm);
+  background: var(--ds-surface-inset);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-font-size-label);
+  /* pre-wrap preserves newlines while letting overlong unbroken JSON wrap. */
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  /* Cap the visual height; very long argument blobs scroll vertically rather
+   * than blowing the trace card out. */
+  max-height: 12em;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.result {
+  font-size: var(--ds-font-size-control);
+  color: var(--ds-text);
+  min-width: 0;
+}

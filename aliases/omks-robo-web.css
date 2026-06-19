@@ -52,4 +52,22 @@
 
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Chat bubbles (v0.4) — the dashboard already used --color-primary-soft
+   * for the customer turn background in RobotConversationSessionDetail.
+   * Mapping the user bubble onto the same token preserves that look while
+   * the library now owns the geometry (radius / pad / max-width). The
+   * assistant bubble lands on a quiet inset (the dashboard's --color-bg)
+   * so the customer side keeps the visual weight, matching the existing
+   * detail panel aesthetic. */
+  --ds-bubble-bg-user: var(--color-primary-soft);
+  --ds-bubble-fg-user: var(--color-text);
+  --ds-bubble-bg-assistant: var(--color-bg);
+  --ds-bubble-fg-assistant: var(--color-text);
+  --ds-bubble-bg-system: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+  --ds-bubble-fg-system: var(--color-text-muted);
+  --ds-bubble-bg-tool: var(--color-warning-soft);
+  --ds-bubble-fg-tool: var(--color-text);
+  --ds-bubble-meta-fg: var(--color-text-muted);
+  --ds-caret-color: var(--color-text-muted);
 }
