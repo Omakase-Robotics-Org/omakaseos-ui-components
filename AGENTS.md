@@ -30,6 +30,37 @@ own `components/` directory.
    `aliases/status-server-webui.css`) in the same change. A library
    token without a host bridge is a silent regression.
 
+   **Tailwind exception (v0.6 aui surface).** The vendored
+   shadcn-style assistant-ui registry components under `src/aui/`
+   are the **only** place in this library where Tailwind v4 is in
+   use. They were authored upstream against Tailwind utility
+   classes + shadcn theme tokens (`--background`, `--foreground`,
+   `--primary`, ...), and we ship them verbatim rather than re-author
+   them in CSS Modules — the upstream registry is too large to fork
+   visually. To keep that exception bounded:
+
+   - Tailwind imports (`@import "tailwindcss"`,
+     `@import "tailwindcss/theme.css"`, etc.) appear in
+     `src/aui/aui.css` and **nowhere else**.
+   - Tailwind class composition utilities (`clsx`, `tailwind-merge`,
+     `class-variance-authority`, `cn`) are imported only by
+     `src/aui/**/*.{ts,tsx}`.
+   - Legacy v0.4/v0.5 components (`Button`, `Card`, `MessageBubble`,
+     `ConversationStage`, ...) stay on `*.module.css` + `--ds-*`
+     tokens. They DO NOT mount under `.aui-root`, do not use
+     Tailwind utilities, and are not styled by the shadcn theme.
+   - The aui preflight is scoped to `:where(.aui-root *)`. The
+     Thread shell mounts that class on its root; new aui-surface
+     components must mount inside the same subtree or their
+     preflight inheritance breaks.
+
+   These rules are pinned by `spec/aui-tailwind-boundary.spec.ts`
+   (failing CI catches violations) and explained at length in
+   `omksos_web/reports/ui-components-aui-canonical-lift/README.md`
+   and `omksos_web/reports/ui-components-aui-tailwind-preflight-scope/README.md`.
+   If you find yourself wanting to relax any of them, read those
+   reports first — the exception was sized deliberately.
+
 3. **Both call shapes must compile.** When two consuming apps use
    different idioms for the same concept (e.g. `label=` vs `children`),
    the library accepts both. Add a vitest case for each.

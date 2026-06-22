@@ -31,11 +31,17 @@ came to be — see `reports/realtime-chat-components-poc/`).
 | **Form** | v0.3 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
+| **AUI surface** | v0.6 | Vendored shadcn-style assistant-ui registry — the canonical chat shell consumed by live operator surfaces (PoC `assistant-ui-replacement-poc/app`, the body web app's conversations page). **Tailwind exception** — see "Token model" below | `Thread`, `MarkdownText`, `ToolFallback`, `ToolGroupRoot/Trigger/Content`, `Reasoning` family, `ComposerAddAttachment`, `Composer/UserMessage Attachments`, `VoiceOrb` family, `TooltipIconButton`, plus shadcn `Button` / `Collapsible` / `Tooltip` / `Dialog` / `Avatar` re-exports — under sub-entry `/aui` |
 
 The chat-log and live-stage layers share the same `MessageRole` vocabulary
 (`"user" | "assistant" | "system" | "tool"`) — taken verbatim from the OpenAI
 Realtime API — and the same role-tinted accent tokens, so a speaker's tile in
 the live stage and their bubble in the log read visually consistent.
+
+The AUI surface layer (v0.6) is **deliberately separate**: it ships under
+the `/aui` sub-entry, mounts under a `.aui-root` subtree, and uses
+Tailwind v4 + shadcn theme tokens rather than `--ds-*`. See the Tailwind
+exception note in the Token model section.
 
 ## Public API
 
@@ -54,6 +60,20 @@ import {
   // v0.5: live-conversation primitives (1:n live stage)
   ConversationStage, ParticipantTile, LiveCaption, pickStageColumns,
 } from "@omakase-robotics/ui-components";
+
+// v0.6: canonical assistant-ui surface — separate sub-entry
+import {
+  Thread,
+  MarkdownText,
+  ToolFallback, ToolGroupRoot, ToolGroupTrigger, ToolGroupContent,
+  Reasoning, ReasoningRoot, ReasoningTrigger, ReasoningContent, ReasoningText,
+  ComposerAddAttachment, ComposerAttachments, UserMessageAttachments,
+  VoiceOrb, VoiceControl, deriveVoiceOrbState,
+  TooltipIconButton, Button, Collapsible, Tooltip, Dialog, Avatar,
+  cn,
+  ReadonlyThreadProvider, AssistantRuntimeProvider,
+  fromThreadMessageLike, useLocalRuntime,
+} from "@omakase-robotics/ui-components/aui";
 ```
 
 Plus host-specific alias CSS, imported once at the SPA entry:
@@ -64,10 +84,17 @@ import "@omakase-robotics/ui-components/aliases/omks-robo-web.css";
 
 // status_server_webui (dark, operator-facing)
 import "@omakase-robotics/ui-components/aliases/status-server-webui.css";
+
+// AUI surface (v0.6): pre-built Tailwind v4 + shadcn theme stylesheet,
+// scoped under `.aui-root`. Required only when the consumer mounts an
+// aui-surface component (Thread / MarkdownText / etc).
+import "@omakase-robotics/ui-components/aui/aui.css";
 ```
 
 The alias must come **after** the host's own brand variables.css so the
-`--ds-*` mappings reference defined tokens.
+`--ds-*` mappings reference defined tokens. The `aui/aui.css` is
+independent of the `--ds-*` aliases — it brings its own scoped reset
+and shadcn theme tokens.
 
 ### Backwards-compatible call shapes
 
@@ -111,6 +138,32 @@ renders plausibly. The alias map for each host is in `aliases/`.
 
 Bind to **purpose** (`--ds-control-height-md`), not to **value** (`32px`).
 A host theme can shift density without touching component CSS.
+
+### Tailwind exception (v0.6 aui surface)
+
+The aui surface is the **only** layer that does not bind to `--ds-*`.
+It uses Tailwind v4 utility classes plus the shadcn theme token set
+(`--background`, `--foreground`, `--primary`, `--muted`, `--border`,
+`--ring`, ...) because the upstream shadcn-style assistant-ui
+registry was authored that way. Re-authoring those components in
+CSS Modules + `--ds-*` would diverge us from upstream's refresh path
+(`npx shadcn add ...` propagates updates verbatim into `src/aui/`).
+
+To keep the exception bounded, the package guarantees:
+
+| Boundary | Where it's pinned |
+| --- | --- |
+| Tailwind imports (`@import "tailwindcss/..."`) live only in `src/aui/aui.css` | `spec/aui-tailwind-boundary.spec.ts` |
+| Tailwind class composition (`clsx`, `tailwind-merge`, `class-variance-authority`, `cn`) imported only by `src/aui/**/*.{ts,tsx}` | `spec/aui-tailwind-boundary.spec.ts` |
+| Tailwind preflight scoped to `:where(.aui-root *)` — does NOT clobber consumer CSS-Modules surfaces | `spec/aui-preflight-scope.spec.ts`, `src/aui/aui.css` |
+| Surface root mounts with `.aui-root` className — preflight matches the subtree it was scoped to | `spec/aui-tailwind-boundary.spec.ts` (Thread mount) |
+| AUI is shipped as `dist/aui/{index.js, aui.css}` (pre-built); legacy v0.4/v0.5 stay as TS source | `package.json` `exports` map |
+
+Each row has an automated assertion: a future PR that breaks the
+exception fails CI before review. The boundary was sized in
+`omksos_web/reports/ui-components-aui-canonical-lift/` and tightened
+in `omksos_web/reports/ui-components-aui-tailwind-preflight-scope/`;
+read both before moving any of these boundaries.
 
 ## Consuming the library
 
