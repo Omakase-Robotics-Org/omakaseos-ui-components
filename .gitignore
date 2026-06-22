@@ -1,6 +1,12 @@
 node_modules
 demo/dist
-dist
+# `dist/` is generally a build artifact; keep it ignored. The v0.6 aui
+# surface is the exception: it is shipped to consumers via git+ssh tag,
+# so its compiled JS+CSS+d.ts MUST be committed alongside the tag (a
+# bare clone has no toolchain to rebuild). The negation below tracks
+# `dist/aui/` while leaving every other dist subtree out of git.
+dist/*
+!dist/aui
 storybook-static
 .DS_Store
 *.log
