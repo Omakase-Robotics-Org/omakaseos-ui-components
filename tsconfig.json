@@ -13,7 +13,14 @@
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@/lib/utils": ["./src/aui/lib/cn.ts"],
+      "@/components/ui/*": ["./src/aui/ui/*"],
+      "@/components/assistant-ui/*": ["./src/aui/*"],
+      "@/*": ["./src/aui/*"]
+    }
   },
-  "include": ["src", "demo", "vite.config.ts"]
+  "include": ["src", "spec", "demo", "vite.config.ts"]
 }

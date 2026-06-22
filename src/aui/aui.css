@@ -1,0 +1,148 @@
+/**
+ * @file v0.6 aui surface — Tailwind v4 entry + shadcn theme tokens.
+ *
+ * Two responsibilities, deliberately decoupled:
+ *
+ * 1. Tailwind v4's `@import` brings the engine in. The `@source`
+ *    directive scopes utility-class generation to **only** the files
+ *    under `src/aui/` so the rest of the library (CSS-Modules-based
+ *    v0.4 / v0.5) is unaffected — Tailwind never sees `MessageBubble.tsx`,
+ *    `Transcript.tsx`, or any non-aui file, so we don't bloat the
+ *    consumer bundle with unused utilities.
+ *
+ * 2. `@theme inline` declares the shadcn theme tokens the vendored
+ *    Thread / Composer / MarkdownText etc. target by name
+ *    (--background, --foreground, --primary, --muted, --border, …).
+ *    The values are inherited from the omks-robo brand SoT so the
+ *    surface lands in the dashboard palette rather than shadcn's
+ *    default neutral.
+ *
+ * Consumer integration (host app): import this file ONCE at app entry
+ * and the surface inherits these tokens. The library is published with
+ * sideEffects: ["star-star-slash-star-dot-css"], so a bare
+ * import "@omakase-robotics/ui-components/aui/aui.css" is the contract.
+ *
+ * Authoring note: the Tailwind v4 CSS reader currently chokes on stray
+ * backticks (and curly-brace template-literal patterns) inside CSS
+ * comments — it treats them as unterminated string sentinels. So this
+ * file's prose deliberately avoids backticks even where they would read
+ * naturally; we fall back to plain double quotes. The bug is not ours
+ * to fix here, but the workaround is cheap enough.
+ */
+@import "tailwindcss";
+
+/* Pull in the upstream assistant-ui markdown "dot" loading-indicator CSS.
+ * The vendored MarkdownText component (src/aui/markdown-text.tsx) used to
+ * import this from @assistant-ui/react-markdown/styles/dot.css inside JS;
+ * we removed the JS import to avoid resolving @assistant-ui/react-markdown
+ * twice at dev time (which surfaced as a second copy of React via a sibling
+ * node_modules tree). Pulling it in here via plain CSS @import keeps the
+ * stylesheet on the page without forcing the consumer's bundler through
+ * the JS module of @assistant-ui/react-markdown. */
+@import "@assistant-ui/react-markdown/styles/dot.css";
+
+/* Content discovery: Tailwind v4 auto-scans the package's source files
+ * adjacent to the CSS entry. We don't need a manual @source override,
+ * and we deliberately avoid one — using @source would surface the
+ * comment-parser bug described in the authoring note above. */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  --background: oklch(0.985 0.005 244);
+  --foreground: oklch(0.205 0.04 263);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.205 0.04 263);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.04 263);
+
+  --primary: oklch(0.546 0.214 263);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.962 0.018 250);
+  --secondary-foreground: oklch(0.205 0.04 263);
+
+  --muted: oklch(0.962 0.018 250);
+  --muted-foreground: oklch(0.55 0.04 257);
+
+  --accent: oklch(0.92 0.04 250);
+  --accent-foreground: oklch(0.205 0.04 263);
+
+  --destructive: oklch(0.564 0.244 27.5);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  --border: oklch(0.93 0.01 250);
+  --input: oklch(0.93 0.01 250);
+  --ring: oklch(0.7 0.04 263);
+}
+
+.dark {
+  --background: oklch(0.18 0.03 263);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.23 0.03 263);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.23 0.03 263);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.7 0.18 263);
+  --primary-foreground: oklch(0.205 0.04 263);
+  --secondary: oklch(0.28 0.04 263);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.28 0.04 263);
+  --muted-foreground: oklch(0.7 0.04 257);
+  --accent: oklch(0.32 0.06 263);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.62 0.24 27.5);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.55 0.04 263);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  @keyframes shimmer {
+    from { background-position: 0 0; }
+    to   { background-position: -200% 0; }
+  }
+}
+
+@layer base {
+  /* Border default — the surface assumes `border-border` is the default
+   * border color across all elements (matches the shadcn registry's
+   * `* { @apply border-border }`). Scoped to the surface roots so this
+   * class does not leak to host elements outside the aui subtree. */
+  .aui-root,
+  .aui-root * {
+    border-color: var(--color-border);
+  }
+}
