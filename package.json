@@ -1,6 +1,6 @@
 {
   "name": "@omakase-robotics/ui-components",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1–v0.2 status primitives, v0.3 form & layout primitives, v0.4 conversation-log primitives, v0.5 live-conversation primitives (Google Meet 1:n stage), v0.6 canonical assistant-ui primitives (Thread / Composer / MarkdownText / Tool / Reasoning / Voice — vendored from the shadcn-style assistant-ui registry, Tailwind v4 in-package).",
   "type": "module",
   "main": "src/index.ts",
