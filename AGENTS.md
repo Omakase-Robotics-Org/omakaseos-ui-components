@@ -65,10 +65,36 @@ own `components/` directory.
    different idioms for the same concept (e.g. `label=` vs `children`),
    the library accepts both. Add a vitest case for each.
 
-4. **Native elements only.** Form controls wrap a real
-   `<input>` / `<select>` / `<button>` / `<textarea>`. Synthetic ARIA
-   widgets are out of scope; we get a11y / IME / mobile pickers for
-   free from the platform.
+4. **Native elements only — with one bounded exception.** Form controls
+   wrap a real `<input>` / `<select>` / `<button>` / `<textarea>`.
+   Synthetic ARIA widgets are out of scope by default; we get a11y /
+   IME / mobile pickers for free from the platform.
+
+   **AsyncCombobox exception (v0.7).** A single primitive,
+   `src/AsyncCombobox.tsx`, is allowed to compose a native `<input
+   role="combobox">` with a synthetic `<ul role="listbox">` /
+   `<li role="option">` panel. This is the only way to express
+   "type-to-search a server-fetched candidate list" — `<select>` and
+   `<datalist>` both break at thousands of options
+   (see `omksos_web/reports/ui-components-async-combobox-layer/`).
+
+   To keep the exception bounded, the package guarantees:
+
+   - `role="listbox"` / `role="option"` / `role="combobox"` appear in
+     `src/AsyncCombobox.tsx` and **nowhere else** under `src/`
+     (excluding the aui surface, which is governed by its own
+     boundary).
+   - `spec/async-combobox-boundary.spec.ts` runs that grep on every
+     CI invocation; a future PR that opens a second synthetic widget
+     fails before review.
+   - The `<input>` half stays native, so IME, mobile soft keyboards,
+     and autocomplete behaviors keep working.
+
+   If you find yourself wanting to relax this exception (a second
+   synthetic widget, an ARIA dialog inside a primitive, etc.), read
+   the report first — the boundary was sized deliberately, and the
+   right answer is almost always "rebuild the request on top of
+   AsyncCombobox" or "let the consumer own that synthetic widget".
 
 5. **Overflow first.** Every container assumes a long unbroken token
    in its content. `min-width: 0` on flex children, `overflow-wrap:

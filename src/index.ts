@@ -11,6 +11,9 @@
  *            LiveCaption) — Google Meet 1:n in-progress stage view.
  *            Distinct from v0.4: a Transcript renders what was said; a
  *            ConversationStage renders who is in the room right now.
+ * v0.7:      AsyncCombobox — type-to-search single-choice picker over
+ *            an async candidate list. The library's only synthetic
+ *            ARIA widget; bounded by `spec/async-combobox-boundary.spec.ts`.
  *
  * L2 (BatteryBadge, ConnectionBadge, SignalBars) and L3 (RobotStatePanel,
  * ServicePanel) remain deferred until the contract is proven across both
@@ -59,6 +62,19 @@ export type { SwitchProps } from "./Switch";
 
 export { Slider } from "./Slider";
 export type { SliderProps } from "./Slider";
+
+// v0.7: synthetic ARIA combobox over an async candidate list. The
+// library's only synthetic widget — see the AsyncCombobox exception
+// in AGENTS.md and `spec/async-combobox-boundary.spec.ts` for the
+// scope. Use this when a `<select>` would break at the data scale
+// (server-fetched candidate lists with thousands of rows).
+export { AsyncCombobox } from "./AsyncCombobox";
+export type {
+  AsyncComboboxProps,
+  AsyncComboboxOption,
+  AsyncComboboxSearchFn,
+  AsyncComboboxSize,
+} from "./AsyncCombobox";
 
 // Conversation log primitives (v0.4) — past-tense transcript.
 // Use these when rendering a sequence of finalized utterances the user

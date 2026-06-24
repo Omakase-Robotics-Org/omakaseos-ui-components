@@ -1,0 +1,144 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The synthetic combobox visual mirrors `Input` so a row of mixed
+ * `<Input>` / `<AsyncCombobox>` controls reads as one family. */
+.input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  font-family: inherit;
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-control);
+  /* Reserve room for the chevron on the right. */
+  padding-right: 28px;
+  transition:
+    border-color var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast);
+}
+
+.wrap[data-size="sm"] .input {
+  height: var(--ds-control-height-sm);
+  padding-left: var(--ds-control-padding-x-sm);
+  font-size: var(--ds-font-size-label);
+}
+
+.wrap[data-size="md"] .input {
+  height: var(--ds-control-height-md);
+  padding-left: var(--ds-control-padding-x-md);
+}
+
+.wrap[data-size="lg"] .input {
+  height: var(--ds-control-height-lg);
+  padding-left: var(--ds-control-padding-x-lg);
+  font-size: var(--ds-font-size-body);
+}
+
+.input::placeholder {
+  color: var(--ds-text-muted);
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--ds-border-strong);
+}
+
+.input:focus-visible,
+.input:focus {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+
+.wrap[data-invalid="true"] .input {
+  border-color: var(--ds-tone-danger-fg);
+}
+
+.input:disabled {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+  background: var(--ds-surface-inset);
+}
+
+/* Chevron — same SVG as Select. */
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--ds-space-md);
+  width: 10px;
+  height: 6px;
+  pointer-events: none;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+  transform: translateY(-50%);
+  color: var(--ds-text-muted);
+}
+
+/* Dropdown panel. Absolutely positioned under the input; the parent
+ * needs no special positioning because `.wrap` is `position: relative`. */
+.panel {
+  position: absolute;
+  top: calc(100% + var(--ds-space-2xs));
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  box-shadow: var(--ds-shadow-overlay);
+  max-height: 280px;
+  overflow-y: auto;
+  /* Hidden state keeps the element in DOM so screen readers can
+   * read aria-controls reliably. */
+  display: none;
+}
+
+.wrap[data-open="true"] .panel {
+  display: block;
+}
+
+.listbox {
+  list-style: none;
+  margin: 0;
+  padding: var(--ds-space-2xs) 0;
+}
+
+.option {
+  display: block;
+  padding: var(--ds-space-2xs) var(--ds-space-md);
+  cursor: pointer;
+  color: var(--ds-text);
+  /* Long labels truncate so a single row stays one line tall. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.option[data-active="true"] {
+  background: var(--ds-surface-hover);
+}
+
+.option[aria-selected="true"] {
+  font-weight: 600;
+}
+
+.option[aria-selected="true"][data-active="true"] {
+  background: var(--ds-surface-active);
+}
+
+.empty,
+.loading {
+  padding: var(--ds-space-2xs) var(--ds-space-md);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-size-label);
+}
