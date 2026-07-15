@@ -484,6 +484,12 @@ export function AsyncCombobox(props: AsyncComboboxProps) {
               role="option"
               aria-selected={option.value === value}
               data-active={index === activeIndex ? "true" : undefined}
+              // Native tooltip on hover so the full label survives
+              // even if a future consumer squeezes the panel wide
+              // enough that wrapping still cannot fit the text.
+              // Defense-in-depth: the CSS wrap is the primary fix,
+              // this attribute is the visible fallback.
+              title={option.label}
               onMouseDown={onOptionMouseDown(index)}
               onMouseEnter={() => setActiveIndex(index)}
             >

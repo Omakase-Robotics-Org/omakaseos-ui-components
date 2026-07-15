@@ -270,4 +270,54 @@ describe("AsyncCombobox", () => {
       .filter((el) => el.getAttribute("aria-selected") === "true");
     expect(selected.map((el) => el.textContent)).toEqual(["Beacon"]);
   });
+
+  it("keeps long common-prefix labels individually identifiable in the DOM", async () => {
+    // Regression pin for the "acme-bulk-agent-disp…" defect: the
+    // previous CSS set `white-space: nowrap; overflow: hidden;
+    // text-overflow: ellipsis` on the option, so 10 candidates with
+    // the same long prefix rendered as 10 visually-identical
+    // ellipsised rows. jsdom cannot observe layout truncation, but it
+    // CAN confirm that (a) each option carries its FULL label text in
+    // the DOM (so a wrap-based renderer has the data to paint it),
+    // and (b) each option carries a native `title` attribute matching
+    // its label as a hover-time fallback. Together those pin the two
+    // affordances the fix relies on.
+    const LONG_PREFIX = "acme-bulk-agent-dispatcher-";
+    const LONG_LABELS: readonly AsyncComboboxOption[] = [
+      { value: "a", label: `${LONG_PREFIX}alpha` },
+      { value: "b", label: `${LONG_PREFIX}bravo` },
+      { value: "c", label: `${LONG_PREFIX}charlie` },
+    ];
+    const searchFn = vi.fn(async () => LONG_LABELS);
+    render(
+      <AsyncCombobox
+        value=""
+        selectedLabel=""
+        onChange={vi.fn()}
+        searchFn={searchFn}
+        placeholder="Search…"
+        anyOptionLabel="Any"
+        loadingLabel="Loading…"
+        noResultsLabel="No matches"
+      />,
+    );
+    const input = screen.getByRole("combobox");
+    fireEvent.focus(input);
+    await vi.advanceTimersByTimeAsync(300);
+    await vi.runAllTimersAsync();
+    // Filter out the synthetic "Any" clear row — assert on the fetched rows only.
+    const rows = screen.getAllByRole("option").filter((el) => el.textContent !== "Any");
+    expect(rows).toHaveLength(LONG_LABELS.length);
+    // Each option carries its full label as textContent (no ellipsis
+    // baked into the string) AND as a native title attribute.
+    for (const [i, option] of rows.entries()) {
+      const expected = LONG_LABELS[i]!.label;
+      expect(option.textContent).toBe(expected);
+      expect(option.getAttribute("title")).toBe(expected);
+    }
+    // The set of textContents is unique — no two options are
+    // rendered as the same string.
+    const seen = new Set(rows.map((el) => el.textContent));
+    expect(seen.size).toBe(rows.length);
+  });
 });

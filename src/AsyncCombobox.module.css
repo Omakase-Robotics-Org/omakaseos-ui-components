@@ -118,10 +118,20 @@
   padding: var(--ds-space-2xs) var(--ds-space-md);
   cursor: pointer;
   color: var(--ds-text);
-  /* Long labels truncate so a single row stays one line tall. */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Wrap long labels rather than truncate with an ellipsis. The
+   * panel width is bound to the input's width (`.panel { left: 0;
+   * right: 0 }` inherits from `.wrap { width: 100% }`), so a
+   * narrow container (FilterBar column, tight Dialog form) leaves
+   * the panel narrow too. A single-line ellipsis in that state
+   * silently hides the disambiguating suffix of every option that
+   * shares a long common prefix — the whole listbox reads as N
+   * copies of the same string, breaking the "pick which one" job
+   * the widget exists to do. `word-break: break-word` folds a
+   * label to two-or-more lines instead. Row height goes variable
+   * but the panel's max-height (280px, scroll) is unchanged, so
+   * the visual budget stays bounded. */
+  white-space: normal;
+  word-break: break-word;
 }
 
 .option[data-active="true"] {
