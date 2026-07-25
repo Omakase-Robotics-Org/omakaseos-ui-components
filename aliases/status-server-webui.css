@@ -16,8 +16,10 @@
   --ds-surface-hover: var(--bg-hover);
   --ds-surface-active: var(--bg-hover);
   --ds-border: var(--border);
+  --ds-border-subtle: var(--border-subtle);
   --ds-border-strong: var(--text-secondary);
   --ds-text: var(--text-primary);
+  --ds-text-secondary: var(--text-secondary);
   --ds-text-muted: var(--text-muted);
   --ds-text-disabled: var(--text-muted);
   --ds-text-on-accent: var(--bg-primary);
@@ -45,9 +47,14 @@
   /* Radii */
   --ds-radius-control: var(--radius-sm);
   --ds-radius-card: var(--radius-md);
+  --ds-radius-lg: var(--radius-lg);
   --ds-radius-pill: 100px;
 
   --ds-shadow-card: var(--shadow-card);
+  /* This host's overlay shadow is its toast shadow — the only floating surface it
+     has. Mapping it keeps a component that reads --ds-shadow-overlay looking the
+     way this host's own toast does. */
+  --ds-shadow-overlay: var(--shadow-toast);
   --ds-font-mono: var(--font-mono);
 
   /* Chat bubbles (v0.4) — operator-facing, dark theme. The "running" green

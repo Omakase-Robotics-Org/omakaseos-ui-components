@@ -18,8 +18,17 @@
   --ds-surface-hover: #ececec;
   --ds-surface-active: #e0e0e0;
   --ds-border: #d4d4d4;
+  /* Weaker than --ds-border: separators INSIDE a surface, where a full border
+     would read as a second edge. The robot console's panels rely on this level;
+     without it they had to keep a private token. */
+  --ds-border-subtle: #e8e8e8;
   --ds-border-strong: #9ca3af;
   --ds-text: #111111;
+  /* Between --ds-text and --ds-text-muted: supporting copy that is still primary
+     content (a card's subtitle, a fact's value), as opposed to --ds-text-muted's
+     annotations and --ds-text-disabled's inert controls. Consumers that only need
+     two levels can leave it alone; it falls back to a sensible mid grey. */
+  --ds-text-secondary: #404040;
   --ds-text-muted: #6b7280;
   --ds-text-disabled: #9ca3af;
   --ds-text-on-accent: #ffffff;
@@ -69,6 +78,8 @@
   /* Radii — purpose-bound. */
   --ds-radius-control: 6px;
   --ds-radius-card: 8px;
+  /* Larger than a card: dialogs and the map viewer's framed surfaces. */
+  --ds-radius-lg: 12px;
   --ds-radius-pill: 999px;
 
   /* Shadow */

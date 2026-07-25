@@ -20,6 +20,11 @@
   --ds-border: var(--color-border);
   --ds-border-strong: var(--color-text-subtle, var(--color-text-muted));
   --ds-text: var(--color-text);
+  /* The brand SoT has three text levels (text / muted / subtle) and the library
+     now has four; secondary and muted therefore both resolve to the brand's
+     muted. That is deliberate: inventing a fourth brand level here would put a
+     colour decision in an alias file instead of the brand SoT. */
+  --ds-text-secondary: var(--color-text-muted);
   --ds-text-muted: var(--color-text-muted);
   --ds-text-disabled: var(--color-text-subtle, var(--color-text-muted));
   --ds-text-on-accent: var(--color-on-primary, #ffffff);
@@ -45,12 +50,19 @@
    * ring reads as a halo, not a solid stroke. */
   --ds-focus-ring-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
 
-  /* Radii — defer to the brand SoT for the card radius, library fallback
-   * for control radius (the SoT does not yet own a control radius token). */
+  /* Radii — the dashboard owns card and control radii in its own
+   * modules/styles/global.css; --ds-radius-lg has no counterpart there, so the
+   * library's default applies (a deliberate non-mapping, like every other level
+   * the host does not own). */
   --ds-radius-card: var(--radius-card);
+  --ds-radius-control: var(--radius-control);
   --ds-radius-pill: 999px;
 
   --ds-shadow-card: var(--shadow-card);
+  /* The dashboard's elevation scale for anchored floating layers. A library
+     component that reads --ds-shadow-overlay (a toast, a popup) then floats the
+     way the dashboard's own overlays do. */
+  --ds-shadow-overlay: var(--shadow-overlay);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Chat bubbles (v0.4) — the dashboard already used --color-primary-soft

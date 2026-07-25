@@ -1,7 +1,7 @@
 {
   "name": "@omakase-robotics/ui-components",
-  "version": "0.7.1",
-  "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1–v0.2 status primitives, v0.3 form & layout primitives, v0.4 conversation-log primitives, v0.5 live-conversation primitives (Google Meet 1:n stage), v0.6 canonical assistant-ui primitives (Thread / Composer / MarkdownText / Tool / Reasoning / Voice — vendored from the shadcn-style assistant-ui registry, Tailwind v4 in-package), v0.7 AsyncCombobox (type-to-search over an async candidate list — the library's only synthetic ARIA widget, bounded by an automated boundary spec).",
+  "version": "0.8.0",
+  "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1\u2013v0.2 status primitives, v0.3 form & layout primitives, v0.4 conversation-log primitives, v0.5 live-conversation primitives (Google Meet 1:n stage), v0.6 canonical assistant-ui primitives (Thread / Composer / MarkdownText / Tool / Reasoning / Voice \u2014 vendored from the shadcn-style assistant-ui registry, Tailwind v4 in-package), v0.7 AsyncCombobox (type-to-search over an async candidate list \u2014 the library's only synthetic ARIA widget, bounded by an automated boundary spec), v0.8 three vocabulary levels the shared robot console needed (--ds-text-secondary between text and muted, --ds-border-subtle below border, --ds-radius-lg above card) so a consumer no longer has to keep a private token set.",
   "type": "module",
   "main": "src/index.ts",
   "module": "src/index.ts",
