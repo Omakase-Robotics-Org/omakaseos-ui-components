@@ -1,0 +1,149 @@
+/**
+ * @file CSS Module for tool-group.tsx (Tailwind -> CSS Modules migration).
+ * Shape mirrors reasoning.module.css / tool-fallback.module.css: see
+ * reasoning.module.css's file header for the shared conventions (naming,
+ * literal-value transcription, dead animate-in family) — not repeated
+ * here.
+ *
+ * `toolGroupVariants` (cva) returns CSS Module class names for the root's
+ * OWN class list (base + per-variant extra class), same pattern as
+ * reasoning.module.css. Unlike ReasoningRoot, ToolGroupRoot always
+ * renders a `data-variant` attribute (`data-variant={variant ?? "outline"}`
+ * — see tool-group.tsx), so descendant styling keyed off
+ * `.root[data-variant="..."]` is safe for ALL three variants here
+ * (including the default "outline"), not just the non-default ones.
+ */
+
+.root {
+  width: 100%;
+}
+
+.rootOutline {
+  border-radius: var(--radius);
+  border-width: 1px;
+  border-style: solid;
+  padding-block: 0.75rem;
+}
+
+.rootMuted {
+  border-radius: var(--radius);
+  border-width: 1px;
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
+  background-color: color-mix(in oklab, var(--muted) 30%, transparent);
+  padding-block: 0.75rem;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via,
+    --tw-gradient-to;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.root[data-variant="ghost"] .trigger {
+  color: var(--muted-foreground);
+  padding-block: 0.25rem;
+}
+
+@media (hover: hover) {
+  .root[data-variant="ghost"] .trigger:hover {
+    color: var(--foreground);
+  }
+}
+
+.root[data-variant="outline"] .trigger,
+.root[data-variant="muted"] .trigger {
+  width: 100%;
+  padding-inline: 1rem;
+}
+
+.triggerLoader {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  animation-name: global(spin);
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.labelWrapper {
+  position: relative;
+  display: inline-block;
+  text-align: start;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.root[data-variant="ghost"] .labelWrapper {
+  font-weight: 400;
+}
+
+.root[data-variant="outline"] .labelWrapper,
+.root[data-variant="muted"] .labelWrapper {
+  flex-grow: 1;
+}
+
+/* Shimmer overlay: dead in the current Tailwind build (see
+ * reasoning.module.css header) — only positioning utilities are real. */
+.shimmer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  rotate: 0deg;
+  transition-property: transform, translate, scale, rotate;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.trigger[data-state="closed"] .chevron {
+  rotate: calc(90deg * -1);
+}
+
+.content {
+  position: relative;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+  outline-style: none;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.content[data-state="closed"] {
+  pointer-events: none;
+}
+
+.contentInner {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.root[data-variant="ghost"] .contentInner {
+  margin-top: 0.25rem;
+  gap: 0.25rem;
+}
+
+.root[data-variant="outline"] .contentInner,
+.root[data-variant="muted"] .contentInner {
+  margin-top: 0.75rem;
+  border-top-width: 1px;
+  border-top-style: solid;
+  padding-inline: 1rem;
+  padding-top: 0.75rem;
+}

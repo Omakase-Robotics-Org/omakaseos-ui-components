@@ -1,41 +1,39 @@
 /**
- * @file Boundary contract — Tailwind v4 lives ONLY inside `src/aui/`.
+ * @file Boundary contract — Tailwind v4 lives NOWHERE in this library.
  *
- * The library shipped four kinds of stylesheets historically:
- *   - `*.module.css` for v0.1-v0.5 primitives (Button, Card, Toolbar,
- *     MessageBubble, Transcript, ConversationStage, ...). Pure CSS Modules
- *     bound to `--ds-*` design tokens. No Tailwind, no shadcn theme tokens.
- *   - `aliases/*.css` mapping consumer brand tokens onto `--ds-*`.
- *   - `tokens.css` with the `--ds-*` defaults.
- *   - **NEW in v0.6**: `src/aui/aui.css` — Tailwind v4 + shadcn theme
- *     tokens, scoped under `.aui-root`. Required because the vendored
- *     shadcn-style assistant-ui registry components are authored against
- *     Tailwind utility classes; we don't re-author them in CSS Modules.
+ * History: `src/aui/` (the vendored shadcn-style assistant-ui registry —
+ * `Thread` / `Composer` / `MarkdownText` / `Tool` / `Reasoning` / `Voice`)
+ * used to be the library's ONE bounded Tailwind exception — every other
+ * surface (`Button`, `Card`, `MessageBubble`, `ConversationStage`, ...)
+ * was always plain CSS Modules bound to `--ds-*` tokens, with no
+ * Tailwind, no shadcn theme tokens. `src/aui/aui.css` brought in
+ * Tailwind v4 + a `.aui-root`-scoped shadcn theme + preflight because the
+ * vendored components were authored against Tailwind utility classes and
+ * we shipped them (`dist/aui/`) as pre-built JS+CSS specifically so that
+ * exception could stay LOCAL to this package's own build pipeline.
  *
- * The Tailwind exception is BOUNDED. Anywhere else in the library
- * (Button, Card, ConversationStage, MessageBubble, ...) using a
- * Tailwind utility class or pulling Tailwind into a non-aui stylesheet
- * is a contract break. This spec catches that drift on every CI run.
+ * The v0.9 migration (see `omksos_web/reports/aui-css-modules/README.md`)
+ * removed that exception: every `src/aui/` component now styles itself
+ * with a co-located `*.module.css` file, `aui.css` is plain CSS (shadcn
+ * theme tokens as custom properties + the `.aui-root`-scoped preflight,
+ * copied to plain selectors), and `cn()` is a bare clsx composer (no
+ * `tailwind-merge`, nothing left to merge once class names are opaque
+ * CSS-Module hashes instead of overlapping utility atoms). This spec's
+ * premise inverted along with it: it now asserts Tailwind is NOT present
+ * ANYWHERE in the package — no live `@import "tailwindcss..."`, no
+ * `tailwind-merge` import, no Tailwind package in `package.json`, no
+ * Tailwind-only class syntax in any component. A regression here
+ * (someone reaching for a Tailwind utility class again, e.g. because
+ * it's the fastest way to prototype a new aui component) is exactly the
+ * drift this spec exists to catch — the whole point of the migration was
+ * that `source/service` and `status_server_webui` consume this library
+ * as plain CSS Modules with zero Tailwind toolchain coupling, and that
+ * must stay true from here on.
  *
- * Rationale (recorded so future maintainers don't relax the rules
- * without realizing what they cost):
- *   - The legacy v0.4/v0.5 surfaces ship as TS source. Their consumers
- *     (`source/packages/web`, status_server_webui) DO NOT have a
- *     Tailwind toolchain in their Vite stack — they consume CSS Modules
- *     directly. If a v0.4 component starts emitting Tailwind class
- *     names, those classes never resolve at the consumer (no Tailwind
- *     content scan), and the component renders unstyled.
- *   - The aui surface ships as **pre-built JS+CSS** under `dist/aui/`
- *     precisely because Tailwind needs an authoring pipeline, and we
- *     keep that pipeline LOCAL to the package. Pulling Tailwind back
- *     into the v0.4 sources would re-introduce the toolchain coupling
- *     the dist/aui split was designed to remove.
- *   - The aui preflight is scoped under `.aui-root`
- *     (see omksos_web/reports/ui-components-aui-tailwind-preflight-scope/).
- *     If a non-aui component starts mounting under `.aui-root`, or if
- *     Tailwind class names start leaking out of `src/aui/`, the
- *     consumer's body web app surfaces (dialog, button, headings) get
- *     clobbered by the reset. We pin both directions here.
+ * Historical mentions of Tailwind in code comments (explaining WHY a
+ * class or pattern was translated the way it was, or documenting the
+ * migration itself) are fine and expected — this spec only fails on
+ * LIVE imports, dependencies, and class-composition syntax.
  */
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -43,13 +41,15 @@ import { resolve, relative, sep } from "node:path";
 
 const root = resolve(__dirname, "..");
 const srcDir = resolve(root, "src");
-const auiDir = resolve(root, "src/aui");
-const distAuiDir = resolve(root, "dist/aui");
+const demoDir = resolve(root, "demo");
+const aliasesDir = resolve(root, "aliases");
 
 /** Walk a directory recursively and yield files. Skips hidden + symlinks. */
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
-    if (name.startsWith(".")) {continue;}
+    if (name.startsWith(".")) {
+      continue;
+    }
     const p = resolve(dir, name);
     const s = statSync(p);
     if (s.isDirectory()) {
@@ -60,30 +60,32 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
-/** True if the absolute path lives under `src/aui/`. */
-function isInsideAui(absPath: string): boolean {
-  const r = relative(auiDir, absPath);
-  // Outside if relative starts with `..` or is absolute.
-  return r.length > 0 && !r.startsWith("..") && !r.startsWith(sep);
-}
-
-describe("aui Tailwind boundary contract", () => {
-  /** All TS / TSX / CSS files under `src/`. */
-  const allSources = Array.from(walk(srcDir)).filter((p) =>
+describe("aui Tailwind boundary contract (post-migration: Tailwind lives NOWHERE)", () => {
+  const srcSources = Array.from(walk(srcDir)).filter((p) =>
     /\.(ts|tsx|css)$/.test(p),
   );
-  const nonAuiSources = allSources.filter((p) => !isInsideAui(p));
-  const auiSources = allSources.filter(isInsideAui);
+  const demoSources = Array.from(walk(demoDir))
+    .filter((p) => {
+      const rel = relative(demoDir, p);
+      const parts = rel.split(sep);
+      return (
+        /\.(ts|tsx|css|html)$/.test(p) &&
+        !parts.includes("node_modules") &&
+        !parts.includes("dist")
+      );
+    });
+  const aliasSources = Array.from(walk(aliasesDir)).filter((p) =>
+    /\.css$/.test(p),
+  );
+  const allSources = [...srcSources, ...demoSources, ...aliasSources];
 
-  it("Tailwind imports stay inside src/aui/ (no @import \"tailwindcss\" / @import \"tailwindcss/...\" outside)", () => {
+  it('no CSS file imports Tailwind (no @import "tailwindcss..." / @tailwind directives anywhere)', () => {
     const offenders: string[] = [];
-    for (const f of nonAuiSources) {
-      if (!f.endsWith(".css")) {continue;}
+    for (const f of allSources) {
+      if (!f.endsWith(".css")) {
+        continue;
+      }
       const content = readFileSync(f, "utf-8");
-      // Match the Tailwind v4 catch-all import OR any layered subimport.
-      // We deliberately match BOTH the bare and the layered forms here
-      // so that a future maintainer pulling in only `theme` or only
-      // `utilities` from outside `src/aui/` still trips this rule.
       if (
         /@import\s+["']tailwindcss(\/[A-Za-z0-9_.\-]+)?["']/.test(content) ||
         /@tailwind\s+(base|components|utilities)/.test(content)
@@ -93,15 +95,11 @@ describe("aui Tailwind boundary contract", () => {
     }
     expect(offenders, {
       message:
-        "Non-aui CSS files imported Tailwind. Move the file under src/aui/, or rewrite it as CSS Modules + --ds-* tokens.",
+        "A CSS file imports Tailwind. The v0.9 migration removed Tailwind from this package entirely — rewrite the file as plain CSS / CSS Modules + tokens instead of reintroducing the toolchain.",
     } as never).toEqual([]);
   });
 
-  it("Tailwind devDependencies are referenced ONLY by build scripts and aui sources", () => {
-    // package.json references tailwindcss / @tailwindcss/cli for the
-    // `build:aui:css` script — that's the canonical, single point of
-    // contact. Nothing under `src/` outside `src/aui/` should `import`
-    // (or `require`) any Tailwind package.
+  it("no TS/TSX file imports a Tailwind package", () => {
     const tailwindNamePatterns = [
       /from\s+["']tailwindcss(\/[^"']*)?["']/,
       /from\s+["']@tailwindcss\/[^"']+["']/,
@@ -109,8 +107,10 @@ describe("aui Tailwind boundary contract", () => {
       /require\s*\(\s*["']@tailwindcss\/[^"']+["']\s*\)/,
     ];
     const offenders: string[] = [];
-    for (const f of nonAuiSources) {
-      if (f.endsWith(".css")) {continue;}
+    for (const f of allSources) {
+      if (f.endsWith(".css")) {
+        continue;
+      }
       const content = readFileSync(f, "utf-8");
       if (tailwindNamePatterns.some((re) => re.test(content))) {
         offenders.push(relative(root, f));
@@ -118,86 +118,124 @@ describe("aui Tailwind boundary contract", () => {
     }
     expect(offenders, {
       message:
-        "Non-aui TypeScript files imported Tailwind. The aui surface is the ONLY in-package consumer of Tailwind.",
+        "A TypeScript file imported a Tailwind package. Tailwind has no authoring pipeline in this package anymore — nothing should import it.",
     } as never).toEqual([]);
   });
 
-  it("Tailwind-utility class composition (cn / clsx / twMerge / class-variance-authority) stays inside src/aui/", () => {
-    // The legacy v0.4/v0.5 components style themselves through
-    // `*.module.css` + `--ds-*` tokens. They have no business reaching
-    // for `cn`, `clsx`, `tailwind-merge`, or `cva` — those exist to
-    // compose Tailwind utility classes, which by contract live only
-    // under src/aui/. A non-aui import of any of these is a smell
-    // that someone is trying to write Tailwind outside the boundary.
-    const utilImportPatterns = [
-      /from\s+["']clsx["']/,
-      /from\s+["']tailwind-merge["']/,
-      /from\s+["']class-variance-authority["']/,
-      // The aui surface re-exports `cn` from the library, but that
-      // re-export is ONLY meant for consumers (and IS imported via the
-      // /aui sub-entry, not from inside the library). A non-aui file
-      // pulling `cn` from `@omakase-robotics/ui-components/aui` would
-      // also be wrong.
-      /from\s+["']@omakase-robotics\/ui-components\/aui(\/[^"']*)?["']/,
-    ];
+  it("no source imports tailwind-merge (cn() is a plain clsx composer now)", () => {
     const offenders: string[] = [];
-    for (const f of nonAuiSources) {
-      if (f.endsWith(".css")) {continue;}
+    for (const f of allSources) {
+      if (f.endsWith(".css")) {
+        continue;
+      }
       const content = readFileSync(f, "utf-8");
-      if (utilImportPatterns.some((re) => re.test(content))) {
+      if (/from\s+["']tailwind-merge["']/.test(content)) {
         offenders.push(relative(root, f));
       }
     }
     expect(offenders, {
       message:
-        "Non-aui sources reached for Tailwind-class composition utilities. Style legacy components with *.module.css + --ds-* tokens.",
+        "A source file imports tailwind-merge. src/aui/lib/cn.ts is a plain clsx composer post-migration — there is nothing left for tailwind-merge to resolve (CSS-Module class names don't have overlapping Tailwind-utility semantics), and the package no longer depends on it.",
     } as never).toEqual([]);
   });
 
-  it("Tailwind authoring is OPT-IN: at least one aui file actually uses it", () => {
-    // Belt-and-suspenders: if someone deletes the aui Tailwind surface
-    // entirely, the four assertions above still pass trivially. This
-    // assertion makes the boundary spec FAIL when the boundary is
-    // empty — a sign the boundary stopped being a real contract.
-    const auiUsesTailwind = auiSources.some((f) => {
-      if (!f.endsWith(".css")) {return false;}
-      const content = readFileSync(f, "utf-8");
-      return /@import\s+["']tailwindcss\/[a-z]+\.css["']/.test(content);
-    });
-    expect(auiUsesTailwind, {
+  it("package.json carries no Tailwind package (dependency, devDependency, or peer)", () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(root, "package.json"), "utf-8"),
+    ) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+      peerDependencies?: Record<string, string>;
+      peerDependenciesMeta?: Record<string, unknown>;
+    };
+    const allDeps = {
+      ...pkg.dependencies,
+      ...pkg.devDependencies,
+      ...pkg.peerDependencies,
+      ...pkg.peerDependenciesMeta,
+    };
+    const offenders = Object.keys(allDeps).filter(
+      (name) =>
+        name === "tailwindcss" ||
+        name === "tailwind-merge" ||
+        name.startsWith("@tailwindcss/") ||
+        name === "tw-animate-css" ||
+        name === "tailwindcss-animate",
+    );
+    expect(offenders, {
       message:
-        "src/aui/ is supposed to be the Tailwind surface, but no aui CSS imports tailwindcss layered entries. Did the boundary collapse?",
-    } as never).toBe(true);
+        "package.json still declares a Tailwind-family package. None should remain after the v0.9 migration.",
+    } as never).toEqual([]);
   });
 
-  it("the surface root mounts an `.aui-root` className (so the scoped preflight matches)", () => {
-    // The preflight spec
-    // (`spec/aui-preflight-scope.spec.ts`) pins that `aui.css` only
-    // resets elements under `.aui-root *`. That contract has a second
-    // half: the Thread shell MUST mount with `aui-root` on its root, or
-    // the preflight never reaches its consumers. Pin it.
-    const thread = resolve(auiDir, "thread.tsx");
+  it("no aui component className uses Tailwind-only class syntax (variant prefixes / bracket selectors)", () => {
+    // A cheap heuristic rather than a full Tailwind-class dictionary:
+    // Tailwind's variant-prefix syntax (`hover:`, `focus-visible:`,
+    // `dark:`, `data-[state=open]:`) and arbitrary-selector syntax
+    // (`[&_svg]:`, `[&>button]:`) only ever mean anything to a Tailwind
+    // content scanner — plain CSS Modules class names never contain a
+    // bare `:` variant prefix or a `[...]:` bracket selector inside a
+    // className string. Flag any occurrence in a className attribute.
+    const suspiciousTailwindSyntax =
+      /(?:^|[\s"'`{(])(?:hover|focus|focus-within|focus-visible|dark|disabled|active|aria-invalid|aria-disabled):[a-z]|data-\[[a-z-]+[=~^$*|]?=|\[&[_>[:][^\]]*\]:/;
+    const offenders: string[] = [];
+    for (const f of srcSources) {
+      if (!f.endsWith(".tsx")) {
+        continue;
+      }
+      const content = readFileSync(f, "utf-8");
+      const classNameMatches = content.match(/className=\{[^;]*?\}|className="[^"]*"/g) ?? [];
+      for (const snippet of classNameMatches) {
+        if (suspiciousTailwindSyntax.test(snippet)) {
+          offenders.push(`${relative(root, f)}: ${snippet.slice(0, 100)}`);
+        }
+      }
+    }
+    expect(offenders, {
+      message:
+        "Found Tailwind-only class syntax (variant prefixes / bracket selectors) in a className. Style with a co-located *.module.css file instead.",
+    } as never).toEqual([]);
+  });
+
+  it("the surface root still mounts an `.aui-root` className (so the scoped preflight matches)", () => {
+    // The preflight spec (`spec/aui-preflight-scope.spec.ts`) pins that
+    // `aui.css` only resets elements under `.aui-root *`. That contract
+    // has a second half: the Thread shell MUST mount with `aui-root` on
+    // its root, or the preflight never reaches its consumers. Pin it —
+    // post-migration, thread.tsx composes this literal string as one
+    // argument to `cn(...)` rather than as the whole className, so match
+    // any quoted string literal containing both tokens (in either order)
+    // rather than requiring the className to be a single literal.
+    const thread = resolve(srcDir, "aui/thread.tsx");
     const content = readFileSync(thread, "utf-8");
-    expect(
-      /className\s*=\s*["'`][^"'`]*\baui-root\b[^"'`]*["'`]/.test(content),
-      {
-        message:
-          "src/aui/thread.tsx no longer mounts the surface under `.aui-root`. The scoped preflight will not match — restore the className or update both this spec AND the preflight scope rules.",
-      } as never,
-    ).toBe(true);
+    const bothOrders =
+      /["'`][^"'`]*\baui-root\b[^"'`]*\baui-thread-root\b[^"'`]*["'`]/.test(
+        content,
+      ) ||
+      /["'`][^"'`]*\baui-thread-root\b[^"'`]*\baui-root\b[^"'`]*["'`]/.test(
+        content,
+      );
+    expect(bothOrders, {
+      message:
+        "src/aui/thread.tsx no longer mounts the surface under `.aui-root`. The scoped preflight will not match — restore the className or update both this spec AND the preflight scope rules.",
+    } as never).toBe(true);
   });
 
   it("the published aui CSS bundle exists and ships the scoped preflight (smoke)", () => {
     // The exports map declares `./aui/aui.css` → `dist/aui/aui.css`.
     // That file is committed (`.gitignore` negates `dist/aui/`), so a
-    // bare clone of a release tag MUST ship it. If a refactor moves
-    // the build output elsewhere without updating exports, consumers
-    // see "Cannot find module" (the failure mode parent PoC #29 hit).
-    // Pin the file presence + the scoped reset shape it carries.
+    // bare clone of a release tag MUST ship it. If a refactor moves the
+    // build output elsewhere without updating exports, consumers see
+    // "Cannot find module" (the failure mode parent PoC #29 hit). Pin
+    // the file presence + the scoped reset shape it carries — this no
+    // longer depends on Tailwind at all, just on `src/aui/aui.css` being
+    // built into `dist/aui/aui.css` by `bun run build:aui` (plain Vite,
+    // see vite.aui.config.ts).
+    const distAuiDir = resolve(root, "dist/aui");
     const css = readFileSync(resolve(distAuiDir, "aui.css"), "utf-8");
     expect(/\.aui-root[^{]*\{[^}]*box-sizing\s*:\s*border-box/.test(css), {
       message:
-        "dist/aui/aui.css does not carry a `.aui-root`-scoped preflight. The boundary fix from v0.6.1 was lost.",
+        "dist/aui/aui.css does not carry a `.aui-root`-scoped preflight. Run `bun run build:aui` and check src/aui/aui.css.",
     } as never).toBe(true);
   });
 });

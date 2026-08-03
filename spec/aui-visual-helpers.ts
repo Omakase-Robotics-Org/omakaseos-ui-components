@@ -1,7 +1,7 @@
 /**
  * @file Shared helpers for `aui-visual.e2e.spec.ts` — the Phase 1
  * visual-regression baseline for the aui -> CSS Modules migration
- * (see `omksos_web/reports/aui-css-modules-visual-baseline/README.md`).
+ * (see `omksos_web/reports/aui-css-modules/README.md`).
  *
  * Two capture kinds per scene:
  *   - Screenshots (`toHaveScreenshot`, driven directly in the spec).

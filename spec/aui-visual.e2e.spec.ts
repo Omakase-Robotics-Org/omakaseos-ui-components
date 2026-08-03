@@ -1,7 +1,7 @@
 /**
  * @file Phase 1 visual-regression baseline for the `src/aui/` surface
  * (aui -> CSS Modules migration; see
- * `omksos_web/reports/aui-css-modules-visual-baseline/README.md`).
+ * `omksos_web/reports/aui-css-modules/README.md`).
  *
  * This spec does NOT test behavior in the usual sense — it captures the
  * CURRENT Tailwind implementation's rendered output (screenshots +

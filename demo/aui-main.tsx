@@ -1,23 +1,27 @@
 /**
- * @file Phase 1 visual-regression demo page for the `src/aui/` surface.
+ * @file Visual-regression demo page for the `src/aui/` surface.
  *
- * This is the safety net for the upcoming Tailwind v4 -> CSS Modules
+ * This page was built as the safety net for the Tailwind v4 -> CSS Modules
  * migration of `src/aui/`: every scene below mounts real (unmodified)
  * aui components against fixed, network-free fixtures so
  * `spec/aui-visual.e2e.spec.ts` can capture screenshot + computed-style
- * baselines against the CURRENT Tailwind implementation. Phase 2 re-runs
- * the same spec against the migrated CSS Modules implementation and diffs
- * against these committed baselines.
+ * baselines. Phase 1 captured those baselines against the Tailwind
+ * implementation; Phase 2 migrated `src/aui/` to plain CSS Modules and
+ * re-ran the same spec against the new implementation, diffing against
+ * the committed baselines byte-for-byte. This page keeps running the same
+ * role afterward — any future `src/aui/` change re-proves itself against
+ * the same committed baselines.
  *
  * Deliberately a SEPARATE page from `demo/main.tsx` / `demo/index.html`:
- * that harness renders the v0.1-v0.5 `--ds-*` token primitives and never
- * loads Tailwind. This page is the only place in the demo app that imports
- * `src/aui/aui.css` (Tailwind + the shadcn theme + the `.aui-root`-scoped
- * preflight), matching how a real consumer imports it exactly once at app
- * entry (see `source/service/packages/web/src/apps/customer/main.tsx`).
+ * that harness renders the v0.1-v0.5 `--ds-*` token primitives and has
+ * nothing to do with the aui surface. This page is the only place in the
+ * demo app that imports `src/aui/aui.css` (shadcn theme tokens + the
+ * `.aui-root`-scoped preflight), matching how a real consumer imports it
+ * exactly once at app entry (see
+ * `source/service/packages/web/src/apps/customer/main.tsx`).
  *
  * Determinism rules followed throughout this file (see
- * `omksos_web/reports/aui-css-modules-visual-baseline/README.md` for the
+ * `omksos_web/reports/aui-css-modules/README.md` for the
  * full rationale):
  *   - No network calls, no `setTimeout`/`setInterval`, no `Math.random()`.
  *   - Every `<Thread />` is driven by `useExternalStoreRuntime` (NOT

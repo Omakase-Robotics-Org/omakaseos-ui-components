@@ -1,0 +1,276 @@
+/* AttachmentPreview <img> */
+.preview {
+  display: block;
+  height: auto;
+  max-height: 80vh;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* "invisible" utility applied while the preview image hasn't loaded yet */
+.invisibleWhileLoading {
+  visibility: hidden;
+}
+
+/* AttachmentPreviewDialog: DialogTrigger (asChild — renders directly onto our
+   own child element, not overriding another component's default look, so a
+   single class is fine here). */
+.trigger {
+  cursor: pointer;
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via,
+    --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+}
+@media (hover: hover) {
+  .trigger:hover {
+    background-color: var(--accent);
+    background-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  }
+}
+
+/* AttachmentPreviewDialog: DialogContent override.
+   DialogContent (owned by a parallel worker, src/aui/ui/dialog.tsx) sets its
+   own default padding (p-6) and max-width (sm:max-w-lg) on the same element —
+   a genuine conflict between two same-specificity classes on one node, so we
+   double our own selector to win deterministically regardless of CSS load
+   order (see CLAUDE-conventions "Overriding a child component's own base
+   style from a parent"). */
+.dialogContent.dialogContent {
+  padding: calc(var(--spacing) * 2);
+}
+@media (width >= 40rem) {
+  .dialogContent.dialogContent {
+    max-width: var(--container-3xl);
+  }
+}
+
+/* AttachmentPreviewDialog: DialogContent's own internal close-button
+   (rendered inside dialog.tsx, not by us) is targeted here via the stable
+   literal `aui-attachment-preview-dialog-content` hook + a child combinator.
+   `:global(.X) > button` already carries a type-selector specificity edge
+   over a plain single class, so no doubling is needed for this part — except
+   the ring reset, which mirrors Tailwind's own `ring-0!` (`!`) exactly,
+   since Tailwind itself needed `!important` there. */
+:global(.aui-attachment-preview-dialog-content) > button {
+  background-color: var(--foreground);
+  background-color: color-mix(in oklab, var(--foreground) 60%, transparent);
+  border-radius: calc(infinity * 1px);
+  padding: var(--spacing);
+  opacity: 100%;
+  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0
+    calc(0px + var(--tw-ring-offset-width, 0px)) var(--tw-ring-color, currentcolor)
+    !important;
+  box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000) !important;
+}
+:global(.aui-attachment-preview-dialog-content) > button svg {
+  color: var(--background);
+}
+@media (hover: hover) {
+  :global(.aui-attachment-preview-dialog-content) > button:hover svg {
+    color: var(--destructive);
+  }
+}
+
+/* Image preview title / wrapper */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.previewWrapper {
+  background-color: var(--background);
+  position: relative;
+  margin-inline: auto;
+  display: flex;
+  max-height: 80dvh;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* AttachmentThumb: Avatar / AvatarImage (owned by a parallel worker,
+   src/aui/ui/avatar.tsx) each set their own default size-8 shrink-0
+   rounded-full (Avatar) / aspect-square size-full (AvatarImage) — genuine
+   conflicts on width/height/border-radius, so both overrides are doubled. */
+.tileAvatar.tileAvatar {
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+}
+.tileImage.tileImage {
+  object-fit: cover;
+}
+
+.tileFallbackIcon {
+  color: var(--muted-foreground);
+  width: calc(var(--spacing) * 8);
+  height: calc(var(--spacing) * 8);
+}
+
+/* AttachmentUI: AttachmentPrimitive.Root (headless assistant-ui primitive,
+   forwards className without its own default look — single class is fine). */
+.root {
+  position: relative;
+}
+
+/* only:*:first:size-24 — verified via lookup.js against the oracle:
+   .only\:\*\:first\:size-24 { &:only-child { :is(& > *) { &:first-child {
+     width: calc(var(--spacing) * 24); height: calc(var(--spacing) * 24);
+   } } } }
+   i.e. "when THIS element is the only child of its own parent, its own
+   first direct child gets size-24". Flattened (no CSS nesting relied on): */
+.rootMessage:only-child > :first-child {
+  width: calc(var(--spacing) * 24);
+  height: calc(var(--spacing) * 24);
+}
+
+.tile {
+  background-color: var(--muted);
+  width: calc(var(--spacing) * 14);
+  height: calc(var(--spacing) * 14);
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: calc(var(--composer-radius) - var(--composer-padding));
+  border-style: solid;
+  border-width: 1px;
+  transition-property: opacity;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+}
+@media (hover: hover) {
+  .tile:hover {
+    opacity: 75%;
+  }
+}
+
+/* AttachmentRemove: TooltipIconButton (owned by a parallel worker,
+   src/aui/tooltip-icon-button.tsx) hardcodes its own size-6 p-1 on the
+   underlying Button, which itself defaults to size-9 rounded-md for
+   size="icon" — genuine conflicts on width/height/border-radius, so this
+   override is doubled. The svg-color rules target our OWN child icon
+   (XIcon, rendered directly by us as TooltipIconButton's children), so
+   those don't need doubling — they're additive descendant selectors, not
+   fighting another component's own rule for the same element. */
+.tileRemove.tileRemove {
+  color: var(--muted-foreground);
+  position: absolute;
+  inset-inline-end: calc(var(--spacing) * 1.5);
+  top: calc(var(--spacing) * 1.5);
+  width: calc(var(--spacing) * 3.5);
+  height: calc(var(--spacing) * 3.5);
+  border-radius: calc(infinity * 1px);
+  background-color: var(--color-white);
+  opacity: 100%;
+  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px
+    var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow);
+}
+@media (hover: hover) {
+  .tileRemove.tileRemove:hover {
+    background-color: var(--color-white) !important;
+  }
+}
+.tileRemove svg {
+  color: var(--color-black);
+}
+@media (hover: hover) {
+  .tileRemove:hover svg {
+    color: var(--destructive);
+  }
+}
+
+/* Tripled selector: Button's own default-svg-size rule
+ * (`.button svg:not([class*="size-"])`, specificity (0,2,1)) otherwise
+ * beats a plain single class (0,1,0) from another file. Repeating the
+ * class three times ((0,3,0)) wins on the class-count bucket alone,
+ * without depending on cross-file stylesheet order. */
+.removeIcon.removeIcon.removeIcon {
+  width: calc(var(--spacing) * 3);
+  height: calc(var(--spacing) * 3);
+}
+:global(.dark) .removeIcon.removeIcon.removeIcon {
+  stroke-width: 2.5px;
+}
+
+/* Doubled selector: thread.module.css's `.userMessageRoot > :where(*)`
+ * sets grid-column-start:2 for every direct child of the user-message
+ * grid at specificity (0,1,0) — the `:where()` wrapper is zero
+ * -specificity by design, but `.userMessageRoot` still counts, tying
+ * with a plain single-class override here (this element is also a
+ * direct child of that grid). Doubling forces this element's own
+ * explicit column placement (1, spanning full width) to win regardless
+ * of cross-file stylesheet order. */
+.userMessageAttachmentsEnd.userMessageAttachmentsEnd {
+  grid-column: 1 / -1;
+  grid-column-start: 1;
+  grid-row-start: 1;
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: calc(var(--spacing) * 2);
+}
+
+.composerAttachments {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  overflow-x: auto;
+}
+.composerAttachments:empty {
+  display: none;
+}
+
+/* ComposerAddAttachment: TooltipIconButton override, same conflict shape as
+   .tileRemove above (size-7 rounded-full vs the button's own size-6/size-9 +
+   rounded-md) — doubled. */
+.composerAddAttachment.composerAddAttachment {
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  border-radius: calc(infinity * 1px);
+  padding: var(--spacing);
+  font-size: var(--text-xs);
+  line-height: var(--tw-leading, var(--text-xs--line-height));
+  --tw-font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-semibold);
+}
+@media (hover: hover) {
+  .composerAddAttachment.composerAddAttachment:hover {
+    background-color: var(--muted-foreground);
+    background-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);
+  }
+}
+:global(.dark) .composerAddAttachment.composerAddAttachment {
+  border-color: var(--muted-foreground);
+  border-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);
+}
+@media (hover: hover) {
+  :global(.dark) .composerAddAttachment.composerAddAttachment:hover {
+    background-color: var(--muted-foreground);
+    background-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
+  }
+}
+
+/* Tripled selector: see .removeIcon note above. */
+.addIcon.addIcon.addIcon {
+  width: calc(var(--spacing) * 4.5);
+  height: calc(var(--spacing) * 4.5);
+  stroke-width: 1.5px;
+}

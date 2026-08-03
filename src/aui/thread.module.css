@@ -1,0 +1,591 @@
+/**
+ * @file CSS Module for thread.tsx (v0.9 CSS Modules migration).
+ *
+ * Translated 1:1 from the Tailwind v4 utility classes the component used
+ * to carry, verified against the Tailwind-emitted oracle stylesheet (see
+ * `omksos_web/reports/aui-css-modules/README.md`). Two categories of
+ * Tailwind utility were INTENTIONALLY dropped rather than translated:
+ *
+ *   - The `animate-in`/`fade-in`/`slide-in-from-*`/`fill-mode-*` family:
+ *     confirmed to compile to NO CSS at all in the pre-migration build
+ *     (no `tailwindcss-animate`/`tw-animate-css` plugin was ever
+ *     installed) — reproducing "nothing" faithfully means omitting them,
+ *     not inventing a real enter/exit animation.
+ *   - Tailwind's `group`/`peer` marker classes — replaced by plain
+ *     descendant/sibling selectors keyed off the `data-*` attributes the
+ *     components already render (`data-dragging`, `data-state`, ...).
+ *
+ * `animate-pulse` IS real (used on the assistant "thinking" indicator and
+ * the stop-dictation icon) and is implemented for real, referencing the
+ * `@keyframes pulse` declared once, globally, in `aui.css`.
+ *
+ * Box-shadow ("ring"/"shadow" utilities) are written as the fully
+ * expanded literal 5-part `box-shadow` list Tailwind's own
+ * `--tw-inset-shadow`/`--tw-inset-ring-shadow`/`--tw-ring-offset-shadow`/
+ * `--tw-ring-shadow`/`--tw-shadow` composition produces (each defaulting
+ * to the transparent placeholder `0 0 #0000` when unused) — this is NOT
+ * an approximation, it's the literal input Tailwind's own custom
+ * properties would have resolved to, so the browser's normalized computed
+ * `boxShadow` string comes out identical either way.
+ */
+
+/* ---------------------------------------------------------------------
+ * ThreadRoot / Viewport
+ * ------------------------------------------------------------------- */
+
+.root {
+  background-color: var(--background);
+  container-type: inline-size;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.viewport {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow-x: auto;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+}
+
+.viewportInner {
+  margin-inline: auto;
+  display: flex;
+  width: 100%;
+  max-width: var(--thread-max-width);
+  flex: 1;
+  flex-direction: column;
+  padding-inline: 1rem;
+  padding-top: 1rem;
+}
+
+.viewportInnerCentered {
+  justify-content: center;
+}
+
+.messageGroup {
+  margin-bottom: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1.5rem;
+}
+.messageGroup:empty {
+  display: none;
+}
+
+.viewportFooter {
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: visible;
+  padding-bottom: 1rem;
+}
+@media (width >= 48rem) {
+  .viewportFooter {
+    padding-bottom: 1.5rem;
+  }
+}
+
+.viewportFooterDocked {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  border-top-left-radius: var(--composer-radius);
+  border-top-right-radius: var(--composer-radius);
+}
+
+/* ThreadScrollToBottom — TooltipIconButton override (own base already
+ * gives size-6/rounded-md/p-1/active:scale-90; this call site further
+ * overrides variant="outline" and rounded-full/p-4). Doubled selector
+ * forces the override to win regardless of stylesheet order. */
+.scrollToBottom.scrollToBottom {
+  position: absolute;
+  top: -3rem;
+  z-index: 10;
+  align-self: center;
+  border-radius: calc(infinity * 1px);
+  padding: 1rem;
+}
+.scrollToBottom.scrollToBottom:disabled {
+  visibility: hidden;
+}
+:global(.dark) .scrollToBottom.scrollToBottom {
+  border-color: var(--border);
+  background-color: var(--background);
+}
+:global(.dark) .scrollToBottom.scrollToBottom:hover {
+  background-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------
+ * Welcome / Suggestions
+ * ------------------------------------------------------------------- */
+
+.welcomeRoot {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-inline: 1rem;
+  text-align: center;
+}
+
+.welcomeHeading {
+  font-size: var(--text-2xl, 1.5rem);
+  line-height: 2rem;
+  font-weight: var(--font-weight-semibold, 600);
+  transition-duration: 200ms;
+}
+
+.suggestionsRoot {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-inline: 1rem;
+}
+
+.suggestionItem {
+  transition-duration: 200ms;
+}
+
+/* Button variant="ghost" override — base ghost variant gives h-9/px-4/
+ * py-2 (size="default"); this call site overrides to h-auto/px-3.5/
+ * py-1.5/rounded-full/font-normal, all conflicting with the base. */
+.suggestionButton.suggestionButton {
+  color: var(--foreground);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  height: auto;
+  gap: 0.375rem;
+  border-radius: calc(infinity * 1px);
+  padding-inline: 0.875rem;
+  padding-block: 0.375rem;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: calc(1.25 / 0.875);
+  font-weight: var(--font-weight-normal, 400);
+  white-space: nowrap;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+}
+.suggestionButton.suggestionButton:hover {
+  background-color: var(--muted);
+}
+
+.suggestionText2:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------
+ * Composer
+ * ------------------------------------------------------------------- */
+
+.composerRoot {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.composerShell {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-radius: var(--composer-radius);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  background-color: var(--composer-bg);
+  padding: var(--composer-padding);
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 4px 16px -8px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+  transition-property: border-color, box-shadow;
+}
+.composerShell:focus-within {
+  border-color: var(--border);
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 6px 24px -8px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.composerShell[data-dragging="true"] {
+  border-color: var(--ring);
+  border-style: dashed;
+  background-color: color-mix(in oklab, var(--accent) 50%, var(--background));
+}
+:global(.dark) .composerShell {
+  border-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);
+  box-shadow: none;
+}
+:global(.dark) .composerShell:focus-within {
+  border-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
+}
+
+.composerInput {
+  max-height: 8rem;
+  min-height: 2.5rem;
+  width: 100%;
+  resize: none;
+  background-color: transparent;
+  padding-inline: 0.625rem;
+  padding-block: 0.25rem;
+  font-size: var(--text-base, 1rem);
+  line-height: calc(1.5 / 1);
+  outline-style: none;
+}
+.composerInput::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+}
+
+.composerActionWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composerButtonGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Composer dictate / stop-dictation / send / cancel — all size-7
+ * rounded-full overrides on top of TooltipIconButton's own size-6/
+ * rounded-md-via-Button-base. */
+.composerDictate.composerDictate {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: calc(infinity * 1px);
+}
+.dictateIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.composerStopDictation.composerStopDictation {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: calc(infinity * 1px);
+  color: var(--destructive);
+}
+/* Tripled selector: Button's own default-svg-size rule
+ * (`.button svg:not([class*="size-"])`, see button.module.css) has
+ * specificity (0,2,1) — a plain single class on the icon (0,1,0) loses.
+ * Repeating the class three times ((0,3,0)) beats it on the class-count
+ * bucket alone, without depending on cross-file stylesheet order. */
+.stopDictationIcon.stopDictationIcon.stopDictationIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  animation-name: global(pulse);
+  animation-duration: 2s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  animation-iteration-count: infinite;
+  fill: currentcolor;
+}
+
+.composerSend.composerSend {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: calc(infinity * 1px);
+}
+/* Tripled selector: see .stopDictationIcon note above — beats Button's
+ * default-svg-size rule regardless of cross-file stylesheet order. */
+.sendIcon.sendIcon.sendIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.composerCancel.composerCancel {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: calc(infinity * 1px);
+}
+.cancelIcon.cancelIcon.cancelIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: currentcolor;
+}
+
+/* ---------------------------------------------------------------------
+ * Message error
+ * ------------------------------------------------------------------- */
+
+.messageErrorRoot {
+  border: 1px solid var(--destructive);
+  background-color: color-mix(in oklab, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+  margin-top: 0.5rem;
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.75rem;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: calc(1.25 / 0.875);
+}
+:global(.dark) .messageErrorRoot {
+  background-color: color-mix(in oklab, var(--destructive) 5%, transparent);
+  color: var(--color-red-200, #f8d7da);
+}
+
+.messageErrorMessage {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* ---------------------------------------------------------------------
+ * Assistant message
+ * ------------------------------------------------------------------- */
+
+.assistantMessageRoot {
+  position: relative;
+  transition-duration: 150ms;
+}
+
+.assistantMessageContent {
+  color: var(--foreground);
+  padding-inline: 0.5rem;
+  line-height: var(--leading-relaxed, 1.625);
+  overflow-wrap: break-word;
+  contain-intrinsic-size: auto 24px;
+  content-visibility: auto;
+}
+
+.assistantMessageIndicator {
+  animation-name: global(pulse);
+  animation-duration: 2s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  animation-iteration-count: infinite;
+  font-family: var(--font-sans);
+}
+
+.assistantMessageFooter {
+  margin-inline-start: 0.5rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: -1.875rem;
+  min-height: 1.875rem;
+  padding-top: 0.375rem;
+}
+
+.assistantActionBarRoot {
+  color: var(--muted-foreground);
+  grid-column-start: 3;
+  grid-row-start: 2;
+  margin-inline-start: -0.25rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.actionBarMoreContent {
+  background-color: color-mix(in oklab, var(--popover) 95%, transparent);
+  color: var(--popover-foreground);
+  z-index: 50;
+  min-width: 8rem;
+  overflow: hidden;
+  border-radius: calc(var(--radius) + 4px);
+  border: 1px solid var(--border);
+  padding: 0.375rem;
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.actionBarMoreItem {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: calc(var(--radius) - 4px);
+  padding-inline: 0.625rem;
+  padding-block: 0.375rem;
+  font-size: var(--text-sm, 0.875rem);
+  line-height: calc(1.25 / 0.875);
+  outline-style: none;
+  user-select: none;
+}
+.actionBarMoreItem:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+.actionBarMoreItem:focus {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* DownloadIcon inside ActionBarMoreItem — NOT wrapped in a Button, so it
+ * doesn't get a button-level default svg size; needs its own explicit
+ * size (matches the original `size-4` = 1rem). */
+.exportIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ---------------------------------------------------------------------
+ * User message
+ * ------------------------------------------------------------------- */
+
+.userMessageRoot {
+  display: grid;
+  grid-auto-rows: auto;
+  grid-template-columns: minmax(72px, 1fr) auto;
+  align-content: flex-start;
+  row-gap: 0.5rem;
+  padding-inline: 0.5rem;
+  transition-duration: 150ms;
+  contain-intrinsic-size: auto 60px;
+  content-visibility: auto;
+}
+.userMessageRoot > :where(*) {
+  grid-column-start: 2;
+}
+
+.userMessageContentWrapper {
+  position: relative;
+  grid-column-start: 2;
+  min-width: 0;
+}
+
+.userMessageContent {
+  background-color: var(--muted);
+  color: var(--foreground);
+  border-radius: calc(var(--radius) + 4px);
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
+  overflow-wrap: break-word;
+}
+.userMessageContent:empty {
+  display: none;
+}
+
+.userActionBarWrapper {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  translate: -100% calc(calc(1 / 2 * 100%) * -1);
+  padding-inline-end: 0.5rem;
+}
+.userMessageContent:empty ~ .userActionBarWrapper {
+  display: none;
+}
+:global([dir="rtl"]) .userActionBarWrapper {
+  translate: 100% calc(calc(1 / 2 * 100%) * -1);
+}
+
+/* Doubled selector: `.userMessageRoot > :where(*)` (above) sets
+ * grid-column-start:2 for every direct child at specificity (0,1,0) — the
+ * `:where()` wrapper is zero-specificity by design, but the surrounding
+ * `.userMessageRoot` class still counts, tying with a plain single-class
+ * override here. Doubling forces this element's own explicit column
+ * placement (1) to win regardless of cross-rule source order. */
+.userBranchPicker.userBranchPicker {
+  grid-column: 1 / -1;
+  grid-column-start: 1;
+  grid-row-start: 3;
+  margin-inline-end: -0.25rem;
+  justify-content: flex-end;
+}
+
+.userActionBarRoot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* ---------------------------------------------------------------------
+ * Edit composer
+ * ------------------------------------------------------------------- */
+
+.editComposerWrapper {
+  display: flex;
+  flex-direction: column;
+  padding-inline: 0.5rem;
+}
+
+.editComposerRoot {
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  margin-inline-start: auto;
+  display: flex;
+  width: 100%;
+  max-width: 85%;
+  flex-direction: column;
+  border-radius: var(--composer-radius);
+  background-color: var(--composer-bg);
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 4px 16px -8px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+:global(.dark) .editComposerRoot {
+  border-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);
+  box-shadow: none;
+}
+
+.editComposerInput {
+  color: var(--foreground);
+  min-height: 3.5rem;
+  width: 100%;
+  resize: none;
+  background-color: transparent;
+  padding-inline: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+  font-size: var(--text-base, 1rem);
+  line-height: calc(1.5 / 1);
+  outline-style: none;
+}
+
+.editComposerFooter {
+  margin-inline: 0.625rem;
+  margin-bottom: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: flex-end;
+}
+
+/* Button size="sm" override (h-8/rounded-full/px-3.5 vs base h-8 already
+ * matching for size="sm" — only rounded-full is a genuine conflict). */
+.editComposerButton.editComposerButton {
+  height: 2rem;
+  border-radius: calc(infinity * 1px);
+  padding-inline: 0.875rem;
+}
+
+/* ---------------------------------------------------------------------
+ * Branch picker
+ * ------------------------------------------------------------------- */
+
+.branchPickerRoot {
+  color: var(--muted-foreground);
+  margin-inline-start: -0.5rem;
+  margin-inline-end: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: calc(1 / 0.75);
+}
+
+.branchPickerState {
+  font-weight: var(--font-weight-medium, 500);
+}

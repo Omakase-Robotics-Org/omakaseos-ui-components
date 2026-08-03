@@ -1,0 +1,152 @@
+/**
+ * @file Dialog — CSS Modules port of the former Tailwind classes.
+ * `animate-in`/`animate-out`/`fade-in-0`/`fade-out-0`/`zoom-in-95`/
+ * `zoom-out-95` are intentionally NOT implemented — they resolve to
+ * nothing in the current (pre-migration) build (no `tailwindcss-animate`
+ * plugin installed), so implementing a real animation now would be a
+ * regression relative to the frozen baseline (see
+ * aui-migration-conventions.md, "Dead classes").
+ */
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: color-mix(in oklab, #000 50%, transparent);
+}
+
+.dialogContent {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  display: grid;
+  width: 100%;
+  max-width: calc(100% - 2rem);
+  /* translate-x-[-50%] translate-y-[-50%]: native `translate:` property,
+   * not `transform:` (see conventions memo). Both utilities resolve to
+   * the same literal value here, so just write the composed result. */
+  translate: -50% -50%;
+  gap: 1rem; /* gap-4 */
+  border-style: solid; /* `border` (longhand only, see button.module.css note) */
+  border-width: 1px;
+  border-radius: var(--radius); /* rounded-lg */
+  background-color: var(--background);
+  padding: 1.5rem; /* p-6 */
+  --tw-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+  box-shadow:
+    var(--tw-inset-shadow, 0 0 #0000),
+    var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
+  transition-duration: 200ms;
+  outline-style: none;
+}
+@media (width >= 40rem) {
+  .dialogContent {
+    max-width: 32rem; /* sm:max-w-lg (--container-lg) */
+  }
+}
+
+.dialogClose {
+  position: absolute;
+  top: 1rem; /* top-4 */
+  right: 1rem; /* right-4 */
+  border-radius: 0.125rem; /* rounded-xs */
+  opacity: 70%;
+  --tw-ring-offset-color: var(--background); /* ring-offset-background */
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.dialogClose:hover {
+  opacity: 100%;
+}
+.dialogClose:focus {
+  --tw-ring-offset-width: 2px; /* focus:ring-offset-2 */
+  --tw-ring-offset-shadow: 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-color: var(--ring); /* focus:ring-ring */
+  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
+    var(--tw-ring-color, currentcolor); /* focus:ring-2 */
+  box-shadow:
+    var(--tw-inset-shadow, 0 0 #0000),
+    var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
+  --tw-outline-style: none; /* focus:outline-hidden */
+  outline-style: none;
+}
+@media (forced-colors: active) {
+  .dialogClose:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+}
+.dialogClose:disabled {
+  pointer-events: none;
+}
+.dialogClose[data-state="open"] {
+  background-color: var(--accent);
+  color: var(--muted-foreground);
+}
+.dialogClose svg {
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.dialogClose svg:not([class*="size-"]) {
+  width: 1rem; /* size-4 */
+  height: 1rem;
+}
+
+.dialogHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* gap-2 */
+  text-align: center;
+}
+@media (width >= 40rem) {
+  .dialogHeader {
+    text-align: left;
+  }
+}
+
+.dialogFooter {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem; /* gap-2 */
+}
+@media (width >= 40rem) {
+  .dialogFooter {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+.dialogTitle {
+  font-size: 1.125rem; /* text-lg */
+  line-height: 1; /* leading-none */
+  font-weight: 600; /* font-semibold */
+}
+
+.dialogDescription {
+  font-size: 0.875rem; /* text-sm */
+  line-height: calc(1.25 / 0.875);
+  color: var(--muted-foreground);
+}
+
+/* sr-only (matches Tailwind's oracle rule verbatim; see attachment.module.css
+ * for the same pattern used by the parallel attachment.tsx conversion). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}

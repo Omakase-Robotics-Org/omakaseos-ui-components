@@ -1,0 +1,216 @@
+/**
+ * @file CSS Module for tool-fallback.tsx (Tailwind -> CSS Modules
+ * migration). Shape mirrors reasoning.module.css / tool-group.module.css:
+ * see reasoning.module.css's file header for the shared conventions
+ * (naming, literal-value transcription, dead animate-in family) — not
+ * repeated here.
+ *
+ * ToolFallback has no cva/variant concept (unlike Reasoning/ToolGroup),
+ * so there's no root-class-splitting concern here.
+ *
+ * Some conditional visual states (icon "cancelled"/"running", label
+ * "cancelled", args "cancelled") aren't backed by a `data-*` attribute in
+ * the markup — the original Tailwind classes for those were applied
+ * conditionally in JS (`isCancelled && "..."`). Rather than invent new
+ * `data-*` attributes (out of scope here), those stay as conditionally
+ * applied CSS Module classes composed in the component, same mechanism
+ * as before, just swapping the literal Tailwind string for a module
+ * class reference.
+ */
+
+.root {
+  width: 100%;
+}
+
+.trigger {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via,
+    --tw-gradient-to;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+@media (hover: hover) {
+  .trigger:hover {
+    color: var(--foreground);
+  }
+}
+
+.triggerIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.triggerIconCancelled {
+  color: var(--muted-foreground);
+}
+
+.triggerIconRunning {
+  animation-name: global(spin);
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.duration {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  font-variant-numeric: tabular-nums;
+}
+
+.labelWrapper {
+  position: relative;
+  display: inline-block;
+  text-align: start;
+  line-height: 1;
+}
+
+.labelWrapperCancelled {
+  color: var(--muted-foreground);
+  text-decoration-line: line-through;
+}
+
+/* Shimmer overlay: dead in the current Tailwind build (see
+ * reasoning.module.css header) — only positioning utilities are real. */
+.shimmer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  rotate: 0deg;
+  transition-property: transform, translate, scale, rotate;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.trigger[data-state="closed"] .chevron {
+  rotate: calc(90deg * -1);
+}
+
+.content {
+  position: relative;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+  outline-style: none;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.content[data-state="closed"] {
+  pointer-events: none;
+}
+
+.contentInner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-inline-start: 1.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.argsCancelled {
+  opacity: 60%;
+}
+
+.argsValue {
+  background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+  color: var(--muted-foreground);
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.625rem;
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  white-space: pre-wrap;
+}
+
+.resultHeader {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  font-weight: 500;
+}
+
+.resultContent {
+  background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+  color: var(--muted-foreground);
+  margin-top: 0.25rem;
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.625rem;
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  white-space: pre-wrap;
+}
+
+.errorHeader {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.errorReason {
+  color: var(--muted-foreground);
+}
+
+.approval {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+/* Applied alongside .approval only on the declared-options render path,
+ * which wraps allow/reject option buttons onto multiple lines. */
+.approvalWrap {
+  flex-wrap: wrap;
+}
+
+.approvalConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.approvalConfirmTitle {
+  font-weight: 600;
+}
+
+.approvalConfirmDescription {
+  color: var(--muted-foreground);
+}
+
+.approvalConfirmGrants {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.approvalConfirmGrant {
+  background-color: var(--muted);
+  border-radius: 0.25rem;
+  padding-inline: 0.375rem;
+  padding-block: 0.125rem;
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+}
+
+.approvalConfirmActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

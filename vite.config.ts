@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -9,11 +8,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: "demo",
-  plugins: [react(), tailwindcss()],
+  plugins: [react()],
   build: {
     // Two demo entry points: the v0.1-v0.5 `--ds-*` token harness
-    // (index.html) and the v0.6 aui Tailwind surface (aui.html, its own
-    // page because it's the only place that loads src/aui/aui.css).
+    // (index.html) and the v0.6 aui surface (aui.html, its own page
+    // because it's the only place that loads src/aui/aui.css).
     // Without this, `vite build` only bundles index.html and aui.html
     // would silently stop being exercised by `bun run build`.
     rollupOptions: {

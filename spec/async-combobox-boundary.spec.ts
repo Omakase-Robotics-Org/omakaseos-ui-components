@@ -20,17 +20,18 @@
  *   - Every additional synthetic widget enlarges the surface a
  *     reviewer must audit. Pinning the count at exactly one means
  *     the reviewer can read one file and trust the library.
- *   - The aui surface (Tailwind exception) is governed by its own
- *     boundary spec — it is the only other "exception layer" in the
- *     package, and its contents are unrelated to ARIA combobox
- *     primitives. So we explicitly exclude `src/aui/` from the
- *     "no role= here" rule and pin THIS exception (AsyncCombobox)
+ *   - The aui surface (vendored shadcn-style assistant-ui registry
+ *     components, CSS Modules since the v0.9 migration) is governed
+ *     by its own boundary spec — it is the only other "exception
+ *     layer" in the package, and its contents are unrelated to ARIA
+ *     combobox primitives. So we explicitly exclude `src/aui/` from
+ *     the "no role= here" rule and pin THIS exception (AsyncCombobox)
  *     separately.
  *
  * Each assertion is paired with the symmetric "the exception is
- * not empty" guard, mirroring the aui Tailwind boundary spec — so a
- * future PR that deletes AsyncCombobox.tsx without removing the
- * exception language fails CI before review.
+ * not empty" guard, mirroring the aui boundary spec — so a future PR
+ * that deletes AsyncCombobox.tsx without removing the exception
+ * language fails CI before review.
  */
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -77,8 +78,8 @@ describe("AsyncCombobox synthetic-widget boundary contract", () => {
   /**
    * Sources subject to the rule: everything under `src/` EXCEPT
    *   - `src/AsyncCombobox.tsx` (the canonical, allowed location)
-   *   - `src/aui/**` (the Tailwind exception layer; governed by
-   *     `aui-tailwind-boundary.spec.ts`)
+   *   - `src/aui/**` (the vendored assistant-ui exception layer;
+   *     governed by `aui-tailwind-boundary.spec.ts`)
    *   - The AsyncCombobox spec itself (the unit spec rightly
    *     interrogates the role attributes via testing-library queries
    *     and string literals).

@@ -17,15 +17,16 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import styles from "./tool-group.module.css";
 
 const ANIMATION_DURATION = 200;
 
-const toolGroupVariants = cva("aui-tool-group-root group/tool-group w-full", {
+const toolGroupVariants = cva(styles.root, {
   variants: {
     variant: {
-      outline: "rounded-lg border py-3",
+      outline: styles.rootOutline,
       ghost: "",
-      muted: "border-muted-foreground/30 bg-muted/30 rounded-lg border py-3",
+      muted: styles.rootMuted,
     },
   },
   defaultVariants: { variant: "outline" },
@@ -76,9 +77,8 @@ function ToolGroupRoot({
       open={isOpen}
       onOpenChange={handleOpenChange}
       className={cn(
-        toolGroupVariants({ variant }),
-        "group/tool-group-root",
-        className,
+        "aui-tool-group-root",
+        toolGroupVariants({ variant, className }),
       )}
       style={
         {
@@ -106,28 +106,23 @@ function ToolGroupTrigger({
   return (
     <CollapsibleTrigger
       data-slot="tool-group-trigger"
-      className={cn(
-        "aui-tool-group-trigger group/trigger flex items-center gap-2 text-sm transition-colors",
-        "group-data-[variant=ghost]/tool-group-root:text-muted-foreground group-data-[variant=ghost]/tool-group-root:hover:text-foreground group-data-[variant=ghost]/tool-group-root:py-1",
-        "group-data-[variant=outline]/tool-group-root:w-full group-data-[variant=outline]/tool-group-root:px-4",
-        "group-data-[variant=muted]/tool-group-root:w-full group-data-[variant=muted]/tool-group-root:px-4",
-        className,
-      )}
+      className={cn("aui-tool-group-trigger", styles.trigger, className)}
       {...props}
     >
       {active && (
         <LoaderIcon
           data-slot="tool-group-trigger-loader"
-          className="aui-tool-group-trigger-loader size-4 shrink-0 animate-spin"
+          className={cn(
+            "aui-tool-group-trigger-loader",
+            styles.triggerLoader,
+          )}
         />
       )}
       <span
         data-slot="tool-group-trigger-label"
         className={cn(
-          "aui-tool-group-trigger-label-wrapper relative inline-block text-start leading-none font-medium",
-          "group-data-[variant=ghost]/tool-group-root:font-normal",
-          "group-data-[variant=outline]/tool-group-root:grow",
-          "group-data-[variant=muted]/tool-group-root:grow",
+          "aui-tool-group-trigger-label-wrapper",
+          styles.labelWrapper,
         )}
       >
         <span>{label}</span>
@@ -135,7 +130,7 @@ function ToolGroupTrigger({
           <span
             aria-hidden
             data-slot="tool-group-trigger-shimmer"
-            className="aui-tool-group-trigger-shimmer shimmer pointer-events-none absolute inset-0 motion-reduce:animate-none"
+            className={cn("aui-tool-group-trigger-shimmer", styles.shimmer)}
           >
             {label}
           </span>
@@ -143,12 +138,7 @@ function ToolGroupTrigger({
       </span>
       <ChevronDownIcon
         data-slot="tool-group-trigger-chevron"
-        className={cn(
-          "aui-tool-group-trigger-chevron size-4 shrink-0",
-          "transition-transform duration-(--animation-duration) ease-out",
-          "group-data-[state=closed]/trigger:-rotate-90",
-          "group-data-[state=open]/trigger:rotate-0",
-        )}
+        className={cn("aui-tool-group-trigger-chevron", styles.chevron)}
       />
     </CollapsibleTrigger>
   );
@@ -162,29 +152,10 @@ function ToolGroupContent({
   return (
     <CollapsibleContent
       data-slot="tool-group-content"
-      className={cn(
-        "aui-tool-group-content relative overflow-hidden text-sm outline-none",
-        "group/collapsible-content ease-out",
-        "data-[state=closed]:animate-collapsible-up",
-        "data-[state=open]:animate-collapsible-down",
-        "data-[state=closed]:fill-mode-forwards",
-        "data-[state=closed]:pointer-events-none",
-        "data-[state=open]:duration-(--animation-duration)",
-        "data-[state=closed]:duration-(--animation-duration)",
-        className,
-      )}
+      className={cn("aui-tool-group-content", styles.content, className)}
       {...props}
     >
-      <div
-        className={cn(
-          "mt-2 flex flex-col gap-2",
-          "group-data-[variant=ghost]/tool-group-root:mt-1 group-data-[variant=ghost]/tool-group-root:gap-1",
-          "group-data-[variant=outline]/tool-group-root:mt-3 group-data-[variant=outline]/tool-group-root:border-t group-data-[variant=outline]/tool-group-root:px-4 group-data-[variant=outline]/tool-group-root:pt-3",
-          "group-data-[variant=muted]/tool-group-root:mt-3 group-data-[variant=muted]/tool-group-root:border-t group-data-[variant=muted]/tool-group-root:px-4 group-data-[variant=muted]/tool-group-root:pt-3",
-        )}
-      >
-        {children}
-      </div>
+      <div className={styles.contentInner}>{children}</div>
     </CollapsibleContent>
   );
 }
@@ -230,4 +201,3 @@ export {
   ToolGroupContent,
   toolGroupVariants,
 };
-

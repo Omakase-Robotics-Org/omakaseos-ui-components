@@ -31,7 +31,7 @@ came to be — see `reports/realtime-chat-components-poc/`).
 | **Form** | v0.3 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
-| **AUI surface** | v0.6 | Vendored shadcn-style assistant-ui registry — the canonical chat shell consumed by live operator surfaces (PoC `assistant-ui-replacement-poc/app`, the body web app's conversations page). **Tailwind exception** — see "Token model" below | `Thread`, `MarkdownText`, `ToolFallback`, `ToolGroupRoot/Trigger/Content`, `Reasoning` family, `ComposerAddAttachment`, `Composer/UserMessage Attachments`, `VoiceOrb` family, `TooltipIconButton`, plus shadcn `Button` / `Collapsible` / `Tooltip` / `Dialog` / `Avatar` re-exports — under sub-entry `/aui` |
+| **AUI surface** | v0.6 | Vendored shadcn-style assistant-ui registry — the canonical chat shell consumed by live operator surfaces (PoC `assistant-ui-replacement-poc/app`, the body web app's conversations page). CSS Modules + shadcn theme tokens — see "Token model" below | `Thread`, `MarkdownText`, `ToolFallback`, `ToolGroupRoot/Trigger/Content`, `Reasoning` family, `ComposerAddAttachment`, `Composer/UserMessage Attachments`, `VoiceOrb` family, `TooltipIconButton`, plus shadcn `Button` / `Collapsible` / `Tooltip` / `Dialog` / `Avatar` re-exports — under sub-entry `/aui` |
 
 The chat-log and live-stage layers share the same `MessageRole` vocabulary
 (`"user" | "assistant" | "system" | "tool"`) — taken verbatim from the OpenAI
@@ -39,9 +39,11 @@ Realtime API — and the same role-tinted accent tokens, so a speaker's tile in
 the live stage and their bubble in the log read visually consistent.
 
 The AUI surface layer (v0.6) is **deliberately separate**: it ships under
-the `/aui` sub-entry, mounts under a `.aui-root` subtree, and uses
-Tailwind v4 + shadcn theme tokens rather than `--ds-*`. See the Tailwind
-exception note in the Token model section.
+the `/aui` sub-entry, mounts under a `.aui-root` subtree, and uses shadcn
+theme tokens rather than `--ds-*`. It shipped on Tailwind v4 through v0.8;
+the v0.9 migration (`omksos_web/reports/aui-css-modules/`) moved it onto
+plain CSS Modules with no change to the public API or the theme token
+names. See the "aui surface" note in the Token model section.
 
 ## Public API
 
@@ -139,31 +141,36 @@ renders plausibly. The alias map for each host is in `aliases/`.
 Bind to **purpose** (`--ds-control-height-md`), not to **value** (`32px`).
 A host theme can shift density without touching component CSS.
 
-### Tailwind exception (v0.6 aui surface)
+### The aui surface (v0.6, CSS Modules since v0.9)
 
 The aui surface is the **only** layer that does not bind to `--ds-*`.
-It uses Tailwind v4 utility classes plus the shadcn theme token set
-(`--background`, `--foreground`, `--primary`, `--muted`, `--border`,
-`--ring`, ...) because the upstream shadcn-style assistant-ui
-registry was authored that way. Re-authoring those components in
-CSS Modules + `--ds-*` would diverge us from upstream's refresh path
-(`npx shadcn add ...` propagates updates verbatim into `src/aui/`).
+It uses the shadcn theme token set (`--background`, `--foreground`,
+`--primary`, `--muted`, `--border`, `--ring`, ...) because the upstream
+shadcn-style assistant-ui registry was authored that way, and
+re-authoring the token NAMES would diverge us from upstream's refresh
+path (`npx shadcn add ...` propagates updates verbatim into `src/aui/`).
 
-To keep the exception bounded, the package guarantees:
+Through v0.8 this layer additionally ran on Tailwind v4 utility classes
+— the **only** Tailwind usage anywhere in the package. The v0.9 migration
+(`omksos_web/reports/aui-css-modules/`) replaced that with plain CSS
+Modules (one `*.module.css` per component, same theme token names, same
+public API) so the package ships with **no Tailwind toolchain at all**.
+The package guarantees:
 
 | Boundary | Where it's pinned |
 | --- | --- |
-| Tailwind imports (`@import "tailwindcss/..."`) live only in `src/aui/aui.css` | `spec/aui-tailwind-boundary.spec.ts` |
-| Tailwind class composition (`clsx`, `tailwind-merge`, `class-variance-authority`, `cn`) imported only by `src/aui/**/*.{ts,tsx}` | `spec/aui-tailwind-boundary.spec.ts` |
-| Tailwind preflight scoped to `:where(.aui-root *)` — does NOT clobber consumer CSS-Modules surfaces | `spec/aui-preflight-scope.spec.ts`, `src/aui/aui.css` |
+| No Tailwind import, dependency, or utility-class syntax anywhere in the package | `spec/aui-tailwind-boundary.spec.ts` |
+| No `tailwind-merge` import anywhere — `cn()` is a plain `clsx` composer | `spec/aui-tailwind-boundary.spec.ts` |
+| Preflight scoped to `:where(.aui-root *)` — does NOT clobber consumer CSS-Modules surfaces | `spec/aui-preflight-scope.spec.ts`, `src/aui/aui.css` |
 | Surface root mounts with `.aui-root` className — preflight matches the subtree it was scoped to | `spec/aui-tailwind-boundary.spec.ts` (Thread mount) |
 | AUI is shipped as `dist/aui/{index.js, aui.css}` (pre-built); legacy v0.4/v0.5 stay as TS source | `package.json` `exports` map |
 
-Each row has an automated assertion: a future PR that breaks the
-exception fails CI before review. The boundary was sized in
+Each row has an automated assertion: a future PR that reintroduces
+Tailwind fails CI before review. The original boundary was sized in
 `omksos_web/reports/ui-components-aui-canonical-lift/` and tightened
 in `omksos_web/reports/ui-components-aui-tailwind-preflight-scope/`;
-read both before moving any of these boundaries.
+the v0.9 migration itself is documented in
+`omksos_web/reports/aui-css-modules/`.
 
 ## Consuming the library
 

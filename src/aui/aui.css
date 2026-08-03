@@ -1,64 +1,47 @@
 /**
- * @file v0.6 aui surface — Tailwind v4 entry + shadcn theme tokens.
+ * @file v0.9 aui surface — plain CSS entry (shadcn theme tokens + scoped
+ * preflight). No Tailwind: as of the v0.9 CSS Modules migration, every
+ * component under `src/aui/` styles itself with a co-located
+ * `*.module.css` file. This file remains the single consumer-facing
+ * stylesheet with two responsibilities, unchanged from the Tailwind era:
  *
- * Two responsibilities, deliberately decoupled:
- *
- * 1. Bring the Tailwind engine in (theme + utilities). Tailwind v4's
- *    default preflight is OFF here on purpose — we ship a scoped
- *    preflight (below) that only touches `.aui-root` descendants. The
+ * 1. Declare the shadcn-style theme tokens the vendored Thread / Composer
+ *    / MarkdownText etc. components target by name (--background,
+ *    --foreground, --primary, --muted, --border, ...), inherited from the
+ *    omks-robo brand SoT. A handful of components also reference the
+ *    `--color-*`-prefixed spelling directly in inline `style={}` objects
+ *    (e.g. `color-mix(in oklab, var(--color-muted) 30%, var(--color-background))`
+ *    in thread.tsx) — those aren't Tailwind classes, they're plain CSS
+ *    custom-property references baked into the component's own inline
+ *    styles, so the `--color-*` aliases below exist purely so those
+ *    references keep resolving. (Previously this bridge was Tailwind's
+ *    `@theme inline`; it is now just plain custom properties — same
+ *    values, same mechanism CSS custom properties always had.)
+ * 2. Ship a scoped preflight (below) that only touches `.aui-root`
+ *    descendants — copied verbatim from Tailwind v4's `preflight.css`,
+ *    each selector re-prefixed under `:where(.aui-root ...)`. The
  *    consumer's existing CSS-Modules surfaces (dialog centering, button
- *    paddings, heading hierarchy) keep their margins because the global
- *    "* { margin: 0; padding: 0 }" reset never lands on them.
- *
- * 2. "@theme inline" declares the shadcn theme tokens the vendored
- *    Thread / Composer / MarkdownText etc. target by name
- *    (--background, --foreground, --primary, --muted, --border, ...).
- *    The values are inherited from the omks-robo brand SoT so the
- *    surface lands in the dashboard palette rather than shadcn's
- *    default neutral.
+ *    paddings, heading hierarchy) keep their margins because this reset
+ *    never lands on them.
  *
  * Consumer integration (host app): import this file ONCE at app entry
  * and the surface inherits these tokens. The library is published with
  * sideEffects: ["star-star-slash-star-dot-css"], so a bare
  * import "@omakase-robotics/ui-components/aui/aui.css" is the contract.
  *
- * Authoring note: the Tailwind v4 CSS reader currently chokes on stray
- * backticks (and curly-brace template-literal patterns) inside CSS
- * comments — it treats them as unterminated string sentinels. So this
- * file's prose deliberately avoids backticks even where they would read
- * naturally; we fall back to plain double quotes. The bug is not ours
- * to fix here, but the workaround is cheap enough.
+ * `@keyframes spin` / `@keyframes pulse` below are declared ONCE, here,
+ * globally (this file is plain CSS, not a CSS Module, so `@keyframes`
+ * names are NOT hash-scoped). Every component's `*.module.css` that needs
+ * a spinning loader icon or a pulsing dot references `animation: spin ...`
+ * / `animation: pulse ...` by this literal name rather than declaring its
+ * own local keyframes — a module file declaring `@keyframes spin` itself
+ * would get that name hash-scoped by the CSS Modules processor, which
+ * would break the computed `animationName` contract pinned by the Phase 1
+ * visual baseline (`spec/aui-baselines/*.json` expects the literal string
+ * "spin" / "pulse").
  */
 
-@layer theme, base, components, utilities;
-
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
-
-/* Phase 1 visual-baseline harness note (aui -> CSS Modules migration,
- * `omksos_web/reports/aui-css-modules-visual-baseline/`): the `@tailwindcss/vite`
- * dev-server plugin auto-detects candidate class names by scanning from the
- * Vite `root` (`demo/`, see vite.config.ts). Every file in this directory
- * (thread.tsx, attachment.tsx, ...) sits OUTSIDE that root, so without an
- * explicit `@source` the dev build silently emits zero utility classes for
- * the whole surface (the `bun run build:aui:css` / `@tailwindcss/cli`
- * production build does not have this problem — its root is the package
- * root — which is why this only ever showed up in the new demo page, not in
- * the existing shipped build). This directive is scan-path-only: it does
- * not add, remove, or rename a single class anywhere in this directory. */
-@source "./**/*.{ts,tsx}";
-
-/* Pull in the upstream assistant-ui markdown "dot" loading-indicator CSS.
- * The vendored MarkdownText component (src/aui/markdown-text.tsx) used to
- * import this from @assistant-ui/react-markdown/styles/dot.css inside JS;
- * we removed the JS import to avoid resolving @assistant-ui/react-markdown
- * twice at dev time (which surfaced as a second copy of React via a sibling
- * node_modules tree). Pulling it in here via plain CSS @import keeps the
- * stylesheet on the page without forcing the consumer's bundler through
- * the JS module of @assistant-ui/react-markdown. */
 @import "@assistant-ui/react-markdown/styles/dot.css";
-
-@custom-variant dark (&:is(.dark *));
 
 :root {
   --radius: 0.625rem;
@@ -90,6 +73,80 @@
   --border: oklch(0.93 0.01 250);
   --input: oklch(0.93 0.01 250);
   --ring: oklch(0.7 0.04 263);
+
+  /* Bridge aliases — plain custom properties standing in for the former
+   * `@theme inline` block. Custom properties are re-resolved at point of
+   * use following normal inheritance, so declaring these once here (not
+   * repeated under `.dark`) is sufficient: under `.dark`, `var(--muted)`
+   * etc. above are re-defined, and anything referencing `--color-muted`
+   * picks up the new value automatically. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Tailwind v4 default theme tokens (verbatim from
+   * node_modules/tailwindcss/theme.css). Under Tailwind, `@theme` used to
+   * inject exactly the subset of these actually referenced by a matched
+   * utility class as REAL global `:root` custom properties — that's how
+   * e.g. `font-size: var(--text-sm)` in the compiled CSS ever resolved to
+   * an actual pixel value. Post-migration there is no `@theme` engine
+   * left to do that injection, but several component `*.module.css`
+   * files still reference these names directly (mirroring the oracle
+   * Tailwind output they were translated from) rather than inlining the
+   * computed value — so they stay declared here, once, globally. Do not
+   * remove one just because nothing currently seems to use it without a
+   * `var(--x, fallback)` — a future component may add a plain reference
+   * again, and losing the global silently breaks it (exactly what
+   * happened here: the VoiceOrb canvas rendered at its raw HTML
+   * default 300x150 instead of 4rem square because `--spacing` had
+   * disappeared along with Tailwind, and `calc(var(--spacing) * 16)`
+   * evaluates to nothing without it). */
+  --spacing: 0.25rem;
+  --container-3xl: 48rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --leading-relaxed: 1.625;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --color-black: #000;
+  --color-white: #fff;
+  --color-red-200: oklch(88.5% 0.062 18.334);
+  --color-amber-500: oklch(76.9% 0.188 70.08);
+  --color-green-500: oklch(72.3% 0.219 149.579);
 }
 
 .dark {
@@ -114,37 +171,19 @@
   --ring: oklch(0.55 0.04 263);
 }
 
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+/* Real, core-Tailwind-equivalent keyframes (spin/pulse are NOT part of the
+ * "dead animate-in family" — see module-authoring note above). Declared
+ * verbatim from Tailwind v4's defaults so computed animation timing
+ * matches the Phase 1 baseline exactly. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-
-  --animate-shimmer: shimmer 2s linear infinite;
-
-  @keyframes shimmer {
-    from { background-position: 0 0; }
-    to   { background-position: -200% 0; }
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
   }
 }
 
@@ -163,186 +202,184 @@
  * specificity at 0 so consumer styles still win on equal terms; the
  * .aui-root gate keeps the reset confined to the surface subtree.
  *
- * Authoring rule: when the upstream preflight changes (Tailwind upgrade),
- * re-pull the rules below from `node_modules/tailwindcss/preflight.css`
- * and re-prefix each selector. This file is not generated; the prefix
- * has to be reapplied by hand. The unit spec under
- * `spec/aui-preflight-scope.spec.ts` pins the contract: no global "*"
- * wildcard reset may leak into the built CSS.
+ * Authoring rule: this used to be re-pulled from
+ * `node_modules/tailwindcss/preflight.css` on a Tailwind upgrade. Now that
+ * Tailwind is gone from this package, there is no upstream to re-pull from
+ * — this is simply the library's own scoped reset going forward. The unit
+ * spec under `spec/aui-preflight-scope.spec.ts` pins the contract: no
+ * global "*" wildcard reset may leak into the built CSS.
  * -------------------------------------------------------------------- */
 
-@layer base {
-  /* 1. Prevent padding and border from affecting element width.
-   * 2. Remove default margins and padding.
-   * 3. Reset all borders. */
-  :where(.aui-root, .aui-root *, .aui-root *::after, .aui-root *::before, .aui-root *::backdrop, .aui-root *::file-selector-button) {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    border: 0 solid;
-    border-color: var(--color-border);
-  }
+/* 1. Prevent padding and border from affecting element width.
+ * 2. Remove default margins and padding.
+ * 3. Reset all borders. */
+:where(.aui-root, .aui-root *, .aui-root *::after, .aui-root *::before, .aui-root *::backdrop, .aui-root *::file-selector-button) {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+  border-color: var(--color-border);
+}
 
-  /* hr */
-  :where(.aui-root hr) {
-    height: 0;
-    color: inherit;
-    border-top-width: 1px;
-  }
+/* hr */
+:where(.aui-root hr) {
+  height: 0;
+  color: inherit;
+  border-top-width: 1px;
+}
 
-  /* abbr[title] */
-  :where(.aui-root abbr[title]) {
-    -webkit-text-decoration: underline dotted;
-    text-decoration: underline dotted;
-  }
+/* abbr[title] */
+:where(.aui-root abbr[title]) {
+  -webkit-text-decoration: underline dotted;
+  text-decoration: underline dotted;
+}
 
-  /* Headings inside the surface inherit their parent typography
-   * (consumer headings stay untouched because we DO NOT match :where(h1..)
-   * outside .aui-root). */
-  :where(.aui-root h1, .aui-root h2, .aui-root h3, .aui-root h4, .aui-root h5, .aui-root h6) {
-    font-size: inherit;
-    font-weight: inherit;
-  }
+/* Headings inside the surface inherit their parent typography
+ * (consumer headings stay untouched because we DO NOT match :where(h1..)
+ * outside .aui-root). */
+:where(.aui-root h1, .aui-root h2, .aui-root h3, .aui-root h4, .aui-root h5, .aui-root h6) {
+  font-size: inherit;
+  font-weight: inherit;
+}
 
-  /* Anchor reset for opt-in styling. */
-  :where(.aui-root a) {
-    color: inherit;
-    -webkit-text-decoration: inherit;
-    text-decoration: inherit;
-  }
+/* Anchor reset for opt-in styling. */
+:where(.aui-root a) {
+  color: inherit;
+  -webkit-text-decoration: inherit;
+  text-decoration: inherit;
+}
 
-  /* Bold weight in Edge / Safari. */
-  :where(.aui-root b, .aui-root strong) {
-    font-weight: bolder;
-  }
+/* Bold weight in Edge / Safari. */
+:where(.aui-root b, .aui-root strong) {
+  font-weight: bolder;
+}
 
-  /* Mono font for code / kbd / samp / pre. */
-  :where(.aui-root code, .aui-root kbd, .aui-root samp, .aui-root pre) {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-      "Liberation Mono", "Courier New", monospace;
-    font-size: 1em;
-  }
+/* Mono font for code / kbd / samp / pre. */
+:where(.aui-root code, .aui-root kbd, .aui-root samp, .aui-root pre) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 1em;
+}
 
-  /* Small / sub / sup. */
-  :where(.aui-root small) {
-    font-size: 80%;
-  }
-  :where(.aui-root sub, .aui-root sup) {
-    font-size: 75%;
-    line-height: 0;
-    position: relative;
-    vertical-align: baseline;
-  }
-  :where(.aui-root sub) {
-    bottom: -0.25em;
-  }
-  :where(.aui-root sup) {
-    top: -0.5em;
-  }
+/* Small / sub / sup. */
+:where(.aui-root small) {
+  font-size: 80%;
+}
+:where(.aui-root sub, .aui-root sup) {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+:where(.aui-root sub) {
+  bottom: -0.25em;
+}
+:where(.aui-root sup) {
+  top: -0.5em;
+}
 
-  /* Tables. */
-  :where(.aui-root table) {
-    text-indent: 0;
-    border-color: inherit;
-    border-collapse: collapse;
-  }
+/* Tables. */
+:where(.aui-root table) {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
 
-  /* Focus ring fallback. */
-  :where(.aui-root :-moz-focusring) {
-    outline: auto;
-  }
+/* Focus ring fallback. */
+:where(.aui-root :-moz-focusring) {
+  outline: auto;
+}
 
-  /* Progress / summary. */
-  :where(.aui-root progress) {
-    vertical-align: baseline;
-  }
-  :where(.aui-root summary) {
-    display: list-item;
-  }
+/* Progress / summary. */
+:where(.aui-root progress) {
+  vertical-align: baseline;
+}
+:where(.aui-root summary) {
+  display: list-item;
+}
 
-  /* Lists are unstyled inside the surface. */
-  :where(.aui-root ol, .aui-root ul, .aui-root menu) {
-    list-style: none;
-  }
+/* Lists are unstyled inside the surface. */
+:where(.aui-root ol, .aui-root ul, .aui-root menu) {
+  list-style: none;
+}
 
-  /* Replaced elements. */
-  :where(.aui-root img, .aui-root svg, .aui-root video, .aui-root canvas, .aui-root audio, .aui-root iframe, .aui-root embed, .aui-root object) {
-    display: block;
-    vertical-align: middle;
-  }
-  :where(.aui-root img, .aui-root video) {
-    max-width: 100%;
-    height: auto;
-  }
+/* Replaced elements. */
+:where(.aui-root img, .aui-root svg, .aui-root video, .aui-root canvas, .aui-root audio, .aui-root iframe, .aui-root embed, .aui-root object) {
+  display: block;
+  vertical-align: middle;
+}
+:where(.aui-root img, .aui-root video) {
+  max-width: 100%;
+  height: auto;
+}
 
-  /* Form controls. */
-  :where(.aui-root button, .aui-root input, .aui-root select, .aui-root optgroup, .aui-root textarea, .aui-root ::file-selector-button) {
-    font: inherit;
-    font-feature-settings: inherit;
-    font-variation-settings: inherit;
-    letter-spacing: inherit;
-    color: inherit;
-    border-radius: 0;
-    background-color: transparent;
-    opacity: 1;
-  }
+/* Form controls. */
+:where(.aui-root button, .aui-root input, .aui-root select, .aui-root optgroup, .aui-root textarea, .aui-root ::file-selector-button) {
+  font: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  border-radius: 0;
+  background-color: transparent;
+  opacity: 1;
+}
 
-  :where(.aui-root select:is([multiple], [size]) optgroup) {
-    font-weight: bolder;
-  }
-  :where(.aui-root select:is([multiple], [size]) optgroup option) {
-    padding-inline-start: 20px;
-  }
-  :where(.aui-root ::file-selector-button) {
-    margin-inline-end: 4px;
-  }
+:where(.aui-root select:is([multiple], [size]) optgroup) {
+  font-weight: bolder;
+}
+:where(.aui-root select:is([multiple], [size]) optgroup option) {
+  padding-inline-start: 20px;
+}
+:where(.aui-root ::file-selector-button) {
+  margin-inline-end: 4px;
+}
 
+:where(.aui-root ::placeholder) {
+  opacity: 1;
+}
+@supports (not (-webkit-appearance: -apple-pay-button)) or
+  (contain-intrinsic-size: 1px) {
   :where(.aui-root ::placeholder) {
-    opacity: 1;
+    color: color-mix(in oklab, currentcolor 50%, transparent);
   }
-  @supports (not (-webkit-appearance: -apple-pay-button)) or
-    (contain-intrinsic-size: 1px) {
-    :where(.aui-root ::placeholder) {
-      color: color-mix(in oklab, currentcolor 50%, transparent);
-    }
-  }
+}
 
-  :where(.aui-root textarea) {
-    resize: vertical;
-  }
+:where(.aui-root textarea) {
+  resize: vertical;
+}
 
-  :where(.aui-root ::-webkit-search-decoration) {
-    -webkit-appearance: none;
-  }
-  :where(.aui-root ::-webkit-date-and-time-value) {
-    min-height: 1lh;
-    text-align: inherit;
-  }
-  :where(.aui-root ::-webkit-datetime-edit) {
-    display: inline-flex;
-  }
-  :where(.aui-root ::-webkit-datetime-edit-fields-wrapper) {
-    padding: 0;
-  }
-  :where(.aui-root ::-webkit-datetime-edit, .aui-root ::-webkit-datetime-edit-year-field, .aui-root ::-webkit-datetime-edit-month-field, .aui-root ::-webkit-datetime-edit-day-field, .aui-root ::-webkit-datetime-edit-hour-field, .aui-root ::-webkit-datetime-edit-minute-field, .aui-root ::-webkit-datetime-edit-second-field, .aui-root ::-webkit-datetime-edit-millisecond-field, .aui-root ::-webkit-datetime-edit-meridiem-field) {
-    padding-block: 0;
-  }
-  :where(.aui-root ::-webkit-calendar-picker-indicator) {
-    line-height: 1;
-  }
-  :where(.aui-root :-moz-ui-invalid) {
-    box-shadow: none;
-  }
+:where(.aui-root ::-webkit-search-decoration) {
+  -webkit-appearance: none;
+}
+:where(.aui-root ::-webkit-date-and-time-value) {
+  min-height: 1lh;
+  text-align: inherit;
+}
+:where(.aui-root ::-webkit-datetime-edit) {
+  display: inline-flex;
+}
+:where(.aui-root ::-webkit-datetime-edit-fields-wrapper) {
+  padding: 0;
+}
+:where(.aui-root ::-webkit-datetime-edit, .aui-root ::-webkit-datetime-edit-year-field, .aui-root ::-webkit-datetime-edit-month-field, .aui-root ::-webkit-datetime-edit-day-field, .aui-root ::-webkit-datetime-edit-hour-field, .aui-root ::-webkit-datetime-edit-minute-field, .aui-root ::-webkit-datetime-edit-second-field, .aui-root ::-webkit-datetime-edit-millisecond-field, .aui-root ::-webkit-datetime-edit-meridiem-field) {
+  padding-block: 0;
+}
+:where(.aui-root ::-webkit-calendar-picker-indicator) {
+  line-height: 1;
+}
+:where(.aui-root :-moz-ui-invalid) {
+  box-shadow: none;
+}
 
-  :where(.aui-root button, .aui-root input:where([type="button"], [type="reset"], [type="submit"]), .aui-root ::file-selector-button) {
-    appearance: button;
-  }
+:where(.aui-root button, .aui-root input:where([type="button"], [type="reset"], [type="submit"]), .aui-root ::file-selector-button) {
+  appearance: button;
+}
 
-  :where(.aui-root ::-webkit-inner-spin-button, .aui-root ::-webkit-outer-spin-button) {
-    height: auto;
-  }
+:where(.aui-root ::-webkit-inner-spin-button, .aui-root ::-webkit-outer-spin-button) {
+  height: auto;
+}
 
-  :where(.aui-root [hidden]):where(:not([hidden="until-found"])) {
-    display: none !important;
-  }
+:where(.aui-root [hidden]):where(:not([hidden="until-found"])) {
+  display: none !important;
 }

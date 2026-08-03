@@ -1,0 +1,86 @@
+.voiceControl {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  padding-inline: calc(var(--spacing) * 4);
+  padding-block: calc(var(--spacing) * 2);
+}
+
+.voiceStatus {
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+}
+
+/* VoiceStatusDot base + per-state colors (conditional logic unchanged in
+   voice.tsx — this just gives each branch its own module class). */
+.voiceStatusDot {
+  width: calc(var(--spacing) * 2.5);
+  height: calc(var(--spacing) * 2.5);
+  flex-shrink: 0;
+  border-radius: calc(infinity * 1px);
+  transition-property: all;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  --tw-duration: 300ms;
+  transition-duration: 300ms;
+}
+
+.voiceStatusDotIdle {
+  background-color: var(--muted-foreground);
+}
+
+.voiceStatusDotConnecting {
+  animation-name: global(pulse);
+  animation-duration: 2s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  animation-iteration-count: infinite;
+  background-color: var(--color-amber-500);
+}
+
+.voiceStatusDotActive {
+  background-color: var(--color-green-500);
+}
+
+.voiceStatusDotMuted {
+  background-color: var(--destructive);
+}
+
+/* VoiceOrb <canvas> — no children, so no descendant-svg concerns. */
+.voiceOrb {
+  width: calc(var(--spacing) * 16);
+  height: calc(var(--spacing) * 16);
+  flex-shrink: 0;
+}
+
+/* VoiceConnectButton: Button (owned by a parallel worker,
+   src/aui/ui/button.tsx) — variant="default" size="sm" already sets its own
+   gap-1.5 (its base classlist includes a permanent "gap-2" for icon+label
+   layout) and rounded-md for size="sm" — genuine conflicts on gap and
+   border-radius, so this override is doubled per the shared conventions
+   memo's "Overriding a child component's own base style from a parent". */
+.connectButton.connectButton {
+  gap: calc(var(--spacing) * 1.5);
+  border-radius: var(--radius);
+}
+
+.connectIcon {
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
+}
+
+/* VoiceMuteButton passes only the literal "aui-voice-mute" hook with no
+   Tailwind utilities at all — nothing to translate, no module class needed. */
+
+/* VoiceDisconnectButton: TooltipIconButton/Button override — the ghost
+   variant's own default text color is a genuine conflict with our permanent
+   text-destructive, so doubled for the same reason as .connectButton. */
+.disconnectButton.disconnectButton {
+  color: var(--destructive);
+}
+@media (hover: hover) {
+  .disconnectButton.disconnectButton:hover {
+    color: var(--destructive);
+  }
+}

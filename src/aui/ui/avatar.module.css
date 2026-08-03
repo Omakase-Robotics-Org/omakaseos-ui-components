@@ -1,0 +1,179 @@
+/**
+ * @file Avatar — CSS Modules port of the former Tailwind classes. The
+ * original relied on `group/avatar` + `group-data-[size=...]/avatar:` and
+ * `group/avatar-group` + `group-has-data-[size=...]/avatar-group:` marker
+ * classes purely so Tailwind could generate unique utility classes; in
+ * hand-written CSS the ancestor already carries the real `data-size`
+ * attribute (Avatar) or a descendant carries it (AvatarGroup, via
+ * `:has()`), so plain descendant / `:has()` selectors replace them
+ * (see aui-migration-conventions.md, "Data-attribute selectors replace
+ * Tailwind's group/peer marker classes").
+ */
+
+/* ---------------------------------------------------------------------
+ * Avatar
+ * ------------------------------------------------------------------- */
+
+.avatarRoot {
+  position: relative;
+  display: flex;
+  width: 2rem; /* size-8 */
+  height: 2rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: calc(infinity * 1px); /* rounded-full */
+  -webkit-user-select: none;
+  user-select: none;
+}
+.avatarRoot[data-size="lg"] {
+  width: 2.5rem; /* size-10 */
+  height: 2.5rem;
+}
+.avatarRoot[data-size="sm"] {
+  width: 1.5rem; /* size-6 */
+  height: 1.5rem;
+}
+
+.avatarImage {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+
+.avatarFallback {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(infinity * 1px);
+  background-color: var(--muted);
+  font-size: 0.875rem; /* text-sm */
+  line-height: calc(1.25 / 0.875);
+  color: var(--muted-foreground);
+}
+.avatarRoot[data-size="sm"] .avatarFallback {
+  font-size: 0.75rem; /* text-xs */
+  line-height: calc(1 / 0.75);
+}
+
+.avatarBadge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(infinity * 1px);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  -webkit-user-select: none;
+  user-select: none;
+  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
+    var(--tw-ring-color, currentcolor);
+  --tw-ring-color: var(--background);
+  box-shadow:
+    var(--tw-inset-shadow, 0 0 #0000),
+    var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
+}
+.avatarRoot[data-size="sm"] .avatarBadge {
+  width: 0.5rem; /* size-2 */
+  height: 0.5rem;
+}
+.avatarRoot[data-size="sm"] .avatarBadge > svg {
+  display: none;
+}
+.avatarRoot[data-size="default"] .avatarBadge {
+  width: 0.625rem; /* size-2.5 */
+  height: 0.625rem;
+}
+.avatarRoot[data-size="default"] .avatarBadge > svg {
+  width: 0.5rem; /* size-2 */
+  height: 0.5rem;
+}
+.avatarRoot[data-size="lg"] .avatarBadge {
+  width: 0.75rem; /* size-3 */
+  height: 0.75rem;
+}
+.avatarRoot[data-size="lg"] .avatarBadge > svg {
+  width: 0.5rem; /* size-2 */
+  height: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------
+ * AvatarGroup / AvatarGroupCount
+ * ------------------------------------------------------------------- */
+
+.avatarGroupRoot {
+  display: flex;
+}
+/* -space-x-2: only margin-inline-end is non-zero (space-x's reverse flag
+ * defaults to 0, zeroing margin-inline-start) — see lookup.js output for
+ * `-space-x-2`. */
+.avatarGroupRoot > :not(:last-child) {
+  margin-inline-end: -0.5rem;
+}
+.avatarGroupRoot > [data-slot="avatar"] {
+  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
+    var(--tw-ring-color, currentcolor);
+  --tw-ring-color: var(--background);
+  box-shadow:
+    var(--tw-inset-shadow, 0 0 #0000),
+    var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
+}
+
+.avatarGroupCount {
+  position: relative;
+  display: flex;
+  width: 2rem; /* size-8 */
+  height: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(infinity * 1px);
+  background-color: var(--muted);
+  font-size: 0.875rem; /* text-sm */
+  line-height: calc(1.25 / 0.875);
+  color: var(--muted-foreground);
+  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
+    var(--tw-ring-color, currentcolor);
+  --tw-ring-color: var(--background);
+  box-shadow:
+    var(--tw-inset-shadow, 0 0 #0000),
+    var(--tw-inset-ring-shadow, 0 0 #0000),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
+}
+.avatarGroupCount > svg {
+  width: 1rem; /* size-4 */
+  height: 1rem;
+}
+/* group-has-data-[size=lg]/avatar-group: / group-has-data-[size=sm]/avatar-group:
+ * — "any avatar in this group has data-size=X" driving a SIBLING element's
+ * (the count's) own size. Translated with :has() on the group root scoping
+ * down into the count, since (unlike the other group/ cases in this file)
+ * there is no single shared ancestor attribute to key off directly. */
+.avatarGroupRoot:has([data-size="lg"]) .avatarGroupCount {
+  width: 2.5rem; /* size-10 */
+  height: 2.5rem;
+}
+.avatarGroupRoot:has([data-size="sm"]) .avatarGroupCount {
+  width: 1.5rem; /* size-6 */
+  height: 1.5rem;
+}
+.avatarGroupRoot:has([data-size="lg"]) .avatarGroupCount > svg {
+  width: 1.25rem; /* size-5 */
+  height: 1.25rem;
+}
+.avatarGroupRoot:has([data-size="sm"]) .avatarGroupCount > svg {
+  width: 0.75rem; /* size-3 */
+  height: 0.75rem;
+}

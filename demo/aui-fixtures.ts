@@ -1,7 +1,7 @@
 /**
  * @file Deterministic, network-free fixtures for the `src/aui/aui.html` demo
  * page — the Phase 1 visual-regression safety net for the aui → CSS Modules
- * migration (see `omksos_web/reports/aui-css-modules-visual-baseline/`).
+ * migration (see `omksos_web/reports/aui-css-modules/`).
  *
  * Every scene in `aui-main.tsx` is seeded from a plain array here so the
  * Playwright baseline spec (`spec/aui-visual.e2e.spec.ts`) captures the same

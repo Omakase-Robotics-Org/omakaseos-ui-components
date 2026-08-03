@@ -3,6 +3,7 @@
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import styles from "./voice.module.css";
 import {
   AuiIf,
   useVoiceControls,
@@ -421,7 +422,7 @@ export const VoiceOrb: FC<VoiceOrbProps> = memo(
     return (
       <canvas
         ref={canvasRef}
-        className={cn("aui-voice-orb size-16 shrink-0", className)}
+        className={cn("aui-voice-orb", styles.voiceOrb, className)}
         data-state={state}
       />
     );
@@ -432,12 +433,7 @@ VoiceOrb.displayName = "VoiceOrb";
 
 export const VoiceControl: FC<{ className?: string }> = ({ className }) => {
   return (
-    <div
-      className={cn(
-        "aui-voice-control flex items-center gap-2 border-b px-4 py-2",
-        className,
-      )}
-    >
+    <div className={cn("aui-voice-control", styles.voiceControl, className)}>
       <VoiceStatusDot />
 
       <AuiIf
@@ -449,7 +445,7 @@ export const VoiceControl: FC<{ className?: string }> = ({ className }) => {
       </AuiIf>
 
       <AuiIf condition={(s) => s.thread.voice?.status.type === "starting"}>
-        <span className="aui-voice-status text-muted-foreground text-sm">
+        <span className={cn("aui-voice-status", styles.voiceStatus)}>
           Connecting...
         </span>
       </AuiIf>
@@ -469,12 +465,13 @@ export const VoiceStatusDot: FC = () => {
   return (
     <span
       className={cn(
-        "aui-voice-status-dot size-2.5 shrink-0 rounded-full transition-all duration-300",
-        state === "idle" && "bg-muted-foreground",
-        state === "connecting" && "animate-pulse bg-amber-500",
-        state === "listening" && "bg-green-500",
-        state === "speaking" && "bg-green-500",
-        state === "muted" && "bg-destructive",
+        "aui-voice-status-dot",
+        styles.voiceStatusDot,
+        state === "idle" && styles.voiceStatusDotIdle,
+        state === "connecting" && styles.voiceStatusDotConnecting,
+        state === "listening" && styles.voiceStatusDotActive,
+        state === "speaking" && styles.voiceStatusDotActive,
+        state === "muted" && styles.voiceStatusDotMuted,
       )}
     />
   );
@@ -486,10 +483,10 @@ export const VoiceConnectButton: FC = () => {
     <Button
       variant="default"
       size="sm"
-      className="aui-voice-connect gap-1.5 rounded-lg"
+      className={cn("aui-voice-connect", styles.connectButton)}
       onClick={() => connect()}
     >
-      <PhoneIcon className="size-4" />
+      <PhoneIcon className={styles.connectIcon} />
       Connect
     </Button>
   );
@@ -516,7 +513,7 @@ export const VoiceDisconnectButton: FC = () => {
   return (
     <TooltipIconButton
       tooltip="Disconnect"
-      className="aui-voice-disconnect text-destructive hover:text-destructive"
+      className={cn("aui-voice-disconnect", styles.disconnectButton)}
       onClick={() => disconnect()}
     >
       <PhoneOffIcon />

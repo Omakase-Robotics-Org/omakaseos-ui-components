@@ -1,23 +1,21 @@
 /**
- * @file Library-mode Vite config for the v0.6 aui surface (JS only).
+ * @file Library-mode Vite config for the aui surface.
  *
- * Why JS-only here:
- *   We tried the obvious path — `@tailwindcss/vite` plugin + CSS imported
- *   from `index.ts` so vite library mode would inline+emit `aui.css`.
- *   Tailwind v4's content extractor crashed on backticked template
- *   literals inside the surface (e.g. `${ANIMATION_DURATION}ms`)
- *   when running under rolldown's lib pipeline ("Unterminated
- *   string: ``"). The same exact CSS + components compile fine in
- *   normal Vite app mode (the PoC builds green every time). Splitting
- *   the CSS off to `@tailwindcss/cli` keeps the JS library build small
- *   and lets the CSS pipeline use the engine's first-class entry path —
- *   no rolldown CSS-in-JS plugin layering, no vite-lib-mode quirks.
+ * v0.9 CSS Modules migration note: this used to be a JS-only build (a
+ * separate `@tailwindcss/cli` invocation produced `dist/aui/aui.css`)
+ * because Tailwind v4's content extractor crashed on backticked template
+ * literals inside the surface when run under rolldown's lib pipeline.
+ * That workaround is gone along with Tailwind itself — every component
+ * now imports its own co-located `*.module.css`, and `src/aui/index.ts`
+ * imports the plain `./aui.css` (tokens + scoped preflight) as a
+ * side-effect. Vite's library mode extracts every CSS import reachable
+ * from the entry into ONE stylesheet; `build.lib.cssFileName` below pins
+ * its name so it lands at `dist/aui/aui.css`, matching the package.json
+ * `./aui/aui.css` export unchanged from before.
  *
- * Bun script that drives the two halves: `build:aui` calls this config
- * for JS, then `build:aui:css` runs `@tailwindcss/cli` for the CSS, and
- * both emit into `dist/aui/`.
+ * Bun script: `build:aui` runs this single config for both JS and CSS.
  *
- * Consumer integration:
+ * Consumer integration (unchanged):
  *   import { Thread } from "@omakase-robotics/ui-components/aui";
  *   import "@omakase-robotics/ui-components/aui/aui.css";
  */
@@ -43,7 +41,6 @@ const externalPatterns: Array<RegExp> = [
   /^class-variance-authority($|\/)/,
   /^clsx($|\/)/,
   /^remark-gfm($|\/)/,
-  /^tailwind-merge($|\/)/,
   /^zustand($|\/)/,
 ];
 
@@ -65,6 +62,11 @@ export default defineConfig({
       { find: "@", replacement: resolve(here, "./src/aui") },
     ],
   },
+  css: {
+    modules: {
+      localsConvention: "camelCase",
+    },
+  },
   build: {
     outDir: "dist/aui",
     emptyOutDir: true,
@@ -74,6 +76,11 @@ export default defineConfig({
       name: "OmksAui",
       formats: ["es"],
       fileName: () => "index.js",
+      // Pins the single extracted stylesheet's name so it lands at
+      // `dist/aui/aui.css` (matching the `./aui/aui.css` package.json
+      // export). Without this it falls back to the package.json `name`
+      // field ("@omakase-robotics/ui-components" -> a nonsense filename).
+      cssFileName: "aui",
     },
     rollupOptions: {
       external: (id) => externalPatterns.some((re) => re.test(id)),

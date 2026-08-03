@@ -1,0 +1,192 @@
+/**
+ * @file CSS Module for reasoning.tsx (Tailwind -> CSS Modules migration).
+ *
+ * Shape mirrors tool-fallback.module.css / tool-group.module.css: a
+ * Collapsible disclosure with a trigger row (icon + label + optional
+ * shimmer overlay + chevron) and a CollapsibleContent with top/bottom
+ * fade masks. Naming convention shared across all three: `.trigger`,
+ * `.chevron`, `.content`, `.shimmer`.
+ *
+ * Literal values below are transcribed from the oracle Tailwind build
+ * (see aui-migration-conventions.md) rather than referenced through
+ * Tailwind's theme custom properties, because aui.css no longer imports
+ * `tailwindcss/theme.css` post-migration (those tokens, e.g. `--spacing`,
+ * `--ease-out`, `--default-transition-duration`, no longer exist as CSS
+ * custom properties). `--radius` is the one exception: it is still
+ * declared directly in aui.css's `:root` (not theme-derived), so
+ * `var(--radius)` is kept as-is.
+ *
+ * `reasoningVariants` (cva) now returns CSS Module class names. The root
+ * element's OWN class list is produced by cva (base + per-variant extra
+ * class), which correctly reproduces the pre-migration behavior where the
+ * "outline" look is the default even on instances that don't pass a
+ * `variant` prop at all (ReasoningRoot only sets the `data-variant`
+ * *attribute* when the prop is explicitly provided — see reasoning.tsx —
+ * so an attribute-selector-only approach would miss the default case).
+ * Variant-conditioned DESCENDANT styling (the fade gradients) keys off
+ * that `data-variant` attribute directly, which is safe here because
+ * those only ever special-case the non-default "muted" value, which is
+ * only ever reached when the attribute is explicitly present.
+ */
+
+.root {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+/* Default cva variant ("outline"). */
+.rootOutline {
+  border-radius: var(--radius);
+  border-width: 1px;
+  border-style: solid;
+  padding-inline: 0.75rem;
+  padding-block: 0.5rem;
+}
+
+.rootMuted {
+  border-radius: var(--radius);
+  padding-inline: 0.75rem;
+  padding-block: 0.5rem;
+  background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+}
+
+.trigger {
+  display: flex;
+  max-width: 75%;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+  transition-property: color, background-color, border-color, outline-color,
+    text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via,
+    --tw-gradient-to;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+@media (hover: hover) {
+  .trigger:hover {
+    color: var(--foreground);
+  }
+}
+
+.triggerIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.labelWrapper {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Shimmer overlay: dead in the current Tailwind build (no
+ * tailwindcss-animate plugin, no `--animate-shimmer` emitted — see
+ * migration conventions memo). Only the positioning utilities are real. */
+.shimmer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.chevron {
+  margin-top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  rotate: 0deg;
+  transition-property: transform, translate, scale, rotate;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.trigger[data-state="closed"] .chevron {
+  rotate: calc(90deg * -1);
+}
+
+.content {
+  position: relative;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+  outline-style: none;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.content[data-state="closed"] {
+  pointer-events: none;
+}
+
+/* `data-[state=closed]:animate-collapsible-up` /
+ * `data-[state=open]:animate-collapsible-down` / `fill-mode-forwards` are
+ * dead in the current build (no keyframes registered for those names) —
+ * intentionally not implemented. */
+
+.fadeTop,
+.fadeBottom {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  z-index: 10;
+  height: 2rem;
+  transition-duration: var(--animation-duration);
+}
+
+.fadeTop {
+  top: 0;
+  background-image: linear-gradient(to bottom, var(--color-background), transparent);
+}
+
+.fadeBottom {
+  bottom: 0;
+  background-image: linear-gradient(to top, var(--color-background), transparent);
+}
+
+/* Muted variant overrides the fade gradient to fade against the muted
+ * background instead of the page background. `hsl(var(--muted)/0.5)` is
+ * transcribed verbatim from the Tailwind arbitrary-value source (--muted
+ * is an oklch() value, so this is technically malformed hsl() syntax —
+ * but it's exactly what the current build already emits, so it is copied
+ * as-is rather than "fixed", per the migration's byte-fidelity mandate). */
+.root[data-variant="muted"] .fadeTop {
+  background-image: linear-gradient(to bottom, hsl(var(--muted)/0.5), transparent);
+}
+
+.root[data-variant="muted"] .fadeBottom {
+  background-image: linear-gradient(to top, hsl(var(--muted)/0.5), transparent);
+}
+
+.content[data-state="open"] .fadeBottom {
+  transition-delay: calc(var(--animation-duration) * 0.75);
+}
+
+.text {
+  position: relative;
+  z-index: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding-inline-start: 1.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  line-height: 1.625;
+  /* transform-gpu: Tailwind emits this exact composed transform (the
+   * empty var(...,) fallbacks for unused rotate/skew axes are verbatim
+   * from the oracle and are what make the computed `transform` a
+   * resolved identity matrix rather than "none"). */
+  transform: translateZ(0) var(--tw-rotate-x,) var(--tw-rotate-y,)
+    var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: var(--animation-duration);
+}
+
+.textContent > :not(:last-child) {
+  margin-block-start: 0px;
+  margin-block-end: 1rem;
+}

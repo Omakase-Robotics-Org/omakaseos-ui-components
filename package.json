@@ -1,7 +1,7 @@
 {
   "name": "@omakase-robotics/ui-components",
-  "version": "0.8.0",
-  "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1\u2013v0.2 status primitives, v0.3 form & layout primitives, v0.4 conversation-log primitives, v0.5 live-conversation primitives (Google Meet 1:n stage), v0.6 canonical assistant-ui primitives (Thread / Composer / MarkdownText / Tool / Reasoning / Voice \u2014 vendored from the shadcn-style assistant-ui registry, Tailwind v4 in-package), v0.7 AsyncCombobox (type-to-search over an async candidate list \u2014 the library's only synthetic ARIA widget, bounded by an automated boundary spec), v0.8 three vocabulary levels the shared robot console needed (--ds-text-secondary between text and muted, --ds-border-subtle below border, --ds-radius-lg above card) so a consumer no longer has to keep a private token set.",
+  "version": "0.9.0",
+  "description": "Shared React component library for omakase-robotics web UIs (omakaseos_service web + status_server_webui). v0.1–v0.2 status primitives, v0.3 form & layout primitives, v0.4 conversation-log primitives, v0.5 live-conversation primitives (Google Meet 1:n stage), v0.6 canonical assistant-ui primitives (Thread / Composer / MarkdownText / Tool / Reasoning / Voice — vendored from the shadcn-style assistant-ui registry, CSS Modules in-package), v0.7 AsyncCombobox (type-to-search over an async candidate list — the library's only synthetic ARIA widget, bounded by an automated boundary spec), v0.8 three vocabulary levels the shared robot console needed (--ds-text-secondary between text and muted, --ds-border-subtle below border, --ds-radius-lg above card) so a consumer no longer has to keep a private token set, v0.9 aui surface migrated off Tailwind v4 onto plain CSS Modules (same public API, no Tailwind toolchain shipped in-package).",
   "type": "module",
   "main": "src/index.ts",
   "module": "src/index.ts",
@@ -29,9 +29,7 @@
   "scripts": {
     "dev": "vite --config vite.config.ts",
     "build:demo": "vite build --config vite.config.ts",
-    "build:aui:js": "vite build --config vite.aui.config.ts",
-    "build:aui:css": "tailwindcss -i ./src/aui/aui.css -o ./dist/aui/aui.css",
-    "build:aui": "bun run build:aui:js && bun run build:aui:css",
+    "build:aui": "vite build --config vite.aui.config.ts",
     "build": "bun run build:aui && bun run build:demo",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest --run",
@@ -51,7 +49,6 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "remark-gfm": "^4.0.0",
-    "tailwind-merge": "^3.0.0",
     "zustand": "^5.0.0"
   },
   "peerDependenciesMeta": {
@@ -82,9 +79,6 @@
     "remark-gfm": {
       "optional": true
     },
-    "tailwind-merge": {
-      "optional": true
-    },
     "zustand": {
       "optional": true
     }
@@ -99,8 +93,6 @@
     "@storybook/addon-themes": "^8.6",
     "@storybook/react-vite": "^8.6",
     "@storybook/test": "^8.6",
-    "@tailwindcss/cli": "^4.3.1",
-    "@tailwindcss/vite": "^4.1.16",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^26.0.0",
@@ -117,8 +109,6 @@
     "react-dom": "^19.2.4",
     "remark-gfm": "^4.0.1",
     "storybook": "^8.6",
-    "tailwind-merge": "^3.3.2",
-    "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3",
     "vite": "^8.0.1",
     "vite-plugin-dts": "^4.5.4",

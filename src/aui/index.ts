@@ -28,6 +28,13 @@
  * removing or renaming one is a v0.7 break.
  */
 
+// Side-effect import: tokens + scoped `.aui-root` preflight. Vite's library
+// build extracts every CSS import reachable from this entry into ONE
+// stylesheet (see vite.aui.config.ts `build.lib.cssFileName`), so this
+// import is what pulls `aui.css` itself — plus every component's own
+// `*.module.css` pulled in transitively below — into `dist/aui/aui.css`.
+import "./aui.css";
+
 // Thread shell.
 export { Thread } from "./thread";
 export type { ThreadProps, ThreadComponents, ThreadGroupPart } from "./thread";
@@ -105,9 +112,9 @@ export {
 } from "./ui/dialog";
 export { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
-// className composer (clsx + tailwind-merge). Exposed so a consumer who
-// needs to compose Tailwind classes alongside the surface picks the same
-// util that the surface itself uses — avoids drift.
+// className composer (clsx). Exposed so a consumer composing classNames
+// alongside the surface picks the same util the surface itself uses —
+// avoids drift.
 export { cn } from "./lib/cn";
 
 // Canonical read-only thread mount — re-exported from @assistant-ui/react
