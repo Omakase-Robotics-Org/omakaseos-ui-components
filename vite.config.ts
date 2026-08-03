@@ -10,6 +10,19 @@ const here = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   root: "demo",
   plugins: [react(), tailwindcss()],
+  build: {
+    // Two demo entry points: the v0.1-v0.5 `--ds-*` token harness
+    // (index.html) and the v0.6 aui Tailwind surface (aui.html, its own
+    // page because it's the only place that loads src/aui/aui.css).
+    // Without this, `vite build` only bundles index.html and aui.html
+    // would silently stop being exercised by `bun run build`.
+    rollupOptions: {
+      input: {
+        main: resolve(here, "./demo/index.html"),
+        aui: resolve(here, "./demo/aui.html"),
+      },
+    },
+  },
   resolve: {
     // The vendored shadcn / assistant-ui registry components target the
     // canonical `@/...` paths from `npx shadcn add`. Mirror them onto the

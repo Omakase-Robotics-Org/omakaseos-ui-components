@@ -35,6 +35,19 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
+/* Phase 1 visual-baseline harness note (aui -> CSS Modules migration,
+ * `omksos_web/reports/aui-css-modules-visual-baseline/`): the `@tailwindcss/vite`
+ * dev-server plugin auto-detects candidate class names by scanning from the
+ * Vite `root` (`demo/`, see vite.config.ts). Every file in this directory
+ * (thread.tsx, attachment.tsx, ...) sits OUTSIDE that root, so without an
+ * explicit `@source` the dev build silently emits zero utility classes for
+ * the whole surface (the `bun run build:aui:css` / `@tailwindcss/cli`
+ * production build does not have this problem — its root is the package
+ * root — which is why this only ever showed up in the new demo page, not in
+ * the existing shipped build). This directive is scan-path-only: it does
+ * not add, remove, or rename a single class anywhere in this directory. */
+@source "./**/*.{ts,tsx}";
+
 /* Pull in the upstream assistant-ui markdown "dot" loading-indicator CSS.
  * The vendored MarkdownText component (src/aui/markdown-text.tsx) used to
  * import this from @assistant-ui/react-markdown/styles/dot.css inside JS;
