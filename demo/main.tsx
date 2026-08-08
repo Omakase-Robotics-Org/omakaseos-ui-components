@@ -33,11 +33,14 @@ import {
   MessageBubble,
   ParticipantTile,
   RealtimeEventLog,
+  ReservedText,
   Select,
+  SignalBars,
   Slider,
   StatusBadge,
   Switch,
   Textarea,
+  ToggleSwitch,
   ToolCallTrace,
   Toolbar,
   Transcript,
@@ -303,6 +306,110 @@ function LiveStagePanel() {
   );
 }
 
+/** ToggleSwitch (v0.10) — on / off / disabled, the three states every
+ * feature-flag call site on the robot console needs. */
+function ToggleSwitchDemo() {
+  const [gestureOn, setGestureOn] = useState(true);
+  const [autopilotOff, setAutopilotOff] = useState(false);
+  return (
+    <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+      <span
+        data-testid="toggle-on"
+        style={{ display: "grid", gap: 4, justifyItems: "center", fontSize: 11, color: "var(--ds-text-muted)" }}
+      >
+        <ToggleSwitch checked={gestureOn} onChange={setGestureOn} ariaLabel="Gesture mode" />
+        on
+      </span>
+      <span
+        data-testid="toggle-off"
+        style={{ display: "grid", gap: 4, justifyItems: "center", fontSize: 11, color: "var(--ds-text-muted)" }}
+      >
+        <ToggleSwitch checked={autopilotOff} onChange={setAutopilotOff} ariaLabel="Autopilot" />
+        off
+      </span>
+      <span
+        data-testid="toggle-disabled"
+        style={{ display: "grid", gap: 4, justifyItems: "center", fontSize: 11, color: "var(--ds-text-muted)" }}
+      >
+        <ToggleSwitch checked disabled onChange={() => {}} ariaLabel="Locked feature" />
+        disabled
+      </span>
+    </div>
+  );
+}
+
+const SIGNAL_LEVELS: ReadonlyArray<{ testid: string; label: string; signal: number }> = [
+  { testid: "signalbars-zero", label: "0%", signal: 0 },
+  { testid: "signalbars-low", label: "25%", signal: 25 },
+  { testid: "signalbars-mid", label: "50%", signal: 50 },
+  { testid: "signalbars-high", label: "75%", signal: 75 },
+  { testid: "signalbars-full", label: "100%", signal: 100 },
+];
+
+/** SignalBars (v0.10) — every threshold crossing (0/1/2/3/4 active bars),
+ * plus the "unknown" contract: the source app's callers render nothing at
+ * all rather than asking this component to guess. */
+function SignalBarsDemo() {
+  return (
+    <div style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
+      {SIGNAL_LEVELS.map((level) => (
+        <div
+          key={level.testid}
+          data-testid={level.testid}
+          style={{ display: "grid", gap: 4, justifyItems: "center" }}
+        >
+          <SignalBars signal={level.signal} />
+          <span style={{ fontSize: 11, color: "var(--ds-text-muted)" }}>{level.label}</span>
+        </div>
+      ))}
+      <div data-testid="signalbars-unknown" style={{ display: "grid", gap: 4, justifyItems: "center" }}>
+        <span style={{ fontSize: 11, color: "var(--ds-text-muted)" }}>—</span>
+        <span style={{ fontSize: 11, color: "var(--ds-text-muted)" }}>unknown</span>
+      </div>
+    </div>
+  );
+}
+
+/** ReservedText (v0.10) — with and without content, side by side. The
+ * point of this primitive is that these two boxes are the same height. */
+function ReservedTextDemo() {
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <div data-testid="reserved-text-empty">
+        <ReservedText tone="muted" />
+      </div>
+      <div data-testid="reserved-text-filled">
+        <ReservedText tone="warning">Guard rejected: arm is outside the safety envelope.</ReservedText>
+      </div>
+    </div>
+  );
+}
+
+function RobotConsolePrimitivesPanel() {
+  return (
+    <Card>
+      <CardHeader
+        title="Robot console primitives (v0.10)"
+        hint="promoted from robot-status-server-app"
+      />
+      <div style={{ display: "grid", gap: 16 }}>
+        <div>
+          <Heading level={3}>ToggleSwitch</Heading>
+          <ToggleSwitchDemo />
+        </div>
+        <div>
+          <Heading level={3}>SignalBars</Heading>
+          <SignalBarsDemo />
+        </div>
+        <div>
+          <Heading level={3}>ReservedText</Heading>
+          <ReservedTextDemo />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -312,6 +419,7 @@ function App() {
         <BasicsPanel />
         <RealtimeChatPanel />
         <LiveStagePanel />
+        <RobotConsolePrimitivesPanel />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
@@ -319,6 +427,7 @@ function App() {
         <BasicsPanel />
         <RealtimeChatPanel />
         <LiveStagePanel />
+        <RobotConsolePrimitivesPanel />
       </section>
     </div>
   );

@@ -1,0 +1,59 @@
+/* ---------- ToggleSwitch ----------
+ * Track/thumb dimensions (40x22, 16x16 thumb, 18px throw) are component-
+ * intrinsic geometry, left un-tokenized — the same choice `Switch.module.css`
+ * makes for its own 36x20 track. Color, radius, focus-ring, disabled-opacity
+ * and transition are bound to --ds-* below (translated from the source
+ * app's hardcoded 0.2s/0.5/#fff/22px/3px during the v0.10 promotion; see
+ * omksos_web/reports/ui-primitives-promotion/README.md for the mapping
+ * rationale). */
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--ds-surface-hover);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-pill);
+  transition: background-color var(--ds-transition-fast), border-color var(--ds-transition-fast);
+}
+.toggleSlider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--ds-text-muted);
+  border-radius: 50%;
+  transition: transform var(--ds-transition-fast), background-color var(--ds-transition-fast);
+}
+.toggleSwitch input:checked + .toggleSlider {
+  background: var(--ds-tone-success-fg);
+  border-color: var(--ds-tone-success-fg);
+}
+.toggleSwitch input:checked + .toggleSlider::before {
+  transform: translateX(18px);
+  background: var(--ds-text-on-accent);
+}
+.toggleSwitch input:not(:disabled):focus + .toggleSlider,
+.toggleSwitch input:not(:disabled):focus-visible + .toggleSlider {
+  outline: var(--ds-focus-ring-width) solid var(--ds-text-secondary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+.toggleSwitch input:disabled + .toggleSlider {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+}

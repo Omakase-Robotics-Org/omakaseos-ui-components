@@ -14,10 +14,14 @@
  * v0.7:      AsyncCombobox — type-to-search single-choice picker over
  *            an async candidate list. The library's only synthetic
  *            ARIA widget; bounded by `spec/async-combobox-boundary.spec.ts`.
+ * v0.10:     ToggleSwitch, SignalBars, ReservedText — promoted from
+ *            `robot-status-server-app`'s self-contained `components/ui/`
+ *            CSS modules (an SoT audit finding: three genuine L1 visual
+ *            primitives living outside the shared design system). See
+ *            `omksos_web/reports/ui-primitives-promotion/README.md`.
  *
- * L2 (BatteryBadge, ConnectionBadge, SignalBars) and L3 (RobotStatePanel,
- * ServicePanel) remain deferred until the contract is proven across both
- * consuming apps.
+ * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
+ * remain deferred until the contract is proven across both consuming apps.
  */
 
 // Status-monitor primitives
@@ -31,6 +35,13 @@ export { Fact, FactList } from "./Fact";
 export type { FactDirection, FactProps } from "./Fact";
 
 export { ButtonRow } from "./ButtonRow";
+
+// v0.10: promoted from robot-status-server-app — see the file header above.
+export { SignalBars } from "./SignalBars";
+export type { SignalBarsProps } from "./SignalBars";
+
+export { ReservedText } from "./ReservedText";
+export type { ReservedTextTone, ReservedTextProps } from "./ReservedText";
 
 // Form & layout primitives (v0.3)
 export { Button } from "./Button";
@@ -59,6 +70,11 @@ export type { CheckboxProps } from "./Checkbox";
 
 export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";
+
+// v0.10: promoted from robot-status-server-app — see the file header above.
+// Distinct from Switch — see ToggleSwitch.tsx's header for why both exist.
+export { ToggleSwitch } from "./ToggleSwitch";
+export type { ToggleSwitchProps } from "./ToggleSwitch";
 
 export { Slider } from "./Slider";
 export type { SliderProps } from "./Slider";

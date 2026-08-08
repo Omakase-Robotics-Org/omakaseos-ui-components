@@ -1,0 +1,28 @@
+/* ---------- SignalBars ----------
+ * Bar geometry (16px height, 3px width, 1px radius) is component-intrinsic
+ * — a mini glyph, not a purpose-bound dimension, so it stays a literal (same
+ * choice `Switch.module.css` makes for its own thumb). The inter-bar gap
+ * translates to --ds-space-2xs (2px, exact match) during the v0.10
+ * promotion; see omksos_web/reports/ui-primitives-promotion/README.md. The
+ * inactive-bar 0.25 opacity is a one-off decorative dim with no fitting
+ * --ds-* purpose token (--ds-disabled-opacity means "control is inert", not
+ * "value below threshold") and is left as a literal. */
+
+.signalBars {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ds-space-2xs);
+  height: 16px;
+}
+
+.signalBar {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--ds-text-muted);
+  opacity: 0.25;
+}
+
+.signalBar[data-active="true"] {
+  background: var(--ds-tone-success-fg);
+  opacity: 1;
+}

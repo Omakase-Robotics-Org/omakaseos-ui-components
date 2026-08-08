@@ -1,0 +1,33 @@
+/* ReservedText — a slot whose height is decided by its line reservation, never by
+   whether it currently holds text. The line height is declared here as a custom
+   property so the height calculation and the rendered lines cannot disagree.
+
+   v0.10 promotion token translation (see
+   omksos_web/reports/ui-primitives-promotion/README.md):
+     font-size 0.8125rem (13px)  -> --ds-font-size-control (13px, exact match —
+       this is compact status copy sitting beside controls/buttons, not
+       reading prose, so the control type scale is the right purpose bucket).
+     line-height 1.35            -> --ds-line-height-control (1.4, closest
+       purpose match; the private 1.35 was a one-off, --ds-line-height-text
+       (1.5) is sized for paragraph prose which this is not). --reserved-line-height
+       moves in lock-step so the height math and the rendered line box never
+       disagree — the one invariant this component exists to hold.
+     margin-bottom 0.75rem (12px) -> --ds-space-lg (12px, exact match). */
+
+.slot {
+  --reserved-line-height: calc(var(--ds-line-height-control) * 1em);
+
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-control);
+  margin-bottom: var(--ds-space-lg);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.slot[data-tone="muted"] {
+  color: var(--ds-text-secondary);
+}
+
+.slot[data-tone="warning"] {
+  color: var(--ds-tone-warning-fg);
+}

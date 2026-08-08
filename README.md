@@ -27,8 +27,8 @@ came to be — see `reports/realtime-chat-components-poc/`).
 
 | Layer | Released | Purpose | Components |
 | --- | --- | --- | --- |
-| **Status** | v0.1–v0.2 | Status-monitor primitives shared by every panel that surfaces robot or service state | `StatusBadge`, `Card` + `CardHeader`, `Fact` + `FactList`, `ButtonRow` |
-| **Form** | v0.3 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field` |
+| **Status** | v0.1–v0.2, v0.10 | Status-monitor primitives shared by every panel that surfaces robot or service state | `StatusBadge`, `Card` + `CardHeader`, `Fact` + `FactList`, `ButtonRow`, `SignalBars`, `ReservedText` |
+| **Form** | v0.3, v0.10 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field`, `ToggleSwitch` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
 | **AUI surface** | v0.6 | Vendored shadcn-style assistant-ui registry — the canonical chat shell consumed by live operator surfaces (PoC `assistant-ui-replacement-poc/app`, the body web app's conversations page). CSS Modules + shadcn theme tokens — see "Token model" below | `Thread`, `MarkdownText`, `ToolFallback`, `ToolGroupRoot/Trigger/Content`, `Reasoning` family, `ComposerAddAttachment`, `Composer/UserMessage Attachments`, `VoiceOrb` family, `TooltipIconButton`, plus shadcn `Button` / `Collapsible` / `Tooltip` / `Dialog` / `Avatar` re-exports — under sub-entry `/aui` |
@@ -61,6 +61,9 @@ import {
 
   // v0.5: live-conversation primitives (1:n live stage)
   ConversationStage, ParticipantTile, LiveCaption, pickStageColumns,
+
+  // v0.10: promoted from robot-status-server-app's components/ui/
+  ToggleSwitch, SignalBars, ReservedText,
 } from "@omakase-robotics/ui-components";
 
 // v0.6: canonical assistant-ui surface — separate sub-entry
@@ -201,7 +204,7 @@ run `bun install --force`.
 ```bash
 bun install
 bun run typecheck         # tsc --noEmit
-bun run test              # vitest --run (107+ tests across 21+ files)
+bun run test              # vitest --run (155+ tests across 24+ files)
 bun run test:e2e          # vite + Playwright; verifies overflow / focus / role / chat / stage
                           #   in real chromium (the things jsdom cannot show)
 bun run dev               # http://localhost:5198 — themed harness (both apps side by side)
