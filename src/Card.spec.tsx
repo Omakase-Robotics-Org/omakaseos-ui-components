@@ -39,16 +39,16 @@ describe("Card + CardHeader", () => {
 });
 
 /**
- * "Elevation is not nested" is a CSS ancestor rule, and jsdom resolves no
- * stylesheet, so the visual half (shadow gone, border stepped down) is proved
- * in a real browser by `spec/elevation-nesting.e2e.spec.ts`. What is provable
- * here — and worth pinning, because it is what the browser rule stands on — is
- * the pairing: Panel renders exactly one scope marker, a nested Card really is
- * a descendant of it, and Card's stylesheet keys off that same marker. Rename
- * the attribute on either side and this fails instead of silently resolving to
- * nothing.
+ * "A nested Card is a section" is a CSS ancestor rule, and jsdom resolves no
+ * stylesheet, so the visual half (surface gone, section rhythm in its place) is
+ * proved in a real browser by `spec/nested-card-sections.e2e.spec.ts`. What is
+ * provable here — and worth pinning, because it is what the browser rule stands
+ * on — is the pairing: Panel renders exactly one scope marker, a nested Card
+ * really is a descendant of it, and Card's stylesheet keys off that same
+ * marker. Rename the attribute on either side and this fails instead of
+ * silently resolving to nothing.
  */
-describe("Card inside a Panel — elevation is not nested", () => {
+describe("Card inside a Panel — a nested card is a section", () => {
   /** The data-* markers Panel actually puts on the element holding its children. */
   function panelBodyMarkers(): string[] {
     const { unmount } = render(<Panel title="Robot state">scope probe</Panel>);
@@ -77,7 +77,7 @@ describe("Card inside a Panel — elevation is not nested", () => {
     expect(panelBodyMarkers()).toEqual(["data-panel-body"]);
   });
 
-  it("keys the demotion off that marker, and demotes only the two elevation properties", () => {
+  it("keys the rule off that marker, and drops every property that draws a surface", () => {
     const [marker] = panelBodyMarkers();
     const css = readFileSync(resolve(__dirname, "Card.module.css"), "utf8");
     const rule = new RegExp(
@@ -90,12 +90,38 @@ describe("Card inside a Panel — elevation is not nested", () => {
       .split(";")
       .map((declaration) => declaration.trim())
       .filter((declaration) => declaration.length > 0);
-    // Shadow dropped, border one rung down — and nothing else. The radius and
-    // the header's type scale stay put, so the nested card keeps the same shape
-    // and the same title as a bare one.
+    // The four properties that make a Card a surface are dropped — outline,
+    // corner, fill, lift — and the fifth replaces the frame's inset with the
+    // section rhythm (0 across, so a section heading lands on the panel title's
+    // own column). Everything CardHeader draws stays put: the title is the only
+    // containment signal left, so it is not also stepped down.
     expect(declarations).toEqual([
-      "border-color: var(--ds-border-subtle)",
+      "border: none",
+      "border-radius: 0",
+      "background: transparent",
       "box-shadow: none",
+      "padding: var(--ds-space-xl) 0",
     ]);
+  });
+
+  /**
+   * The rhythm is stated as each section's OWN padding, not as a separator
+   * between adjacent siblings (`.card + .card`). That is not a style
+   * preference: on the consumer, sibling sections are not reliably adjacent
+   * siblings in the DOM — `ConversationStatePanel` interleaves an
+   * `ApiUnavailable` between two of its cards, and `NavigationPanel` lays two of
+   * them side by side in a two-column grid. A sibling-combinator rule would go
+   * silently vacuous in the first case and draw a line across the wrong edge in
+   * the second, and neither failure is visible from this library. So the
+   * selector is pinned here: the rule must not acquire one.
+   */
+  it("states the rhythm per section, not as a rule about adjacent siblings", () => {
+    const css = readFileSync(resolve(__dirname, "Card.module.css"), "utf8");
+    const selectors = css
+      .replaceAll(/\/\*[\s\S]*?\*\//gu, "")
+      .split("}")
+      .map((block) => block.split("{")[0]?.trim() ?? "")
+      .filter((selector) => selector.length > 0);
+    expect(selectors.filter((selector) => /[+~]/u.test(selector))).toEqual([]);
   });
 });

@@ -29,30 +29,36 @@
  * The header renders an `<h2>`, so a page built out of Panels has a real
  * document outline.
  *
- * ## Elevation is not nested (v0.12)
+ * ## A Card in this body is a section of it (v0.13)
  *
- * A Panel is a page section: it *floats* — `--ds-border` + `--ds-shadow-card`
- * over `--ds-radius-lg`. A Card inside that body is a *grouping* — it divides
- * the section's content — and must not restate the elevation, because Panel
- * and Card are drawn from the same recipe (identical border colour, identical
- * shadow). Nested, that recipe stops reading as "a group within a section" and
- * starts reading as "a frame inside a frame"; measured on the dashboard's
- * monitor page, where `ConversationStatePanel` is Panel > Card x4 and
- * `NavigationPanel` is Panel > Card x3-4 > row borders (omksos_web
- * `reports/monitor-ia-recomposition/`).
+ * A Panel is a page section: it *is* the surface — `--ds-surface` inside
+ * `--ds-border`, over `--ds-radius-lg`, lifted by `--ds-shadow-card`. A Card
+ * inside that body is a *part* of this section, and drawing it from the same
+ * recipe makes the pair read as "a frame inside a frame" rather than as a
+ * section and its parts; measured on the dashboard's monitor page, where
+ * `ConversationStatePanel` is Panel > Card x4 and `NavigationPanel` is
+ * Panel > Card x3-4 > row borders (omksos_web
+ * `reports/monitor-ia-recomposition/`). v0.12 merely relaxed the nested recipe
+ * and the consumer read that as a change of manner, not of structure
+ * (`reports/monitor-scope-coherence/`, ruling B).
  *
  * So the body declares itself as that scope with the `data-panel-body`
- * attribute, and `Card.module.css` carries the descendant rule that drops the
- * shadow and steps the border down to `--ds-border-subtle`. The rule lives on
- * the Card side because Card is the surface being demoted, and it is keyed off
- * an ancestor so that **no call site changes**: nesting is a fact about where a
- * Card sits, which the caller already stated by putting it there.
+ * attribute, and `Card.module.css` carries the descendant rule that strips the
+ * surface entirely — no outline, fill, lift or corner — and replaces the
+ * frame's inset with the rhythm between sections. This panel is then the only
+ * box on screen, and what it holds is a run of headed sections. The rule lives
+ * on the Card side because Card is the thing being restated, and it is keyed
+ * off an ancestor so that **no call site changes**: nesting is a fact about
+ * where a Card sits, which the caller already stated by putting it there.
+ *
+ * The body's own padding becomes the column every section aligns to, header
+ * included — the nested sections have no horizontal inset of their own.
  *
  * The marker sits on the body rather than on the `<section>` deliberately — the
  * header's `headerRight` slot is chrome of the section itself, not content
  * inside it, so a surface placed there is not demoted.
  *
- * If another elevated container is ever added to this library, it declares the
+ * If another surface container is ever added to this library, it declares the
  * same scope (add its marker to the selector list in `Card.module.css`) rather
  * than inventing a second rule.
  */
@@ -82,7 +88,7 @@ export function Panel({ title, fullWidth, headerRight, children, id }: PanelProp
         <h2 className={styles.title}>{title}</h2>
         {headerRight}
       </div>
-      {/* The scope marker for "elevation is not nested" (see the file header).
+      {/* The scope marker for "a Card in this body is a section" (file header).
           It carries no value because it is neither a flag with an off state nor
           a variant: a panel body always is one, so `[data-panel-body]` is the
           whole statement. */}

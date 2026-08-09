@@ -49,22 +49,27 @@ export const NoHeader: Story = {
 };
 
 /**
- * v0.12 — elevation is not nested. Both columns are the same `<Card title=…>`
- * call; the right-hand one merely sits in a `Panel` body, and the ancestor rule
- * drops its shadow and steps its border down to `--ds-border-subtle`. A Panel
- * is the elevation; the Cards inside it are division. Nothing at the call site
- * says so — nesting is stated by where the card is.
+ * v0.13 — a nested Card is a section. Both columns are the same `<Card title=…>`
+ * call; the right-hand ones merely sit in a `Panel` body, where the ancestor
+ * rule takes away everything that makes a Card a *surface* (outline, fill,
+ * lift, corner) and puts the section rhythm where the frame's inset was. A
+ * Panel is the container; the Cards inside it are its sections, held apart by
+ * space and told apart by their headings. Nothing at the call site says so —
+ * nesting is stated by where the card is.
+ *
+ * Three sections rather than two, because the rhythm is the point: whether a
+ * heading groups with what follows it is only readable once a section has a
+ * neighbour on each side.
  */
 export const InsideAPanel: Story = {
   args: { title: undefined },
   render: () => (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-      <Card title="Prompt">Directly on the page: this card floats.</Card>
+      <Card title="Prompt">Directly on the page: this card is a surface.</Card>
       <Panel title="Conversation state">
-        <div style={{ display: "grid", gap: 12 }}>
-          <Card title="Prompt">Inside a panel body: grouping, not elevation.</Card>
-          <Card title="Turn">A second grouping in the same section.</Card>
-        </div>
+        <Card title="Prompt">Inside a panel body: a section, not a surface.</Card>
+        <Card title="Turn">A second section of the same panel.</Card>
+        <Card title="Language override">A third, on the same rhythm.</Card>
       </Panel>
     </div>
   ),
