@@ -1,23 +1,23 @@
 /**
- * @file E2E: prove the v0.13 rule "a nested Card is a section" in a real browser.
+ * @file E2E: what a `Panel` body holds, measured in a real browser (v0.14).
  *
- * Panel and Card are drawn from the same recipe (a --ds-surface fill inside a
- * --ds-border outline, lifted by --ds-shadow-card). v0.12 relaxed that recipe
- * for a nested card — shadow dropped, border stepped down — and the consumer
- * read the result as a change of manner, not of structure: a fainter frame
- * inside a frame is still a frame inside a frame (omksos_web
- * `reports/monitor-scope-coherence/`, ruling B). v0.13 replaces the rule: in a
- * panel body a Card stops being a surface altogether and becomes a section —
- * a heading, its content, and the space around it.
+ * `Panel` and `Card` are drawn from the same recipe (a --ds-surface fill inside
+ * a --ds-border outline, lifted by --ds-shadow-card), so a container inside a
+ * container is a frame inside a frame. v0.12 relaxed that recipe for a nested
+ * card and v0.13 stripped the surface off it altogether; both were rejected,
+ * the second time because restyling a violation until it looks legal leaves the
+ * structure in place and makes the call site lie (omksos_web
+ * `reports/monitor-scope-coherence/`, ruling B).
  *
- * The rule is a CSS ancestor selector with no prop and no class of its own, so:
- *
- *   - vitest/jsdom can only show the structure it stands on (Panel's scope
- *     marker, the nested card being a descendant of it, and the declaration
- *     list itself) — done in `src/Card.spec.tsx`;
- *   - whether the cascade resolves, and whether what it produces actually reads
- *     as sections — alignment and rhythm are measurements, and a measurement
- *     needs a layout engine — is only observable here.
+ * v0.14 refuses the composition (`Card` and `Panel` throw inside a panel's
+ * scope — `src/PanelScope.spec.tsx`) and supplies `Section`: a heading, its
+ * content, and the rhythm around it, drawing no surface. The refusal is
+ * provable in jsdom because it is about the React tree. What is NOT provable
+ * there is everything this file measures — whether a section draws nothing,
+ * whether the alignment and the rhythm actually read as "one box holding headed
+ * parts", and whether a `Card` still draws its whole surface where it is
+ * allowed. Alignment and rhythm are measurements, and a measurement needs a
+ * layout engine.
  *
  * Both host sections are checked, because the two consuming apps map --ds-* to
  * different palettes and a rule that resolves in one is not evidence for the
@@ -29,35 +29,42 @@ import { test, expect, type Locator, type Page } from "playwright/test";
  * `shadowBound` is the host's own answer to "does a card float by shadow at
  * all". The dashboard binds --ds-shadow-card to a real shadow; the robot
  * console's dark palette binds `--shadow-card: none` (rssa
- * `src/styles/variables.css`), so there the shadow half of the rule is a no-op
- * and the rest is the entire visible change. That is stated here rather than
- * skipped: a host that gains a shadow later fails this expectation and gets the
- * full nested-vs-bare comparison, instead of quietly passing a check that
- * compares "none" with "none".
+ * `src/styles/variables.css`), so there the shadow half of the comparison is a
+ * no-op and the rest is the entire visible difference. That is stated here
+ * rather than skipped: a host that gains a shadow later fails this expectation
+ * and gets the full section-vs-card comparison, instead of quietly passing a
+ * check that compares "none" with "none".
  */
 const HOSTS = [
   { selector: ".host--status-webui", anchor: "status-webui", shadowBound: false },
   { selector: ".host--omks-web", anchor: "omks-web", shadowBound: true },
 ] as const;
 
-/** The bare control card: the same component, the same call shape, outside any
- * panel body. Every "nested" expectation below is paired with this, so the file
- * proves a difference rather than a state. */
+/** The bare control card: a Card outside any panel body — where a Card is
+ * allowed, and where it draws its whole surface. Every "a section draws
+ * nothing" expectation below is paired with this, so the file proves a
+ * difference rather than a state. */
 function bareCard(page: Page, host: string): Locator {
   return page.locator(host).locator('[data-testid="bare-card"] > section');
 }
 
-/** The panel that holds the nested sections, addressed by its anchor id. */
+/** The second control: the same `Section`, outside any panel. A Section is not
+ * panel-specific, and this is where that is measured rather than asserted. */
+function bareSection(page: Page, host: string): Locator {
+  return page.locator(host).locator('[data-testid="bare-section"] > section');
+}
+
+/** The panel that holds the sections, addressed by its anchor id. */
 function sectionsPanel(page: Page, anchor: string): Locator {
   return page.locator(`#${anchor}-conversation-state`);
 }
 
 /**
- * The nested sections in document order. Deliberately NOT selected by testid:
- * the third one is a direct child of the panel body while the first two are
- * wrapped in a <div>, and the point of the rule is that this makes no
- * difference. Selecting the wrapped and unwrapped ones the same way is how the
- * spec stays able to notice if it ever starts to.
+ * The sections in document order. Deliberately NOT selected by testid: the
+ * third one is a direct child of the panel body while the first two are wrapped
+ * in a <div>, and the point of the rhythm is that this makes no difference.
+ * Selecting the wrapped and unwrapped ones the same way is how the spec stays
+ * able to notice if it ever starts to.
  */
 function sections(page: Page, anchor: string): Locator {
   return sectionsPanel(page, anchor).locator("[data-panel-body] section");
@@ -82,45 +89,73 @@ function resolveColour(page: Page, value: string): Promise<string> {
   }, value);
 }
 
+/** The four properties that make something a surface, as this host paints them. */
+async function surfaceOf(target: Locator): Promise<{
+  borders: string[];
+  background: string;
+  shadow: string;
+  radius: string;
+}> {
+  const borders = await target.evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return [
+      computed.borderTopWidth,
+      computed.borderRightWidth,
+      computed.borderBottomWidth,
+      computed.borderLeftWidth,
+    ];
+  });
+  return {
+    borders,
+    background: await styleOf(target, "background-color"),
+    shadow: await styleOf(target, "box-shadow"),
+    radius: await styleOf(target, "border-top-left-radius"),
+  };
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
 });
 
 for (const { selector: host, anchor, shadowBound } of HOSTS) {
-  test(`${host}: a card in a panel body draws no surface at all`, async ({ page }) => {
-    const nested = sections(page, anchor);
-    await expect(nested).toHaveCount(3);
+  test(`${host}: a section in a panel body draws no surface at all`, async ({ page }) => {
+    const inPanel = sections(page, anchor);
+    await expect(inPanel).toHaveCount(3);
 
     for (let index = 0; index < 3; index += 1) {
-      const section = nested.nth(index);
+      const section = inPanel.nth(index);
       await expect(section).toBeVisible();
+      const surface = await surfaceOf(section);
 
-      // No outline: all four edges, so a rule that only reset border-color (the
-      // v0.12 shape of this file) cannot pass.
-      const widths = await section.evaluate((element) => {
-        const computed = getComputedStyle(element);
-        return [
-          computed.borderTopWidth,
-          computed.borderRightWidth,
-          computed.borderBottomWidth,
-          computed.borderLeftWidth,
-        ];
-      });
-      expect(widths).toEqual(["0px", "0px", "0px", "0px"]);
-
+      // No outline: all four edges, so a rule that only reset border-color
+      // could not pass.
+      expect(surface.borders).toEqual(["0px", "0px", "0px", "0px"]);
       // No fill. `transparent` computes to rgba(0, 0, 0, 0) — and that is not
       // the same statement as "the same colour the panel happens to have": if
       // the panel's fill changes, a transparent section follows it and a
       // hard-coded one does not.
-      expect(await styleOf(section, "background-color")).toBe("rgba(0, 0, 0, 0)");
-
+      expect(surface.background).toBe("rgba(0, 0, 0, 0)");
       // No lift, no corner.
-      expect(await styleOf(section, "box-shadow")).toBe("none");
-      expect(await styleOf(section, "border-top-left-radius")).toBe("0px");
+      expect(surface.shadow).toBe("none");
+      expect(surface.radius).toBe("0px");
     }
   });
 
-  test(`${host}: the bare card is untouched — the rule is about position, not about Card`, async ({
+  test(`${host}: a section outside a panel draws exactly the same nothing`, async ({ page }) => {
+    // v0.13's rule made one call render as two different things depending on
+    // where it sat, which is what a call site cannot see. A Section reads
+    // nothing about its surroundings, so "in a panel" and "on the page" have to
+    // measure identically — that is what makes it usable as a plain headed
+    // group, and it is why moving one in or out is not a visual change.
+    const outside = bareSection(page, host);
+    await expect(outside).toBeVisible();
+    expect(await surfaceOf(outside)).toEqual(await surfaceOf(sections(page, anchor).first()));
+    expect(await styleOf(outside, "padding-top")).toBe(
+      await styleOf(sections(page, anchor).first(), "padding-top"),
+    );
+  });
+
+  test(`${host}: the bare card is untouched — a Card is a Card where it is allowed`, async ({
     page,
   }) => {
     const bare = bareCard(page, host);
@@ -152,11 +187,10 @@ for (const { selector: host, anchor, shadowBound } of HOSTS) {
   });
 
   test(`${host}: a section heading sits on the panel title's own column`, async ({ page }) => {
-    // This is what horizontal padding 0 is FOR. With the frame gone the inset
-    // no longer holds content off an outline, it just pushes the section's text
-    // off the column its own panel title occupies. At 0 the two align, and the
-    // alignment is what says "this belongs to that section" now that no box
-    // does.
+    // This is what horizontal padding 0 is FOR. A section has no outline to
+    // hold its content off, so an inset would only push its text off the column
+    // its own panel title occupies. At 0 the two align, and the alignment is
+    // what says "this belongs to that panel" now that no box does.
     const panel = sectionsPanel(page, anchor);
     const panelTitle = panel.locator("h2").first();
     const lefts = await panel.evaluate((element) => {
@@ -179,7 +213,7 @@ for (const { selector: host, anchor, shadowBound } of HOSTS) {
   test(`${host}: sections are held apart by more space than holds one together`, async ({
     page,
   }) => {
-    // Containment is carried by proximity now, so the rhythm has to be ordered:
+    // Grouping is carried by proximity now, so the rhythm has to be ordered:
     // the space BETWEEN two sections must beat the largest space WITHIN one, or
     // a heading groups with what precedes it instead of what follows it.
     // Measured on painted content (a Range, so bare text nodes count) rather
@@ -240,17 +274,45 @@ for (const { selector: host, anchor, shadowBound } of HOSTS) {
     expect(firstGap).toBeCloseTo(secondGap, 1);
   });
 
-  test(`${host}: the section heading is the same heading a bare card draws`, async ({ page }) => {
-    // The heading is now the ONLY thing that declares a section, so it is not
-    // stepped down along with the surface — it stays the type a Card draws
-    // anywhere. (Tried at 14px in the demo: below the body copy's own size, the
-    // heading stops dominating its section and the grouping falls apart.)
+  test(`${host}: a section's heading is the heading a card draws`, async ({ page }) => {
+    // The heading is the ONLY thing that declares a section now, so it is not
+    // stepped down along with the surface — it stays the type a Card's header
+    // draws, which is not a coincidence to be measured but a shared
+    // implementation (CardHeader renders SectionHeader). This measures that the
+    // sharing survives the cascade in both hosts. (Tried at 14px in the demo:
+    // below the body copy's own size, the heading stops dominating its section
+    // and the grouping falls apart.)
     const bareHeading = bareCard(page, host).getByRole("heading", { name: "Prompt" });
-    const nestedHeading = sections(page, anchor).first().getByRole("heading", { name: "Prompt" });
+    const sectionHeading = sections(page, anchor).first().getByRole("heading", { name: "Prompt" });
 
-    await expect(nestedHeading).toBeVisible();
+    await expect(sectionHeading).toBeVisible();
     for (const property of ["font-size", "font-weight", "color"]) {
-      expect(await styleOf(nestedHeading, property)).toBe(await styleOf(bareHeading, property));
+      expect(await styleOf(sectionHeading, property)).toBe(await styleOf(bareHeading, property));
     }
+  });
+
+  test(`${host}: the panel is the only box its sections sit in`, async ({ page }) => {
+    // The whole point of refusing a container in a panel body: exactly one
+    // surface is painted around this content, and it is the panel's. If a
+    // section ever regains an outline or a fill, this is where "count the
+    // boxes" comes back.
+    const panel = sectionsPanel(page, anchor);
+    expect(await styleOf(panel, "border-top-width")).toBe("1px");
+    expect(await styleOf(panel, "background-color")).not.toBe("rgba(0, 0, 0, 0)");
+
+    const painted = await panel.evaluate((element) => {
+      const body = element.querySelector("[data-panel-body]");
+      if (body === null) {
+        throw new Error("panel has no body scope");
+      }
+      return [...body.querySelectorAll("*")].filter((node) => {
+        const computed = getComputedStyle(node);
+        return (
+          Number.parseFloat(computed.borderTopWidth) > 0 ||
+          Number.parseFloat(computed.borderBottomWidth) > 0
+        );
+      }).length;
+    });
+    expect(painted).toBe(0);
   });
 }

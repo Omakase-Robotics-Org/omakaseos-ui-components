@@ -27,7 +27,7 @@ came to be — see `reports/realtime-chat-components-poc/`).
 
 | Layer | Released | Purpose | Components |
 | --- | --- | --- | --- |
-| **Status** | v0.1–v0.2, v0.10, v0.11, v0.12, v0.13 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state. Since v0.12 the layer also states one *composition* rule, completed in v0.13: a `Card` inside a `Panel` body is a **section** of it, not a surface within it — no outline, fill, lift or corner, and the frame's inset replaced by the rhythm between sections | `StatusBadge`, `Card` + `CardHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast` |
+| **Status** | v0.1–v0.2, v0.10, v0.11, v0.12–v0.14 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state. Since v0.12 the layer also states one *composition* rule, settled in v0.14: a `Panel` body takes no container — a `Card` or a nested `Panel` there **throws** — and `Section` is the grouping it does take (a heading, its content, and the rhythm around it, drawing no surface) | `StatusBadge`, `Card` + `CardHeader`, `Section` + `SectionHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast` |
 | **Form** | v0.3, v0.10 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field`, `ToggleSwitch` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
@@ -68,6 +68,9 @@ import {
   // v0.11: feedback primitives (presentational — the host owns timing and placement),
   //        the page-grid section, and the tile reading of a set of facts
   Spinner, Toast, Panel, FactGrid,
+
+  // v0.14: a headed group that draws no surface — the way to divide a Panel
+  Section, SectionHeader,
 } from "@omakase-robotics/ui-components";
 
 // v0.6: canonical assistant-ui surface — separate sub-entry
@@ -130,43 +133,78 @@ They are not, and the distinction is the API:
 | Reach for | When | Not |
 | --- | --- | --- |
 | `Panel` | The thing IS a section of the page — one cell of a grid of peers. Small uppercase title over a hard divider; `fullWidth` spans the grid; `id` makes it an anchor target | `Card`, which is a surface *within* a page: softer header with `hint` / `right`, no divider, no grid vocabulary |
+| `Section` | The thing is a *part of* something larger — one matter among several inside a panel, or a headed block on a page. A heading, its content, and the rhythm around it; no surface at all | `Card`, which draws a surface. Inside a `Panel` body, `Section` is the only grouping available: a `Card` there throws |
 | `FactGrid` | The facts are readings taken at a glance — two columns of inset tiles, a small caption over a large monospaced figure | `FactList`, which is a vertical run of rows read one after another |
 
-**A nested `Card` is a section, not a surface (v0.13).** The two containers
-are drawn from the same recipe — a `--ds-surface` fill inside a `--ds-border`
-outline, rounded and lifted by `--ds-shadow-card` — so nesting them repeats
-it, and the pair reads as "a frame inside a frame": the reader has to count
-boxes to know what contains what (measured on the dashboard monitor page:
-`ConversationStatePanel` is Panel > Card × 4, `NavigationPanel` is
-Panel > Card × 3–4 > row borders). v0.12 answered this by relaxing the nested
-recipe (shadow dropped, border stepped down to `--ds-border-subtle`), and the
-consumer's verdict was that a fainter frame inside a frame is still a frame
-inside a frame — a change of manner rather than of structure.
+### A `Panel` body takes no container (v0.14)
 
-So v0.13 replaces the rule. In a `Panel` body a `Card` keeps its element, its
-API and its header, and gives up the four properties that draw a surface:
-**no outline, no fill, no lift, no corner**. Its inset is replaced by the
-section rhythm — `0` across, so a `CardHeader` title lands on the exact column
-the panel's own title occupies, and `--ds-space-xl` down each side, so two
-sections stand `--ds-space-2xl` apart: twice the largest gap inside one of
-them, which is what makes a heading group with what follows it. Containment is
-then carried by proximity and by the heading, the reading that still works
-when a panel grows a fourth and fifth section. Everything `CardHeader` draws
-is unchanged, because the title is now the only containment signal there is.
+`Panel` and `Card` are drawn from the same recipe — a `--ds-surface` fill
+inside a `--ds-border` outline, rounded and lifted by `--ds-shadow-card` — so
+nesting them repeats it and the pair reads as "a frame inside a frame": the
+reader has to count boxes to know what contains what (measured on the dashboard
+monitor page, where `ConversationStatePanel` was Panel > Card × 4 and
+`NavigationPanel` Panel > Card × 3–4 > row borders).
 
-**This is automatic and has no prop**: `Panel` marks its body
-`data-panel-body` and `Card.module.css` keys the rule off that ancestor, so
-nesting is stated by where the caller put the card and every existing call
-site keeps its exact shape. A card that is not in a panel body is untouched.
+**The rule.** Rendering a `Card` — or another `Panel` — as part of a `Panel`'s
+content **throws**:
 
-The rhythm is each section's own padding rather than a separator between
-adjacent ones (`.card + .card`, a hairline or a margin) on purpose: in the
-consumer, sibling sections are not reliably adjacent siblings in the DOM —
-`ConversationStatePanel` interleaves an `ApiUnavailable` between two of its
-cards, and `NavigationPanel` lays two of them side by side in a two-column
-grid, where a top border on "the next one" would rule a line across the card
+```
+Card must not nest inside a Panel — use Section for grouping within a panel
+Panel must not nest inside another Panel — use Section for grouping within a panel, or a sibling Panel in the page grid
+```
+
+…and `Section` is what the panel body does take: a heading, its content, and
+the rhythm around it, drawing no surface. Its geometry is `0` across, so a
+section heading lands on the exact column the panel's own title occupies, and
+`--ds-space-xl` down each side, so two sections stand 32px apart — twice the
+12px between a section's own heading and its body, which is what makes a
+heading group with what follows it. `SectionHeader` *is* `CardHeader` (one
+implementation, exported under both names): a card is a section drawn on a
+surface, so the two headings cannot drift apart.
+
+A `Section` is not panel-specific and reads nothing about its surroundings —
+outside a panel it is a plain headed group that renders identically. Moving one
+in or out is therefore not a visual change.
+
+**How the rule is detected.** `Panel` opens a React context around its
+children, and each container reads it at the top of its render — the same shape
+as the `useX must be used inside XProvider` throws a consumer already knows,
+in the other direction. It throws in production too: a contract that only holds
+in development is a contract the shipped app does not have, and the failure is
+a composition error in the caller's own tree.
+
+Because it is a context and not a DOM ancestor, the contract is about
+*composition*: content rendered elsewhere and portalled into a panel's body
+does not throw (it was not composed into the panel), while a `Card` rendered
+from inside a panel's subtree does throw even when portalled out to an overlay
+layer (React context passes through portals) — raise such an overlay to a layer
+the host owns. `Panel` keeps its `data-panel-body` marker, but nothing styles
+off it any more: it exists so a panel's *content* can be addressed from outside
+the library (omksos_web's browser-level container scan, consumer specs).
+
+**Design history — do not reintroduce the earlier rules.** v0.12 relaxed the
+nested recipe (shadow dropped, border stepped down to `--ds-border-subtle`) and
+the consumer's verdict was that a fainter frame inside a frame is still a frame
+inside a frame — a change of manner, not of structure. v0.13 went further and
+had a `Card` in a panel body render *as* a section (no outline, fill, lift or
+corner), through a `:global([data-panel-body]) .card` ancestor rule. That was
+rejected twice over: a context-dependent automatic transform makes the call
+site lie (the same `<Card>` renders as two different things depending on where
+it sits, so moving it is a silent visual change), and more fundamentally it
+**repainted a violation until it looked legal** — the container-in-container it
+was meant to prevent was still there, now normalized. v0.14 keeps that
+release's *look* as `Section` and drops its mechanism; the ancestor rule is
+gone and `Card.spec.tsx` fails if any contextual selector returns to
+`Card.module.css`.
+
+The section rhythm is each section's own padding rather than a separator
+between adjacent ones (`.section + .section`, a hairline or a margin) on
+purpose: in the consumer, sibling sections are not reliably adjacent siblings
+in the DOM — `ConversationStatePanel` interleaves an `ApiUnavailable` between
+two of them, and `NavigationPanel` lays two side by side in a two-column grid,
+where a top border on "the next one" would rule a line across the section
 *beside* its neighbour. A rule each section carries itself is right in all
-three shapes and cannot go vacuous when a call site wraps a card in a `<div>`.
+three shapes and cannot go vacuous when a call site wraps one in a `<div>`.
 
 A `Fact` is a tile exactly when it is a child of a `FactGrid` (the tile
 look is the grid's, not the fact's), so "tile-styled row" and "unstyled
@@ -331,7 +369,9 @@ orchestrator repo (`omakase-robotics/omksos_web`):
 - v0.10 — `reports/ui-primitives-promotion/`
 - v0.11 — `reports/rssa-ui-unification/`
 - v0.12 — `reports/monitor-ia-recomposition/`
-- v0.13 — `reports/monitor-scope-coherence/` (ruling B)
+- v0.13, v0.14 — `reports/monitor-scope-coherence/` (ruling B; v0.13's
+  ancestor-selector rule was replaced by v0.14's contract + `Section`, and the
+  report records why both earlier attempts were rejected)
 - Storybook + Pages + repo health — `reports/ui-components-catalog-and-pages-poc/`
 
 The current ship state is mirrored into `docs/shared-ui-components/`

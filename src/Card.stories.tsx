@@ -49,27 +49,26 @@ export const NoHeader: Story = {
 };
 
 /**
- * v0.13 — a nested Card is a section. Both columns are the same `<Card title=…>`
- * call; the right-hand ones merely sit in a `Panel` body, where the ancestor
- * rule takes away everything that makes a Card a *surface* (outline, fill,
- * lift, corner) and puts the section rhythm where the frame's inset was. A
- * Panel is the container; the Cards inside it are its sections, held apart by
- * space and told apart by their headings. Nothing at the call site says so —
- * nesting is stated by where the card is.
+ * v0.14 — a Card is a surface within a page, and a page is where it belongs.
+ * Inside a `Panel` body it **throws**: a container in a container is a frame in
+ * a frame, and the vocabulary for dividing a panel is `Section` (see
+ * `Status/Section` → *Inside a panel*). Earlier releases restyled the nested
+ * case instead — v0.12 relaxed the recipe, v0.13 removed the surface — and both
+ * were rejected for making the same call render as two different things
+ * depending on where it sat (omksos_web `reports/monitor-scope-coherence/`,
+ * ruling B). There is deliberately no story of a Card in a Panel: it has no
+ * rendering to show.
  *
- * Three sections rather than two, because the rhythm is the point: whether a
- * heading groups with what follows it is only readable once a section has a
- * neighbour on each side.
+ * What a panel body does take beside a section is plain content, and a Card may
+ * still sit in a panel's `headerRight` — that slot is the panel's own chrome.
  */
-export const InsideAPanel: Story = {
+export const BesideAPanel: Story = {
   args: { title: undefined },
   render: () => (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-      <Card title="Prompt">Directly on the page: this card is a surface.</Card>
+      <Card title="Prompt">A surface within a page: outline, fill, lift, corner.</Card>
       <Panel title="Conversation state">
-        <Card title="Prompt">Inside a panel body: a section, not a surface.</Card>
-        <Card title="Turn">A second section of the same panel.</Card>
-        <Card title="Language override">A third, on the same rhythm.</Card>
+        A panel is a section of the page, and the only box around what it holds.
       </Panel>
     </div>
   ),

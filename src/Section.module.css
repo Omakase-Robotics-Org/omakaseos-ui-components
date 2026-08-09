@@ -1,0 +1,86 @@
+/* ---------- Section (v0.14) ----------
+ * A headed group that draws no surface: no outline, no fill, no lift, no
+ * corner. What is left is what a section is made of — a heading, its content,
+ * and the space around it — so a panel holding these is the only box on screen
+ * and containment is carried by proximity and by the heading.
+ *
+ * The look is v0.13's, kept: that release stripped the surface off a Card
+ * nested in a panel body and the result was accepted. What is dropped is the
+ * MECHANISM — an ancestor selector that restyled `.card` when it happened to
+ * sit inside `[data-panel-body]`. A component that changes shape according to
+ * where it is put makes its call site lie; here the caller writes `Section`
+ * and gets a section, anywhere.
+ *
+ * GEOMETRY. The rhythm is the whole of it, and it does two separate jobs:
+ *
+ *  - Horizontal 0. There is no outline to hold content off, and a section is
+ *    read as part of something larger. At 0 its heading lands on exactly the
+ *    column its `Panel`'s own title occupies (Panel pads header and body alike
+ *    at 20px), so "this belongs to that panel" is stated by alignment.
+ *
+ *  - Vertical --ds-space-xl. This is HALF the inter-section rhythm: two
+ *    sections stacked in a panel body stand 2 x 16px = 32px apart, against the
+ *    12px `.header` leaves between a section's own title and its body. Twice
+ *    over rather than merely more, because grouping by proximity needs a ratio
+ *    and the consumer's sections already put 16px between their last control
+ *    and a footer hint (rssa `ConversationStatePanel.module.css .footerHint`,
+ *    `NavigationPanel.module.css .actionRow`) — a separation that only just
+ *    beat the largest internal gap would stop reading as separation.
+ *
+ * The rhythm is stated as each section's OWN padding rather than as a
+ * separator between adjacent ones (`.section + .section`, a hairline or a
+ * margin). That is not taste: in the consumer, sibling sections are not
+ * reliably adjacent siblings in the DOM — `ConversationStatePanel` interleaves
+ * an `ApiUnavailable` between two of them, and `NavigationPanel` lays two side
+ * by side in a two-column grid, where a top border on "the next one" would rule
+ * a line across the section BESIDE its neighbour. A rule each section carries
+ * itself is right in all three shapes and cannot go vacuous when a call site
+ * wraps one in a <div>. `Section.spec.tsx` pins that no selector here acquires
+ * a sibling combinator.
+ *
+ * `color` is the one thing a section states beyond the rhythm, because text is
+ * not a surface: it makes a standalone section (outside any panel) read the
+ * same as one inside a panel body, which is what "a Section works anywhere"
+ * has to mean.
+ *
+ * The header block below is shared with `Card`: `CardHeader` renders
+ * `SectionHeader`. A card is a section drawn on a surface, so its heading is
+ * the same object and the two cannot drift apart — see `Section.tsx`. Its
+ * numbers are component-intrinsic type geometry and stay px, as the rest of
+ * this library states such values (see `Panel.module.css`); the rhythm above is
+ * a spacing-scale relation and stays a token. */
+
+.section {
+  padding: var(--ds-space-xl) 0;
+  color: var(--ds-text);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ds-text-muted);
+}
+
+.right {
+  flex-shrink: 0;
+}

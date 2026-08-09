@@ -28,6 +28,12 @@
  *            missing half of the tile pattern the `column` direction was
  *            added for. Plus StatusBadge's opt-in `live` region. See
  *            `omksos_web/reports/rssa-ui-unification/README.md`.
+ * v0.14:     Section — a heading, its content and the rhythm around it, with
+ *            no surface of its own: the way to divide a `Panel`'s body now
+ *            that a container inside a container is refused rather than
+ *            restyled (`Card` and `Panel` throw inside a panel's scope). See
+ *            `omksos_web/reports/monitor-scope-coherence/`, ruling B, and
+ *            `src/PanelScope.tsx` for why the check is a context read.
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
@@ -39,6 +45,12 @@ export type { BadgeTone, BadgeSize, StatusBadgeProps } from "./StatusBadge";
 
 export { Card, CardHeader } from "./Card";
 export type { CardProps, CardHeaderProps } from "./Card";
+
+// v0.14: the grouping vocabulary for the inside of a Panel — a headed group
+// that is not a container, so it can divide a panel body without drawing a
+// second surface in it. Legal anywhere; the only grouping legal in a panel.
+export { Section, SectionHeader } from "./Section";
+export type { SectionProps, SectionHeaderProps } from "./Section";
 
 // FactGrid (v0.11) is the tile reading of a set of facts; FactList the
 // list reading. See the file header for which to reach for.

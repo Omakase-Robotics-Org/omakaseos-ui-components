@@ -29,40 +29,38 @@
  * The header renders an `<h2>`, so a page built out of Panels has a real
  * document outline.
  *
- * ## A Card in this body is a section of it (v0.13)
+ * ## A Panel body holds Sections — and no container (v0.14)
  *
- * A Panel is a page section: it *is* the surface — `--ds-surface` inside
- * `--ds-border`, over `--ds-radius-lg`, lifted by `--ds-shadow-card`. A Card
- * inside that body is a *part* of this section, and drawing it from the same
- * recipe makes the pair read as "a frame inside a frame" rather than as a
- * section and its parts; measured on the dashboard's monitor page, where
- * `ConversationStatePanel` is Panel > Card x4 and `NavigationPanel` is
- * Panel > Card x3-4 > row borders (omksos_web
- * `reports/monitor-ia-recomposition/`). v0.12 merely relaxed the nested recipe
- * and the consumer read that as a change of manner, not of structure
- * (`reports/monitor-scope-coherence/`, ruling B).
+ * A Panel *is* the surface — `--ds-surface` inside `--ds-border`, over
+ * `--ds-radius-lg`, lifted by `--ds-shadow-card`. Its body is therefore not a
+ * place for a second one: a container inside a container reads as a frame
+ * inside a frame, and the reader has to count boxes to know what contains what
+ * (measured on the dashboard's monitor page — omksos_web
+ * `reports/monitor-ia-recomposition/`). v0.12 relaxed the nested recipe and
+ * v0.13 stripped the surface off it; the verdict on both was that they
+ * repainted a violation until it looked legal while leaving the structure in
+ * place (`reports/monitor-scope-coherence/`, ruling B).
  *
- * So the body declares itself as that scope with the `data-panel-body`
- * attribute, and `Card.module.css` carries the descendant rule that strips the
- * surface entirely — no outline, fill, lift or corner — and replaces the
- * frame's inset with the rhythm between sections. This panel is then the only
- * box on screen, and what it holds is a run of headed sections. The rule lives
- * on the Card side because Card is the thing being restated, and it is keyed
- * off an ancestor so that **no call site changes**: nesting is a fact about
- * where a Card sits, which the caller already stated by putting it there.
+ * So the body opens a **scope** instead, and the containers refuse to render in
+ * it: a `Card` there throws ("use Section for grouping within a panel"), and so
+ * does another `Panel` — a panel is a cell of the page grid, so a panel that
+ * needs two of them needs two cells, side by side, each stating its own scope.
+ * What a body may hold, besides plain content, is `Section`: a heading, its
+ * content, and the rhythm around it, drawing nothing. The scope is a React
+ * context (`PanelScope.tsx`), so the contract is about composition and not
+ * about DOM position — content portalled out of this subtree is not nested.
  *
- * The body's own padding becomes the column every section aligns to, header
- * included — the nested sections have no horizontal inset of their own.
+ * The scope covers the children only. `headerRight` is chrome of the panel
+ * itself rather than content within it, and it renders in the header, outside
+ * the provider — so a surface placed there is not a nested container, in the
+ * contract exactly as in the DOM.
  *
- * The marker sits on the body rather than on the `<section>` deliberately — the
- * header's `headerRight` slot is chrome of the section itself, not content
- * inside it, so a surface placed there is not demoted.
- *
- * If another surface container is ever added to this library, it declares the
- * same scope (add its marker to the selector list in `Card.module.css`) rather
- * than inventing a second rule.
+ * `data-panel-body` stays on the same element. It is no longer a style hook
+ * (nothing keys off it any more); it is how the browser-level container scan in
+ * omksos_web addresses a panel's content, and how consumer specs select it.
  */
 import type { ReactNode } from "react";
+import { PanelScope, useInsidePanel } from "./PanelScope";
 import styles from "./Panel.module.css";
 
 export type PanelProps = {
@@ -78,6 +76,12 @@ export type PanelProps = {
 
 /** A titled section of a page grid, with a header bar and a padded body. */
 export function Panel({ title, fullWidth, headerRight, children, id }: PanelProps) {
+  if (useInsidePanel()) {
+    throw new Error(
+      "Panel must not nest inside another Panel — use Section for grouping within a panel, or a sibling Panel in the page grid",
+    );
+  }
+
   return (
     <section
       id={id}
@@ -88,12 +92,12 @@ export function Panel({ title, fullWidth, headerRight, children, id }: PanelProp
         <h2 className={styles.title}>{title}</h2>
         {headerRight}
       </div>
-      {/* The scope marker for "a Card in this body is a section" (file header).
-          It carries no value because it is neither a flag with an off state nor
-          a variant: a panel body always is one, so `[data-panel-body]` is the
-          whole statement. */}
+      {/* The marker carries no value because it is neither a flag with an off
+          state nor a variant: a panel body always is one, so `[data-panel-body]`
+          is the whole statement. What it addresses is a panel's content from
+          outside this library; the nesting contract itself is the scope below. */}
       <div className={styles.body} data-panel-body="">
-        {children}
+        <PanelScope>{children}</PanelScope>
       </div>
     </section>
   );

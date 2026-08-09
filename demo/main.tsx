@@ -36,6 +36,8 @@ import {
   ParticipantTile,
   RealtimeEventLog,
   ReservedText,
+  Section,
+  SectionHeader,
   Select,
   SignalBars,
   Slider,
@@ -570,41 +572,41 @@ function PanelGridDemo({ host }: { host: string }) {
       <Panel title="Teleop session" fullWidth headerRight={<Spinner size="sm" tone="info" />}>
         A panel that spans every column of the grid it sits in.
       </Panel>
-      {/* v0.13 "a nested Card is a section": the three cards below are written
-          exactly like the bare one outside the grid — same call shape, no prop
-          — and the ancestor rule strips the surface (outline, fill, lift,
-          corner) and replaces the inset with the section rhythm, because they
-          sit in a panel body. Only a real browser can show it, so the set
-          (nested vs bare) is what spec/nested-card-sections.e2e.spec.ts
+      {/* v0.14 "a panel body holds Sections": what divides this panel is three
+          Sections, which draw no surface at all — a heading, its content, and
+          the rhythm around it. A Card here would not be restyled into one (the
+          v0.13 rule that did that is gone); it would throw. Only a real browser
+          can show that the rhythm reads, so the set (sections vs the bare card
+          and bare section below) is what spec/panel-section.e2e.spec.ts
           measures.
 
-          Three, not two, because the rhythm is what has to be read: with the
-          frames gone, whether "heading + content" groups correctly is only
-          visible once a section has a neighbour on both sides.
+          Three, not two, because the rhythm is what has to be read: with no
+          frames, whether "heading + content" groups correctly is only visible
+          once a section has a neighbour on both sides.
 
           The first two are wrapped in a <div> for the e2e's testid and the
           third is a direct child of the body. That difference is deliberate
           evidence: the rhythm is each section's own padding, so it survives a
-          wrapper — a separator keyed on `.card + .card` would silently skip the
-          wrapped pair, and the consumer wraps (ConversationStatePanel puts an
-          `<ApiUnavailable>` between two of its cards; NavigationPanel lays two
-          side by side in a two-column grid). */}
+          wrapper — a separator keyed on `.section + .section` would silently
+          skip the wrapped pair, and the consumer wraps (ConversationStatePanel
+          puts an `<ApiUnavailable>` between two of its cards; NavigationPanel
+          lays two side by side in a two-column grid). */}
       {/* One cell of the grid, not fullWidth — that is the shape the rule was
           measured in (the dashboard's conversation-state panel is a grid cell),
           and the spanning panel above stays the grid's only one. */}
       <Panel title="Conversation state" id={`${host}-conversation-state`}>
-        <div data-testid="nested-card-first">
-          <Card title="Prompt">The card a panel body holds: a section, not a surface.</Card>
+        <div data-testid="panel-section-first">
+          <Section title="Prompt">What a panel body holds: a section, not a surface.</Section>
         </div>
-        <div data-testid="nested-card-second">
-          <Card>
-            <CardHeader title="Turn" hint="last update: 2s ago" />
+        <div data-testid="panel-section-second">
+          <Section>
+            <SectionHeader title="Turn" hint="last update: 2s ago" />
             A second section of the same panel.
-          </Card>
+          </Section>
         </div>
-        <Card title="Language override">
+        <Section title="Language override">
           A third — an unwrapped one, on the same rhythm as the two above.
-        </Card>
+        </Section>
       </Panel>
     </div>
   );
@@ -615,14 +617,25 @@ function PageSectionsPanel({ host }: { host: string }) {
     <Card>
       <CardHeader
         title="Page sections (v0.11)"
-        hint="Panel + FactGrid — the robot console's screen composition, with v0.13's nested-card rule"
+        hint="Panel + FactGrid — the robot console's screen composition, with v0.14's nesting contract"
       />
       <PanelGridDemo host={host} />
-      {/* The control for the nested sections above: the same card, same call
-          shape, outside any panel body — it keeps its surface (outline, fill,
-          lift, corner, inset). */}
+      {/* Two controls for the panel's sections above.
+
+          The card: same component, same call shape, outside any panel body —
+          it keeps its whole surface (outline, fill, lift, corner, inset). That
+          is the difference v0.14 preserves and v0.13 erased: a Card is a Card
+          wherever it is allowed to be.
+
+          The section: the same Section, outside any panel. It has to render
+          identically to the three inside one, because nothing in it reads its
+          surroundings — that is what makes it usable as a plain headed group,
+          and it is the property the ancestor rule could not have. */}
       <div data-testid="bare-card" style={{ marginTop: 16 }}>
         <Card title="Prompt">The card a page holds directly: still a surface.</Card>
+      </div>
+      <div data-testid="bare-section" style={{ marginTop: 16 }}>
+        <Section title="Prompt">A section outside a panel: the same headed group.</Section>
       </div>
     </Card>
   );

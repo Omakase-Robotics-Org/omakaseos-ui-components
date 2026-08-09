@@ -1,3 +1,18 @@
+/* ---------- Card ----------
+ * A surface within a page, and only that. There is deliberately no rule here
+ * that reads where the card sits: v0.12 stepped the recipe down inside a panel
+ * body and v0.13 removed the surface there altogether, and both were rejected —
+ * a component whose look depends on an ancestor makes its call site lie, and
+ * repainting a nested container until it reads as legal keeps the very
+ * structure the rule existed to prevent (omksos_web
+ * `reports/monitor-scope-coherence/`, ruling B). v0.14 forbids the composition
+ * in `Card.tsx` instead and offers `Section` for what the caller wanted, so
+ * this file has one rule and a card looks the same everywhere it is allowed.
+ * `Card.spec.tsx` pins that no contextual selector comes back.
+ *
+ * The header lives in `Section.module.css`: `CardHeader` renders
+ * `SectionHeader`, because a card is a section drawn on a surface. */
+
 .card {
   background: var(--ds-surface);
   border: 1px solid var(--ds-border);
@@ -5,90 +20,4 @@
   box-shadow: var(--ds-shadow-card);
   padding: 16px 20px;
   color: var(--ds-text);
-}
-
-/* ---------- a nested Card is a section, not a surface (v0.13) ----------
- * Panel and Card are drawn from the same recipe (a --ds-surface fill inside a
- * --ds-border outline, lifted by --ds-shadow-card). A Panel floats because it
- * IS a section of the page; a Card inside one is a division of that section's
- * content. v0.12 relaxed the nested recipe (shadow dropped, border stepped down
- * to --ds-border-subtle) and that was measured, on the consumer, as a change of
- * manner rather than of structure: a fainter frame inside a frame is still a
- * frame inside a frame, and the reader still has to count boxes to know what
- * contains what (omksos_web `reports/monitor-scope-coherence/`, ruling B).
- *
- * So the rule is replaced rather than weakened. In a panel body a Card keeps
- * being a Card in the DOM and in the API, and stops being a *surface*: no
- * outline, no fill, no lift, no corner. What remains is what a section is made
- * of — a heading, its content, and the space around it. Containment is then
- * carried by proximity and by CardHeader's title, which is the only reading
- * that survives a section growing a fourth and fifth sibling.
- *
- * `data-panel-body` is Panel's scope marker (a global attribute, hence
- * `:global()`; the descendant `.card` stays local). Selector specificity is
- * (0,2,0) — one attribute + one class — against the plain `.card` rule's
- * (0,1,0), so it wins regardless of source order or which of the two modules a
- * bundler emits first.
- *
- * PADDING is where the rule's remaining geometry lives, and it is doing two
- * separate jobs:
- *
- *  - Horizontal 0. A frame needed inset so its content did not touch its
- *    outline; with the outline gone the inset only pushes the section's text
- *    off the panel's own left edge. At 0 a section heading lands on exactly the
- *    column the panel's title occupies (Panel's header and body are both padded
- *    20px), so "this is a part of that section" is stated by alignment.
- *
- *  - Vertical --ds-space-lg. This is HALF the inter-section rhythm: two
- *    sections stacked in a panel body stand 2 x 12px = 24px (--ds-space-2xl)
- *    apart, twice the 12px CardHeader leaves between a section's own title and
- *    its body — so the eye groups a heading with what follows it, not with what
- *    precedes it. Stating the rhythm as each section's own padding rather than
- *    as a separator between adjacent ones (`.card + .card`, a hairline or a
- *    margin) is deliberate: on the consumer, sibling sections are NOT reliably
- *    adjacent siblings in the DOM. `ConversationStatePanel` interleaves an
- *    `ApiUnavailable` between its cards, and `NavigationPanel` lays two of them
- *    side by side in a two-column grid, where a top border on "the next one"
- *    would draw a line across the card BESIDE its neighbour rather than below
- *    it. A rule that each section carries itself is right in all three shapes
- *    and cannot go vacuous when a call site wraps a card in a <div>.
- *
- * A card that is not inside a panel body is untouched — that is still the whole
- * reason no call site changes. */
-:global([data-panel-body]) .card {
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: var(--ds-space-xl) 0;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.titleBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.hint {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ds-text-muted);
-}
-
-.right {
-  flex-shrink: 0;
 }
