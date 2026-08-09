@@ -36,6 +36,26 @@ describe("Panel", () => {
     expect(container.querySelector("section")?.getAttribute("data-full-width")).toBe("true");
   });
 
+  it("marks its body as the scope where elevation stops being restated", () => {
+    const { container } = render(<Panel title="A">contents</Panel>);
+    const body = container.querySelector("[data-panel-body]");
+    expect(body).not.toBeNull();
+    // The children are inside the scope; the header (and its headerRight slot,
+    // which is chrome of the section, not content within it) is not.
+    expect(body).toHaveTextContent("contents");
+    expect(body?.contains(screen.getByRole("heading", { level: 2 }))).toBe(false);
+  });
+
+  it("keeps headerRight outside the scope — the header is the section's own chrome", () => {
+    const { container } = render(
+      <Panel title="A" headerRight={<button type="button">Restart</button>}>
+        contents
+      </Panel>,
+    );
+    const body = container.querySelector("[data-panel-body]");
+    expect(body?.contains(screen.getByRole("button", { name: "Restart" }))).toBe(false);
+  });
+
   it("passes id through to the section so the page can anchor to it", () => {
     const { container } = render(
       <Panel title="A" id="robot-state">

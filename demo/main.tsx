@@ -570,6 +570,28 @@ function PanelGridDemo({ host }: { host: string }) {
       <Panel title="Teleop session" fullWidth headerRight={<Spinner size="sm" tone="info" />}>
         A panel that spans every column of the grid it sits in.
       </Panel>
+      {/* v0.12 "elevation is not nested": the two cards below are written
+          exactly like the bare one outside the grid — same call shape, no prop
+          — and the ancestor rule drops their shadow and steps their border down
+          because they sit in a panel body. Only a real browser can show it, so
+          the pair (nested vs bare) is what spec/elevation-nesting.e2e.spec.ts
+          measures. */}
+      {/* One cell of the grid, not fullWidth — that is the shape the rule was
+          measured in (the dashboard's conversation-state panel is a grid cell),
+          and the spanning panel above stays the grid's only one. */}
+      <Panel title="Conversation state">
+        <div style={{ display: "grid", gap: 12 }}>
+          <div data-testid="nested-card-first">
+            <Card title="Prompt">The card a panel body holds: grouping, not elevation.</Card>
+          </div>
+          <div data-testid="nested-card-second">
+            <Card>
+              <CardHeader title="Turn" hint="last update: 2s ago" />
+              A second grouping in the same section.
+            </Card>
+          </div>
+        </div>
+      </Panel>
     </div>
   );
 }
@@ -579,9 +601,14 @@ function PageSectionsPanel({ host }: { host: string }) {
     <Card>
       <CardHeader
         title="Page sections (v0.11)"
-        hint="Panel + FactGrid — the robot console's screen composition"
+        hint="Panel + FactGrid — the robot console's screen composition, with v0.12's nested-card rule"
       />
       <PanelGridDemo host={host} />
+      {/* The control for the nested pair above: the same card, same call shape,
+          outside any panel body — it keeps its shadow and its --ds-border. */}
+      <div data-testid="bare-card" style={{ marginTop: 16 }}>
+        <Card title="Prompt">The card a page holds directly: still elevated.</Card>
+      </div>
     </Card>
   );
 }

@@ -17,6 +17,11 @@
   --text-secondary: #b3b3b3;
   --text-muted: #737373;
   --border: #2a2a2a;
+  /* rssa `src/styles/variables.css` (dark). Needed here since v0.12: the
+     nested-card rule steps a border down to --ds-border-subtle, and with the
+     mapping absent the harness fell through to the library's LIGHT default
+     (#e8e8e8) — on this host that reads as a step up, not down. */
+  --border-subtle: #1a1a1a;
   --status-running: #22c55e;
   --status-stopped: #737373;
   --status-failed: #ef4444;
@@ -29,6 +34,7 @@
   --ds-surface: var(--bg-card);
   --ds-surface-inset: var(--bg-inset);
   --ds-border: var(--border);
+  --ds-border-subtle: var(--border-subtle);
   --ds-text: var(--text-primary);
   --ds-text-muted: var(--text-muted);
   --ds-tone-success-fg: var(--status-running);
@@ -77,6 +83,9 @@
   --color-bg: #f8fafc;
   --color-surface: #ffffff;
   --color-border: #e2e8f0;
+  /* web brand SoT `modules/brand/tokens.ts` (slate100) — the rung below
+     --color-border that v0.12's nested card steps onto. */
+  --color-border-subtle: #f1f5f9;
   --color-text: #040607;
   --color-text-muted: #64748b;
   --color-on-ink-muted: #e2e8f0;
@@ -94,6 +103,7 @@
   --ds-surface: var(--color-surface);
   --ds-surface-inset: var(--color-bg);
   --ds-border: var(--color-border);
+  --ds-border-subtle: var(--color-border-subtle, #e8e8e8);
   --ds-text: var(--color-text);
   --ds-text-muted: var(--color-text-muted);
   --ds-tone-success-fg: var(--color-success);

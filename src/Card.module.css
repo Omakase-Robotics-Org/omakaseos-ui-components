@@ -7,6 +7,31 @@
   color: var(--ds-text);
 }
 
+/* ---------- elevation is not nested (v0.12) ----------
+ * Panel and Card are drawn from the same recipe (--ds-border + --ds-shadow-card).
+ * A Panel floats because it is a section of the page; a Card inside one is a
+ * grouping of that section's content, so it must not float again — nested, the
+ * repeated recipe reads as "a frame inside a frame" rather than as a group
+ * (measured on the dashboard monitor page: Panel > Card x4 in the conversation
+ * state panel, Panel > Card x3-4 > row borders in navigation — omksos_web
+ * `reports/monitor-ia-recomposition/`).
+ *
+ * `data-panel-body` is Panel's scope marker (a global attribute, hence
+ * `:global()`; the descendant `.card` stays local). Selector specificity is
+ * (0,2,0) — one attribute + one class — against the plain `.card` rule's
+ * (0,1,0), so it wins regardless of source order or which of the two modules a
+ * bundler emits first.
+ *
+ * What steps down: the shadow (dropped) and the border (one rung, to
+ * --ds-border-subtle). What does NOT: the radius, so the shape stays
+ * continuous with an un-nested card, and everything CardHeader draws — a title
+ * is the same size wherever the card sits. A card that is not inside a panel
+ * body is untouched, which is why no call site had to change. */
+:global([data-panel-body]) .card {
+  border-color: var(--ds-border-subtle);
+  box-shadow: none;
+}
+
 .header {
   display: flex;
   justify-content: space-between;

@@ -27,7 +27,7 @@ came to be — see `reports/realtime-chat-components-poc/`).
 
 | Layer | Released | Purpose | Components |
 | --- | --- | --- | --- |
-| **Status** | v0.1–v0.2, v0.10, v0.11 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state | `StatusBadge`, `Card` + `CardHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast` |
+| **Status** | v0.1–v0.2, v0.10, v0.11, v0.12 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state. Since v0.12 the layer also states one *composition* rule: elevation is not nested — a `Card` inside a `Panel` body drops its shadow and steps its border down to `--ds-border-subtle` | `StatusBadge`, `Card` + `CardHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast` |
 | **Form** | v0.3, v0.10 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field`, `ToggleSwitch` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
@@ -131,6 +131,21 @@ They are not, and the distinction is the API:
 | --- | --- | --- |
 | `Panel` | The thing IS a section of the page — one cell of a grid of peers. Small uppercase title over a hard divider; `fullWidth` spans the grid; `id` makes it an anchor target | `Card`, which is a surface *within* a page: softer header with `hint` / `right`, no divider, no grid vocabulary |
 | `FactGrid` | The facts are readings taken at a glance — two columns of inset tiles, a small caption over a large monospaced figure | `FactList`, which is a vertical run of rows read one after another |
+
+**Elevation is not nested (v0.12).** The two containers are drawn from the
+same recipe — `--ds-border` plus `--ds-shadow-card` — so nesting them
+repeats it, and the pair reads as "a frame inside a frame" rather than as a
+group within a section (measured on the dashboard monitor page:
+`ConversationStatePanel` is Panel > Card × 4, `NavigationPanel` is
+Panel > Card × 3–4 > row borders). A `Card` inside a `Panel` body therefore
+drops its shadow and steps its border down to `--ds-border-subtle`; the
+radius, the padding and everything `CardHeader` draws are unchanged. **This
+is automatic and has no prop**: `Panel` marks its body `data-panel-body` and
+`Card.module.css` keys the demotion off that ancestor, so nesting is stated
+by where the caller put the card and every existing call site keeps its exact
+shape. A card that is not in a panel body is untouched. (A host whose palette
+binds no card shadow — the robot console's dark theme — sees only the border
+step; that is the palette's decision, not the rule's.)
 
 A `Fact` is a tile exactly when it is a child of a `FactGrid` (the tile
 look is the grid's, not the fact's), so "tile-styled row" and "unstyled
@@ -294,6 +309,7 @@ orchestrator repo (`omakase-robotics/omksos_web`):
 - v0.4–v0.5 — `reports/realtime-chat-components-poc/`
 - v0.10 — `reports/ui-primitives-promotion/`
 - v0.11 — `reports/rssa-ui-unification/`
+- v0.12 — `reports/monitor-ia-recomposition/`
 - Storybook + Pages + repo health — `reports/ui-components-catalog-and-pages-poc/`
 
 The current ship state is mirrored into `docs/shared-ui-components/`
