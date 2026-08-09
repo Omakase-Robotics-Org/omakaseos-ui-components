@@ -18,6 +18,13 @@
   --ds-surface-hover: var(--color-control-bg-hover, var(--color-bg));
   --ds-surface-active: var(--color-control-bg-hover, var(--color-bg));
   --ds-border: var(--color-border);
+  /* Separators INSIDE a surface (v0.8's level below border). Unmapped, this
+     fell back to the library default #e8e8e8 — no weaker than the brand's
+     --color-border, so console-origin "quiet" separators (map rows, fact
+     dividers, log rules) rendered at full border weight on the dashboard.
+     The fallback keeps hosts without the brand variable on the library
+     default. */
+  --ds-border-subtle: var(--color-border-subtle, #e8e8e8);
   --ds-border-strong: var(--color-text-subtle, var(--color-text-muted));
   --ds-text: var(--color-text);
   /* The brand SoT has three text levels (text / muted / subtle) and the library
