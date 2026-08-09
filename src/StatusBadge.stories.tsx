@@ -23,6 +23,7 @@ const meta = {
     },
     size: { control: { type: "inline-radio" }, options: [undefined, "sm", "md"] },
     pulse: { control: "boolean" },
+    live: { control: "boolean" },
   },
 } satisfies Meta<typeof StatusBadge>;
 
@@ -34,6 +35,10 @@ export const Default: Story = {};
 export const Pulse: Story = { args: { pulse: true } };
 
 export const Small: Story = { args: { size: "sm" } };
+
+/** Opt-in live region: the badge reports a value that changes, so a change
+ *  to it is announced (`role="status"`). Off by default. */
+export const Live: Story = { args: { live: true, tone: "danger", children: "Disconnected" } };
 
 export const LabelProp: Story = {
   args: { children: undefined, label: "Live (via label= prop)" },

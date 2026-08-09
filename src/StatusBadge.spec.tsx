@@ -39,6 +39,31 @@ describe("StatusBadge", () => {
     expect(screen.queryByText("from-label")).toBeNull();
   });
 
+  it("is not a live region by default (a badge that labels is not a report)", () => {
+    render(<StatusBadge tone="success">Connected</StatusBadge>);
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("becomes a live region when the call site says the value changes", () => {
+    render(
+      <StatusBadge tone="danger" live>
+        Disconnected
+      </StatusBadge>,
+    );
+    const badge = screen.getByRole("status");
+    expect(badge.getAttribute("data-tone")).toBe("danger");
+  });
+
+  it("hides the pulse dot from assistive tech (it re-states the tone)", () => {
+    const { container } = render(
+      <StatusBadge tone="success" pulse>
+        Live
+      </StatusBadge>,
+    );
+    const dot = container.querySelector('[data-pulse="true"]');
+    expect(dot?.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("propagates the size attribute only for sm", () => {
     const { rerender, container } = render(
       <StatusBadge tone="neutral" size="md">
