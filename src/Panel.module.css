@@ -1,0 +1,55 @@
+/* ---------- Panel ----------
+ * Faithful port of the robot console's Panel.module.css. Its rem values are
+ * carried over as the px they resolve to at the console's 16px root (header
+ * 0.875rem 1.25rem, body 1.25rem, title 0.8125rem), matching how the rest of
+ * this library states component-intrinsic geometry; color, radius, shadow and
+ * transition are bound to --ds-* .
+ *
+ * A section of a page, not a surface inside one — hence --ds-radius-lg (the
+ * step above a card) and a hard divider under the header rather than a gap. */
+
+.panel {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-card);
+  color: var(--ds-text);
+  /* The header's divider runs edge to edge, so the corners have to clip it. */
+  overflow: hidden;
+  /* A grid item defaults to min-width: auto, which lets a long unbroken token
+     inside push the whole track wider. A panel is a grid cell by design. */
+  min-width: 0;
+  transition:
+    background-color var(--ds-transition-fast),
+    border-color var(--ds-transition-fast);
+}
+
+.panel[data-full-width="true"] {
+  grid-column: 1 / -1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ds-space-lg);
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+/* The source app relies on a global `h2 { margin: 0 }`; this library ships no
+   reset, so the heading states it itself — as Card's title already does. */
+.title {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ds-text);
+  overflow-wrap: anywhere;
+}
+
+.body {
+  padding: 20px;
+}

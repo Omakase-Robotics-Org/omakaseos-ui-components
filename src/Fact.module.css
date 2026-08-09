@@ -38,3 +38,53 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* ---------- FactGrid (v0.11) ----------
+ * The robot console's StatsGrid tile pattern, ported faithfully (rem values
+ * carried over as the px they resolve to at its 16px root: gap 0.75rem, tile
+ * padding 0.875rem, caption 0.625rem, figure 1.125rem / 0.8125rem).
+ *
+ * The tile look is scoped to `.grid > .fact` rather than sitting on a Fact
+ * prop: a recessed tile only means anything inside the grid of tiles, and
+ * scoping it here makes "tile-styled row" and "unstyled tile" unreachable
+ * states. Existing FactList consumers are untouched by everything below. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.grid > .fact {
+  min-width: 0;
+  background: var(--ds-surface-inset);
+  border-radius: var(--ds-radius-card);
+  padding: 14px;
+  transition: background-color var(--ds-transition-fast);
+}
+
+/* The caption is smaller and more spaced than a list row's label: it is read
+   once to identify the figure under it, not scanned alongside its value. */
+.grid > .fact > .label {
+  font-size: 10px;
+  color: var(--ds-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* The figure is the point of the tile, so it is display-sized and monospaced
+   (columns of numbers line up, and a changing digit does not reflow). */
+.grid > .fact > .value {
+  font-size: 18px;
+  font-family: var(--ds-font-mono);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A value that is text rather than a figure. */
+.grid > .fact[data-size="sm"] > .value {
+  font-size: 13px;
+  letter-spacing: normal;
+}

@@ -22,8 +22,11 @@
  * v0.11:     Spinner, Toast — the two feedback primitives both apps had
  *            re-implemented locally (the robot console carried three
  *            private spinner keyframes and its own toast card; the
- *            dashboard its own toast card). Plus StatusBadge's opt-in
- *            `live` region. See
+ *            dashboard its own toast card). Panel — the titled page-grid
+ *            section the robot console builds every screen out of (39 call
+ *            sites), distinct from Card. FactGrid + Fact `size` — the
+ *            missing half of the tile pattern the `column` direction was
+ *            added for. Plus StatusBadge's opt-in `live` region. See
  *            `omksos_web/reports/rssa-ui-unification/README.md`.
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
@@ -37,8 +40,15 @@ export type { BadgeTone, BadgeSize, StatusBadgeProps } from "./StatusBadge";
 export { Card, CardHeader } from "./Card";
 export type { CardProps, CardHeaderProps } from "./Card";
 
-export { Fact, FactList } from "./Fact";
-export type { FactDirection, FactProps } from "./Fact";
+// FactGrid (v0.11) is the tile reading of a set of facts; FactList the
+// list reading. See the file header for which to reach for.
+export { Fact, FactList, FactGrid } from "./Fact";
+export type { FactDirection, FactSize, FactProps } from "./Fact";
+
+// v0.11: a titled section of a page grid. NOT a Card variant — see the
+// file header for the distinction (grid cell vs surface within a page).
+export { Panel } from "./Panel";
+export type { PanelProps } from "./Panel";
 
 export { ButtonRow } from "./ButtonRow";
 

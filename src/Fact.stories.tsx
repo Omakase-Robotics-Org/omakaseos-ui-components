@@ -6,7 +6,7 @@
  * stacks the label above the value.
  */
 import type { Meta, StoryObj } from "@storybook/react";
-import { Fact, FactList } from "./Fact";
+import { Fact, FactGrid, FactList } from "./Fact";
 import { StatusBadge } from "./StatusBadge";
 
 const meta = {
@@ -46,5 +46,26 @@ export const ListExample: Story = {
         Robot was redeployed at 12:00. Awaiting first interaction.
       </Fact>
     </FactList>
+  ),
+};
+
+/** The tile pattern: readings taken at a glance. `size="sm"` is for values
+ *  that are text rather than a figure. */
+export const GridExample: Story = {
+  render: () => (
+    <FactGrid>
+      <Fact label="Battery" direction="column">
+        38%
+      </Fact>
+      <Fact label="Uptime" direction="column">
+        14:32
+      </Fact>
+      <Fact label="Pose x" direction="column" size="sm">
+        1.204 m
+      </Fact>
+      <Fact label="Root" direction="column" size="sm">
+        /var/lib/omakase/recordings
+      </Fact>
+    </FactGrid>
   ),
 };
