@@ -70,15 +70,17 @@
   color: var(--primary-foreground);
   -webkit-user-select: none;
   user-select: none;
-  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
-    var(--tw-ring-color, currentcolor);
-  --tw-ring-color: var(--background);
+  /* Tailwind's 5-part box-shadow composition, folded to literals: only the
+   * ring-shadow slot is non-placeholder (offset-width 0 + width 2px, color
+   * = --background); the other four slots keep Tailwind's unused-slot
+   * transparent placeholder `0 0 #0000` so the computed `boxShadow` string
+   * matches the pre-migration Tailwind build exactly. */
   box-shadow:
-    var(--tw-inset-shadow, 0 0 #0000),
-    var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000);
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 2px var(--background),
+    0 0 #0000;
 }
 .avatarRoot[data-size="sm"] .avatarBadge {
   width: 0.5rem; /* size-2 */
@@ -118,15 +120,13 @@
   margin-inline-end: -0.5rem;
 }
 .avatarGroupRoot > [data-slot="avatar"] {
-  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
-    var(--tw-ring-color, currentcolor);
-  --tw-ring-color: var(--background);
+  /* See avatarBadge above for the box-shadow-composition rationale. */
   box-shadow:
-    var(--tw-inset-shadow, 0 0 #0000),
-    var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000);
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 2px var(--background),
+    0 0 #0000;
 }
 
 .avatarGroupCount {
@@ -142,15 +142,13 @@
   font-size: 0.875rem; /* text-sm */
   line-height: calc(1.25 / 0.875);
   color: var(--muted-foreground);
-  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
-    var(--tw-ring-color, currentcolor);
-  --tw-ring-color: var(--background);
+  /* See avatarBadge above for the box-shadow-composition rationale. */
   box-shadow:
-    var(--tw-inset-shadow, 0 0 #0000),
-    var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000);
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 2px var(--background),
+    0 0 #0000;
 }
 .avatarGroupCount > svg {
   width: 1rem; /* size-4 */

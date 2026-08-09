@@ -18,12 +18,11 @@
   padding-inline: calc(var(--spacing) * 3.5);
   padding-block: calc(var(--spacing) * 1.5);
   font-size: var(--text-xs);
-  line-height: var(--tw-leading, var(--text-xs--line-height));
+  line-height: var(--text-xs--line-height);
 }
 
 .codeHeaderLanguage {
   color: var(--muted-foreground);
-  --tw-font-weight: var(--font-weight-medium);
   font-weight: var(--font-weight-medium);
   text-transform: lowercase;
 }
@@ -42,8 +41,7 @@
   margin-bottom: calc(var(--spacing) * 2);
   scroll-margin: calc(var(--spacing) * 20);
   font-size: var(--text-xl);
-  line-height: var(--tw-leading, var(--text-xl--line-height));
-  --tw-font-weight: var(--font-weight-semibold);
+  line-height: var(--text-xl--line-height);
   font-weight: var(--font-weight-semibold);
 }
 .h1:first-child {
@@ -58,8 +56,7 @@
   margin-bottom: calc(var(--spacing) * 2);
   scroll-margin: calc(var(--spacing) * 20);
   font-size: var(--text-lg);
-  line-height: var(--tw-leading, var(--text-lg--line-height));
-  --tw-font-weight: var(--font-weight-semibold);
+  line-height: var(--text-lg--line-height);
   font-weight: var(--font-weight-semibold);
 }
 .h2:first-child {
@@ -74,8 +71,7 @@
   margin-bottom: calc(var(--spacing) * 1.5);
   scroll-margin: calc(var(--spacing) * 20);
   font-size: var(--text-base);
-  line-height: var(--tw-leading, var(--text-base--line-height));
-  --tw-font-weight: var(--font-weight-semibold);
+  line-height: var(--text-base--line-height);
   font-weight: var(--font-weight-semibold);
 }
 .h3:first-child {
@@ -90,8 +86,7 @@
   margin-bottom: var(--spacing);
   scroll-margin: calc(var(--spacing) * 20);
   font-size: var(--text-base);
-  line-height: var(--tw-leading, var(--text-base--line-height));
-  --tw-font-weight: var(--font-weight-medium);
+  line-height: var(--text-base--line-height);
   font-weight: var(--font-weight-medium);
 }
 .h4:first-child {
@@ -105,8 +100,7 @@
   margin-top: calc(var(--spacing) * 3);
   margin-bottom: var(--spacing);
   font-size: var(--text-sm);
-  line-height: var(--tw-leading, var(--text-sm--line-height));
-  --tw-font-weight: var(--font-weight-semibold);
+  line-height: var(--text-sm--line-height);
   font-weight: var(--font-weight-semibold);
 }
 .h5:first-child {
@@ -120,8 +114,7 @@
   margin-top: calc(var(--spacing) * 3);
   margin-bottom: var(--spacing);
   font-size: var(--text-sm);
-  line-height: var(--tw-leading, var(--text-sm--line-height));
-  --tw-font-weight: var(--font-weight-medium);
+  line-height: var(--text-sm--line-height);
   font-weight: var(--font-weight-medium);
 }
 .h6:first-child {
@@ -133,7 +126,6 @@
 
 .p {
   margin-block: calc(var(--spacing) * 3);
-  --tw-leading: var(--leading-relaxed);
   line-height: var(--leading-relaxed);
 }
 .p:first-child {
@@ -205,9 +197,7 @@
   margin-block: calc(var(--spacing) * 3);
   width: 100%;
   border-collapse: separate;
-  --tw-border-spacing-x: 0;
-  --tw-border-spacing-y: 0;
-  border-spacing: var(--tw-border-spacing-x) var(--tw-border-spacing-y);
+  border-spacing: 0 0;
   overflow-y: auto;
 }
 
@@ -216,7 +206,6 @@
   padding-inline: calc(var(--spacing) * 3);
   padding-block: calc(var(--spacing) * 1.5);
   text-align: start;
-  --tw-font-weight: var(--font-weight-medium);
   font-weight: var(--font-weight-medium);
 }
 .th:first-child {
@@ -272,18 +261,16 @@
 }
 
 .li {
-  --tw-leading: var(--leading-relaxed);
   line-height: var(--leading-relaxed);
 }
 
 .strong {
-  --tw-font-weight: var(--font-weight-semibold);
   font-weight: var(--font-weight-semibold);
 }
 
 .sup > a {
   font-size: var(--text-xs);
-  line-height: var(--tw-leading, var(--text-xs--line-height));
+  line-height: var(--text-xs--line-height);
   text-decoration-line: none;
 }
 
@@ -303,7 +290,6 @@
   border-top-width: 0px;
   padding: calc(var(--spacing) * 3.5);
   font-size: 13px;
-  --tw-leading: var(--leading-relaxed);
   line-height: var(--leading-relaxed);
 }
 

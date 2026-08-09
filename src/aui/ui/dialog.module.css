@@ -33,14 +33,14 @@
   border-radius: var(--radius); /* rounded-lg */
   background-color: var(--background);
   padding: 1.5rem; /* p-6 */
-  --tw-shadow:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg */
+  /* shadow-lg, expanded to the literal 5-part box-shadow list (unused
+   * inset/ring slots are Tailwind's transparent placeholder). */
   box-shadow:
-    var(--tw-inset-shadow, 0 0 #0000),
-    var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000);
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   transition-duration: 200ms;
   outline-style: none;
 }
@@ -56,7 +56,6 @@
   right: 1rem; /* right-4 */
   border-radius: 0.125rem; /* rounded-xs */
   opacity: 70%;
-  --tw-ring-offset-color: var(--background); /* ring-offset-background */
   transition-property: opacity;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -65,19 +64,18 @@
   opacity: 100%;
 }
 .dialogClose:focus {
-  --tw-ring-offset-width: 2px; /* focus:ring-offset-2 */
-  --tw-ring-offset-shadow: 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-color: var(--ring); /* focus:ring-ring */
-  --tw-ring-shadow: 0 0 0 calc(2px + var(--tw-ring-offset-width, 0px))
-    var(--tw-ring-color, currentcolor); /* focus:ring-2 */
+  /* ring-offset-background + focus:ring-offset-2 + focus:ring-ring +
+   * focus:ring-2, expanded to the literal 5-part box-shadow list (unused
+   * inset slots are Tailwind's transparent placeholder). 3rd term is the
+   * 2px background-colored offset ring; 4th term is the 2px foreground
+   * ring sitting outside that 2px offset. */
   box-shadow:
-    var(--tw-inset-shadow, 0 0 #0000),
-    var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000);
-  --tw-outline-style: none; /* focus:outline-hidden */
-  outline-style: none;
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 2px var(--background),
+    0 0 0 calc(2px + 2px) var(--ring),
+    0 0 #0000;
+  outline-style: none; /* focus:outline-hidden */
 }
 @media (forced-colors: active) {
   .dialogClose:focus {

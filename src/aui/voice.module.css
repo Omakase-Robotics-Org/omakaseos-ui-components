@@ -11,7 +11,7 @@
 .voiceStatus {
   color: var(--muted-foreground);
   font-size: var(--text-sm);
-  line-height: var(--tw-leading, var(--text-sm--line-height));
+  line-height: var(--text-sm--line-height);
 }
 
 /* VoiceStatusDot base + per-state colors (conditional logic unchanged in
@@ -22,8 +22,7 @@
   flex-shrink: 0;
   border-radius: calc(infinity * 1px);
   transition-property: all;
-  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-  --tw-duration: 300ms;
+  transition-timing-function: var(--default-transition-timing-function);
   transition-duration: 300ms;
 }
 

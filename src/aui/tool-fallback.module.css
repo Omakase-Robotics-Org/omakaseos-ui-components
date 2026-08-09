@@ -31,6 +31,10 @@
   color: var(--muted-foreground);
   font-size: 0.875rem;
   line-height: calc(1.25 / 0.875);
+  /* The three --tw-gradient-* entries are IDENT VALUES here, not variable
+   * references: they resolve nothing and can never fire, but they DO appear
+   * verbatim in the computed `transitionProperty` string, so removing them
+   * would be a visible computed-style change for no behavioural gain. */
   transition-property: color, background-color, border-color, outline-color,
     text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via,
     --tw-gradient-to;

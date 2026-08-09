@@ -18,11 +18,21 @@
    single class is fine here). */
 .trigger {
   cursor: pointer;
+  /* The three --tw-gradient-* entries are Tailwind residue, but they are IDENT
+     VALUES here, not variable references: they resolve nothing and can never
+     fire (an unregistered custom property cannot transition), yet they DO
+     appear verbatim in the computed `transitionProperty` string. Removing them
+     is therefore a visible computed-style change with no behavioural upside, so
+     they stay. This fold removes --tw-* value RESOLUTION — the inheritance
+     leak — not every occurrence of the spelling. */
   transition-property: color, background-color, border-color, outline-color,
     text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via,
     --tw-gradient-to;
-  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-  transition-duration: var(--tw-duration, var(--default-transition-duration));
+  /* --tw-ease/--tw-duration are guaranteed-invalid (no @property
+     initial-value) and never set on .trigger itself, so var()'s fallback —
+     Tailwind's own default transition timing/duration — always wins. */
+  transition-timing-function: var(--default-transition-timing-function);
+  transition-duration: var(--default-transition-duration);
 }
 @media (hover: hover) {
   .trigger:hover {
@@ -60,12 +70,25 @@
   border-radius: calc(infinity * 1px);
   padding: var(--spacing);
   opacity: 100%;
-  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0
-    calc(0px + var(--tw-ring-offset-width, 0px)) var(--tw-ring-color, currentcolor)
-    !important;
-  box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000) !important;
+  /* `ring-0! ring-offset-2 shadow-lg` expanded to the literal slot list.
+     `ring-0!` zeroes the ring WIDTH, but Tailwind's ring-shadow spread is
+     `ring-width + ring-offset-width`, so the 2px offset still paints a real
+     2px ring — terms 3 and 4 are genuine, not unused-slot placeholders.
+     Terms 1-2 are the unused inset slots; terms 5-6 are shadow-lg's two layers.
+
+     Written out because until this fold those four values reached the button
+     by INHERITANCE from the dialog rather than from this rule: the CSS-Modules
+     port dropped the ring-offset/ring-color/shadow declarations, and with
+     Tailwind's `@property { inherits: false }` gone there was nothing left to
+     stop --tw-* leaking down. That leak happened to reproduce the right
+     picture, so it went unnoticed. See reports/tailwind-residue-elimination/. */
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 2px var(--background),
+    0 0 0 2px var(--ring),
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
 }
 :global(.aui-attachment-preview-dialog-content) > button svg {
   color: var(--background);
@@ -147,8 +170,10 @@
   border-style: solid;
   border-width: 1px;
   transition-property: opacity;
-  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-  transition-duration: var(--tw-duration, var(--default-transition-duration));
+  /* --tw-ease/--tw-duration: see .trigger above — unset on .tile, so the
+     fallback (Tailwind's default transition timing/duration) always wins. */
+  transition-timing-function: var(--default-transition-timing-function);
+  transition-duration: var(--default-transition-duration);
 }
 @media (hover: hover) {
   .tile:hover {
@@ -174,11 +199,17 @@
   border-radius: calc(infinity * 1px);
   background-color: var(--color-white);
   opacity: 100%;
-  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px
-    var(--tw-shadow-color, rgb(0 0 0 / 0.1));
-  box-shadow: var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
-    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow);
+  /* --tw-shadow-color is guaranteed-invalid and unset here, so both
+     occurrences fall back to `rgb(0 0 0 / 0.1)`; the two comma-separated
+     shadow layers of the (inlined) --tw-shadow value become the trailing
+     two terms of the box-shadow list below. */
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 @media (hover: hover) {
   .tileRemove.tileRemove:hover {
@@ -247,8 +278,9 @@
   border-radius: calc(infinity * 1px);
   padding: var(--spacing);
   font-size: var(--text-xs);
-  line-height: var(--tw-leading, var(--text-xs--line-height));
-  --tw-font-weight: var(--font-weight-semibold);
+  /* --tw-leading is guaranteed-invalid and unset here, so the fallback
+     (the text-xs line-height token) always wins. */
+  line-height: var(--text-xs--line-height);
   font-weight: var(--font-weight-semibold);
 }
 @media (hover: hover) {
