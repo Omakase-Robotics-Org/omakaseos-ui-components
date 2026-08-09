@@ -535,13 +535,15 @@ const TILE_FACTS: ReadonlyArray<{ label: string; value: string; small?: boolean 
  * one of them spanning every column — with the FactGrid tile pattern
  * inside it. Both are only really visible in a real browser: a grid span
  * and a two-column track have no meaning in jsdom. */
-function PanelGridDemo() {
+function PanelGridDemo({ host }: { host: string }) {
   return (
     <div
       data-testid="panel-grid"
       style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}
     >
-      <Panel title="Robot state" id="demo-robot-state">
+      {/* The anchor id is per host: the harness renders this section twice,
+          and a document may only contain each id once. */}
+      <Panel title="Robot state" id={`${host}-robot-state`}>
         <div data-testid="fact-grid">
           <FactGrid>
             {TILE_FACTS.map((fact) => (
@@ -572,14 +574,14 @@ function PanelGridDemo() {
   );
 }
 
-function PageSectionsPanel() {
+function PageSectionsPanel({ host }: { host: string }) {
   return (
     <Card>
       <CardHeader
         title="Page sections (v0.11)"
         hint="Panel + FactGrid — the robot console's screen composition"
       />
-      <PanelGridDemo />
+      <PanelGridDemo host={host} />
     </Card>
   );
 }
@@ -595,7 +597,7 @@ function App() {
         <LiveStagePanel />
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
-        <PageSectionsPanel />
+        <PageSectionsPanel host="status-webui" />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
@@ -605,7 +607,7 @@ function App() {
         <LiveStagePanel />
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
-        <PageSectionsPanel />
+        <PageSectionsPanel host="omks-web" />
       </section>
     </div>
   );
