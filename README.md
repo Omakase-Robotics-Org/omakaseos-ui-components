@@ -27,7 +27,7 @@ came to be — see `reports/realtime-chat-components-poc/`).
 
 | Layer | Released | Purpose | Components |
 | --- | --- | --- | --- |
-| **Status** | v0.1–v0.2, v0.10 | Status-monitor primitives shared by every panel that surfaces robot or service state | `StatusBadge`, `Card` + `CardHeader`, `Fact` + `FactList`, `ButtonRow`, `SignalBars`, `ReservedText` |
+| **Status** | v0.1–v0.2, v0.10, v0.11 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state | `StatusBadge`, `Card` + `CardHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast` |
 | **Form** | v0.3, v0.10 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field`, `ToggleSwitch` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
@@ -64,6 +64,10 @@ import {
 
   // v0.10: promoted from robot-status-server-app's components/ui/
   ToggleSwitch, SignalBars, ReservedText,
+
+  // v0.11: feedback primitives (presentational — the host owns timing and placement),
+  //        the page-grid section, and the tile reading of a set of facts
+  Spinner, Toast, Panel, FactGrid,
 } from "@omakase-robotics/ui-components";
 
 // v0.6: canonical assistant-ui surface — separate sub-entry
@@ -117,6 +121,57 @@ apps so neither pays a per-call-site cost when adopting the library:
 
 `children` wins over `label` when both are given. The `title=` shorthand
 on `Card` is implemented as `<CardHeader title=…/>` internally.
+
+### Two containers, two surfaces — and why neither is a variant
+
+Four v0.11 additions look like variants of something that already exists.
+They are not, and the distinction is the API:
+
+| Reach for | When | Not |
+| --- | --- | --- |
+| `Panel` | The thing IS a section of the page — one cell of a grid of peers. Small uppercase title over a hard divider; `fullWidth` spans the grid; `id` makes it an anchor target | `Card`, which is a surface *within* a page: softer header with `hint` / `right`, no divider, no grid vocabulary |
+| `FactGrid` | The facts are readings taken at a glance — two columns of inset tiles, a small caption over a large monospaced figure | `FactList`, which is a vertical run of rows read one after another |
+
+A `Fact` is a tile exactly when it is a child of a `FactGrid` (the tile
+look is the grid's, not the fact's), so "tile-styled row" and "unstyled
+tile" are unreachable. Give those facts `direction="column"`, and
+`size="sm"` where the value is text rather than a figure (a path, a name)
+— at display size those read as shouting and wrap out of the tile.
+
+### One tone vocabulary, and the semantics derived from it
+
+`BadgeTone` (`success | warning | danger | info | neutral`) is the single
+semantic tone union — named for its first consumer, `StatusBadge`, and
+shared by `Toast` and `Spinner`. A consuming app maps its domain registers
+onto it once, at the edge (`error → danger`, `running → success`), so the
+same word means the same color everywhere.
+
+`Toast` derives its ARIA role from that tone through a total `Record`:
+`danger → role="alert"` (implicitly assertive — "it did not happen" must
+interrupt), every other tone → `role="status"` (implicitly polite). It
+sets no `aria-live` of its own, so the two politeness levels stay
+distinguishable, and a new tone becomes a compile error rather than a
+silent "polite".
+
+State is therefore assertable by **role and data attribute**
+(`data-tone` / `data-size` / `data-open`) rather than by a visible label
+string, in every consuming app's tests.
+
+### What the host owns (v0.11 feedback primitives)
+
+`Spinner` and `Toast` are presentational: no timers, no state, no portal.
+
+| Concern | Owner | Why |
+| --- | --- | --- |
+| Whether a spinner is on screen | Host | "Work is in progress" is the host's knowledge; a spinner told it is not spinning renders nothing, which is the host's `null` branch |
+| When a toast disappears | Host | The two apps already disagree (5s / 3.2s); timing is a product decision |
+| Where a toast sits | Host | One app pins a single card bottom-right, the other stacks cards bottom-center; a self-positioning card could serve only one |
+| The card, its tone, its role, its enter/exit transition | Library | Pure CSS (`data-open`), so no JS enter/exit state machine is needed |
+
+`StatusBadge` takes an opt-in `live` prop that makes it a `role="status"`
+live region. It is off by default: a badge that *labels* something fixed
+is not a live region, and only the call site knows whether its badge
+reports a changing value.
 
 ## Token model
 
@@ -204,8 +259,10 @@ run `bun install --force`.
 ```bash
 bun install
 bun run typecheck         # tsc --noEmit
-bun run test              # vitest --run (155+ tests across 24+ files)
-bun run test:e2e          # vite + Playwright; verifies overflow / focus / role / chat / stage
+bun run test              # vitest --run (175+ tests across 27+ files)
+bun run test:e2e          # vite + Playwright; verifies overflow / focus / role / chat / stage /
+                          #   spinner rotation, toast semantics, panel grid spans and fact tiles
+                          #   under both host aliases
                           #   in real chromium (the things jsdom cannot show)
 bun run dev               # http://localhost:5198 — themed harness (both apps side by side)
 bun run build             # demo/dist
@@ -235,6 +292,8 @@ orchestrator repo (`omakase-robotics/omksos_web`):
 - v0.1–v0.2 — `reports/shared-status-components-poc/`
 - v0.3 — `reports/shared-ui-components-basics-poc/`
 - v0.4–v0.5 — `reports/realtime-chat-components-poc/`
+- v0.10 — `reports/ui-primitives-promotion/`
+- v0.11 — `reports/rssa-ui-unification/`
 - Storybook + Pages + repo health — `reports/ui-components-catalog-and-pages-poc/`
 
 The current ship state is mirrored into `docs/shared-ui-components/`

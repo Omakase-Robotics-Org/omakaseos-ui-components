@@ -26,27 +26,31 @@ import {
   Checkbox,
   ConversationStage,
   Fact,
+  FactGrid,
   FactList,
   Heading,
   Input,
   LiveCaption,
   MessageBubble,
+  Panel,
   ParticipantTile,
   RealtimeEventLog,
   ReservedText,
   Select,
   SignalBars,
   Slider,
+  Spinner,
   StatusBadge,
   Switch,
   Textarea,
+  Toast,
   ToggleSwitch,
   ToolCallTrace,
   Toolbar,
   Transcript,
   TypingIndicator,
 } from "../src/index";
-import type { RealtimeEventEntry } from "../src/index";
+import type { BadgeTone, RealtimeEventEntry } from "../src/index";
 
 import "./hosts.css";
 
@@ -410,6 +414,176 @@ function RobotConsolePrimitivesPanel() {
   );
 }
 
+/** Spinner (v0.11) — the three sizes (a real browser is the only place the
+ * diameters and the rotation exist), the tone vocabulary, and the default
+ * head that inherits the surrounding ink. */
+function SpinnerDemo() {
+  return (
+    <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+      {(["sm", "md", "lg"] as const).map((size) => (
+        <span
+          key={size}
+          data-testid={`spinner-${size}`}
+          style={{ display: "grid", gap: 4, justifyItems: "center", fontSize: 11, color: "var(--ds-text-muted)" }}
+        >
+          <Spinner size={size} />
+          {size}
+        </span>
+      ))}
+      <span
+        data-testid="spinner-tone-success"
+        style={{ display: "grid", gap: 4, justifyItems: "center", fontSize: 11, color: "var(--ds-text-muted)" }}
+      >
+        <Spinner size="lg" tone="success" ariaLabel="Recording the map" />
+        wizard ring
+      </span>
+      <span
+        data-testid="spinner-inherit"
+        style={{
+          display: "grid",
+          gap: 4,
+          justifyItems: "center",
+          fontSize: 11,
+          color: "var(--ds-tone-danger-fg)",
+        }}
+      >
+        <Spinner />
+        currentColor
+      </span>
+    </div>
+  );
+}
+
+const TOAST_TONES: ReadonlyArray<{ tone: BadgeTone; message: string }> = [
+  { tone: "success", message: "Command accepted." },
+  { tone: "warning", message: "Navigation accepted in degraded mode." },
+  { tone: "danger", message: "Map switch failed: recording is still running." },
+  { tone: "info", message: "Map switched to floor 2." },
+  { tone: "neutral", message: "Nothing to report." },
+];
+
+/** Toast (v0.11) — one card per register, plus the closed state. The card
+ * does not position itself: here it sits in normal flow, which is what a
+ * host viewport element stacks. */
+function ToastDemo() {
+  return (
+    <div style={{ display: "grid", gap: 8, justifyItems: "start" }}>
+      {TOAST_TONES.map(({ tone, message }) => (
+        <span key={tone} data-testid={`toast-${tone}`}>
+          <Toast tone={tone}>{message}</Toast>
+        </span>
+      ))}
+      <span data-testid="toast-closed">
+        <Toast tone="info" open={false}>
+          Dismissed — faded out, and no longer in the way of a click.
+        </Toast>
+      </span>
+    </div>
+  );
+}
+
+/** StatusBadge's opt-in live region (v0.11) next to the default badge:
+ * same markup, one of them a `role="status"` because its value changes. */
+function StatusBadgeSemanticsDemo() {
+  return (
+    <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+      <span data-testid="badge-plain">
+        <StatusBadge tone="neutral">G1-042</StatusBadge>
+      </span>
+      <span data-testid="badge-live">
+        <StatusBadge tone="danger" live pulse>
+          Disconnected
+        </StatusBadge>
+      </span>
+    </div>
+  );
+}
+
+function FeedbackPrimitivesPanel() {
+  return (
+    <Card>
+      <CardHeader
+        title="Feedback primitives (v0.11)"
+        hint="host owns the timer and the placement"
+      />
+      <div style={{ display: "grid", gap: 16 }}>
+        <div>
+          <Heading level={3}>Spinner</Heading>
+          <SpinnerDemo />
+        </div>
+        <div>
+          <Heading level={3}>Toast</Heading>
+          <ToastDemo />
+        </div>
+        <div>
+          <Heading level={3}>StatusBadge semantics</Heading>
+          <StatusBadgeSemanticsDemo />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+const TILE_FACTS: ReadonlyArray<{ label: string; value: string; small?: boolean }> = [
+  { label: "Battery", value: "38%" },
+  { label: "Uptime", value: "14:32" },
+  { label: "Pose x", value: "1.204 m", small: true },
+  { label: "Root", value: "/var/lib/omakase/recordings", small: true },
+];
+
+/** Panel (v0.11) in the layout it exists for — a grid of peer sections,
+ * one of them spanning every column — with the FactGrid tile pattern
+ * inside it. Both are only really visible in a real browser: a grid span
+ * and a two-column track have no meaning in jsdom. */
+function PanelGridDemo() {
+  return (
+    <div
+      data-testid="panel-grid"
+      style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}
+    >
+      <Panel title="Robot state" id="demo-robot-state">
+        <div data-testid="fact-grid">
+          <FactGrid>
+            {TILE_FACTS.map((fact) => (
+              <Fact
+                key={fact.label}
+                label={fact.label}
+                direction="column"
+                size={fact.small ? "sm" : "md"}
+              >
+                {fact.value}
+              </Fact>
+            ))}
+          </FactGrid>
+        </div>
+      </Panel>
+      <Panel title="Network" headerRight={<StatusBadge tone="success">online</StatusBadge>}>
+        <FactList>
+          <Fact label="SSID">omakase-5g</Fact>
+          <Fact label="Signal">
+            <SignalBars signal={75} />
+          </Fact>
+        </FactList>
+      </Panel>
+      <Panel title="Teleop session" fullWidth headerRight={<Spinner size="sm" tone="info" />}>
+        A panel that spans every column of the grid it sits in.
+      </Panel>
+    </div>
+  );
+}
+
+function PageSectionsPanel() {
+  return (
+    <Card>
+      <CardHeader
+        title="Page sections (v0.11)"
+        hint="Panel + FactGrid — the robot console's screen composition"
+      />
+      <PanelGridDemo />
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -420,6 +594,8 @@ function App() {
         <RealtimeChatPanel />
         <LiveStagePanel />
         <RobotConsolePrimitivesPanel />
+        <FeedbackPrimitivesPanel />
+        <PageSectionsPanel />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
@@ -428,6 +604,8 @@ function App() {
         <RealtimeChatPanel />
         <LiveStagePanel />
         <RobotConsolePrimitivesPanel />
+        <FeedbackPrimitivesPanel />
+        <PageSectionsPanel />
       </section>
     </div>
   );
