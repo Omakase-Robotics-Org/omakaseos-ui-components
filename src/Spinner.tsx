@@ -36,6 +36,24 @@
  * `tone` names it explicitly from the library's one semantic tone
  * vocabulary — the same union `StatusBadge` takes, so "success" means
  * the same green in both.
+ *
+ * ## Sizes
+ *
+ * The library's `sm`/`md`/`lg` vocabulary, resolved against the two
+ * places a spinner actually appears. `lg` (36px) is the console's
+ * wizard-modal ring reproduced exactly — a spinner that stands alone in
+ * the middle of a dialog. `sm` (16px) and `md` (24px) are the sizes that
+ * fit inside a control: a 32px icon button holds either with its own
+ * padding intact, which the wizard's 36px could not. They are NOT bound
+ * to `--ds-control-height-*`: a spinner inside a control must be smaller
+ * than the control, so sharing that scale would make every in-button
+ * spinner exactly overflow its button.
+ *
+ * ## Motion
+ *
+ * `prefers-reduced-motion: reduce` stops the rotation and dims the ring
+ * rather than removing it: the indicator is the only thing on screen
+ * saying work is in progress.
  */
 import type { BadgeTone } from "./StatusBadge";
 import styles from "./Spinner.module.css";

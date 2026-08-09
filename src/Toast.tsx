@@ -56,6 +56,13 @@
  * `info → info` (`neutral` is available for a notice that should carry no
  * color at all).
  *
+ * `info` is a register of its own precisely so it does not get folded onto
+ * `danger` — "nothing was asked, this is a notice" is not "it did not
+ * happen". How loud it looks is then the host's, through the alias: the
+ * console maps `--ds-tone-info-fg` to an achromatic grey (its info toast
+ * is deliberately colorless today), the dashboard to its brand blue
+ * (which is what its own info toast already renders).
+ *
  * ## No close button
  *
  * Neither consumer has one: both auto-dismiss, and the console's card is
