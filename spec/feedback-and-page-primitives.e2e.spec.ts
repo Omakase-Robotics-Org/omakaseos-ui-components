@@ -54,8 +54,12 @@ test("Spinner: each size renders its own diameter", async ({ page }) => {
 
 test("Spinner: the ring is actually turning", async ({ page }) => {
   const ring = page.locator('.host--omks-web [data-testid="spinner-md"] [role="status"] > span');
-  await ring.scrollIntoViewIfNeeded();
 
+  // No scrolling, and nothing else that waits for actionability: this
+  // element never stops moving, so Playwright's stability check (the
+  // bounding box has to hold still for two consecutive frames) can never
+  // converge on it. `evaluate` needs neither — getComputedStyle reads the
+  // element wherever it is, including outside the viewport.
   const first = await computed(ring, "transform");
   // A fifth of the 1s rotation — far from a full turn, so the two samples
   // cannot coincide by landing on the same phase.
