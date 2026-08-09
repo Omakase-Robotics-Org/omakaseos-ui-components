@@ -19,6 +19,12 @@
  *            CSS modules (an SoT audit finding: three genuine L1 visual
  *            primitives living outside the shared design system). See
  *            `omksos_web/reports/ui-primitives-promotion/README.md`.
+ * v0.11:     Spinner, Toast — the two feedback primitives both apps had
+ *            re-implemented locally (the robot console carried three
+ *            private spinner keyframes and its own toast card; the
+ *            dashboard its own toast card). Plus StatusBadge's opt-in
+ *            `live` region. See
+ *            `omksos_web/reports/rssa-ui-unification/README.md`.
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
@@ -42,6 +48,14 @@ export type { SignalBarsProps } from "./SignalBars";
 
 export { ReservedText } from "./ReservedText";
 export type { ReservedTextTone, ReservedTextProps } from "./ReservedText";
+
+// v0.11: feedback primitives. Both are presentational — the host owns the
+// timer and the placement; see each file's header.
+export { Spinner } from "./Spinner";
+export type { SpinnerProps, SpinnerSize } from "./Spinner";
+
+export { Toast } from "./Toast";
+export type { ToastProps, ToastTone } from "./Toast";
 
 // Form & layout primitives (v0.3)
 export { Button } from "./Button";

@@ -1,0 +1,83 @@
+/* ---------- Spinner ----------
+ * Ring diameter and stroke width are component-intrinsic geometry, kept as
+ * component-local custom properties rather than --ds-* tokens: a spinner is
+ * not a control, so it must NOT pick up --ds-control-height-* (a spinner
+ * inside a button has to be smaller than the button it sits in). `lg` (36px
+ * / 3px) is the robot console's wizard-modal ring reproduced exactly; `md`
+ * and `sm` step down from it for inline and in-control use.
+ *
+ * The track is --ds-border, not the source app's --ds-surface-inset: the
+ * un-traversed part of the ring is a faint neutral STROKE, and --ds-border
+ * is the token whose purpose is exactly that on any surface. Binding it to
+ * an inset SURFACE color happened to look right in the wizard (which sits on
+ * --ds-surface) and would disappear on any host that renders the spinner on
+ * an inset panel. */
+
+.spinner {
+  --spinner-diameter: 24px;
+  --spinner-stroke: 2px;
+  --spinner-head: currentColor;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--spinner-diameter);
+  height: var(--spinner-diameter);
+}
+
+.spinner[data-size="sm"] {
+  --spinner-diameter: 16px;
+  --spinner-stroke: 2px;
+}
+
+.spinner[data-size="lg"] {
+  --spinner-diameter: 36px;
+  --spinner-stroke: 3px;
+}
+
+.spinner[data-tone="success"] {
+  --spinner-head: var(--ds-tone-success-fg);
+}
+
+.spinner[data-tone="warning"] {
+  --spinner-head: var(--ds-tone-warning-fg);
+}
+
+.spinner[data-tone="danger"] {
+  --spinner-head: var(--ds-tone-danger-fg);
+}
+
+.spinner[data-tone="info"] {
+  --spinner-head: var(--ds-tone-info-fg);
+}
+
+.spinner[data-tone="neutral"] {
+  --spinner-head: var(--ds-tone-neutral-fg);
+}
+
+.ring {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: var(--spinner-stroke) solid var(--ds-border);
+  border-top-color: var(--spinner-head);
+  border-radius: 50%;
+  animation: ds-spin 1s linear infinite;
+}
+
+/* Reduced motion keeps the ring as a static cue instead of removing the
+ * indicator — same treatment TypingIndicator and the console's own arc
+ * already use. */
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+@keyframes ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

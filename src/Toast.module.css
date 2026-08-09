@@ -1,0 +1,85 @@
+/* ---------- Toast ----------
+ * A floating card, so it reads on --ds-surface with --ds-shadow-overlay
+ * (both hosts alias that shadow to their own toast/overlay shadow) and
+ * states its register through the border color rather than a filled
+ * background: the message text stays on the host's normal surface ink, at
+ * the host's normal contrast, whatever the register.
+ *
+ * The card does NOT position itself — see the component header. Placement
+ * (fixed corner, centered stack, portal) belongs to the host's viewport
+ * element, which is the only thing that knows how many toasts there are.
+ *
+ * Two component-local custom properties are left overridable by a host that
+ * needs a different travel or speed: --toast-exit-shift (the slide distance
+ * of a closed card) and --toast-transition. The 180ms default is the
+ * dashboard's measured toast-in duration; the 12px default travel is a
+ * placement-agnostic nudge, because this card does not know whether it is
+ * anchored to the bottom of the screen (the console slides 100px down) or
+ * to the top. */
+
+.toast {
+  --toast-exit-shift: 12px;
+  --toast-transition: 180ms ease-out;
+
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-md);
+  max-width: 360px;
+  padding: var(--ds-space-lg) var(--ds-space-xl);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  box-shadow: var(--ds-shadow-overlay);
+  color: var(--ds-text);
+  font-size: var(--ds-font-size-control);
+  line-height: var(--ds-line-height-text);
+  /* Both hosts send messages that carry their own line breaks (a rejected
+     command's multi-line reason); long unbroken tokens still wrap. */
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--toast-transition),
+    transform var(--toast-transition);
+}
+
+/* A closed card is still in the DOM (hosts that slide out instead of
+   unmounting need it to be), so it must stop intercepting pointer events —
+   otherwise an invisible card keeps swallowing clicks in whichever corner
+   the host pinned it to. */
+.toast[data-open="false"] {
+  opacity: 0;
+  transform: translateY(var(--toast-exit-shift));
+  pointer-events: none;
+}
+
+.toast[data-tone="success"] {
+  border-color: var(--ds-tone-success-fg);
+}
+
+.toast[data-tone="warning"] {
+  border-color: var(--ds-tone-warning-fg);
+}
+
+.toast[data-tone="danger"] {
+  border-color: var(--ds-tone-danger-fg);
+}
+
+.toast[data-tone="info"] {
+  border-color: var(--ds-tone-info-fg);
+}
+
+.toast[data-tone="neutral"] {
+  border-color: var(--ds-tone-neutral-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: opacity var(--toast-transition);
+  }
+
+  .toast[data-open="false"] {
+    transform: none;
+  }
+}
