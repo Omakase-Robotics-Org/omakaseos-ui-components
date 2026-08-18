@@ -107,10 +107,14 @@
   filter: brightness(0.95);
 }
 
+/* danger — its soft background can coincide with a danger-soft surface behind
+ * it (the dashboard's danger-zone section resolves both to the same brand
+ * token), so the resting chip carries its own outline; hover already goes
+ * solid. */
 .button[data-variant="danger"] {
   background: var(--ds-tone-danger-bg);
   color: var(--ds-tone-danger-fg);
-  border-color: transparent;
+  border-color: var(--ds-tone-danger-fg);
 }
 .button[data-variant="danger"]:hover {
   background: var(--ds-tone-danger-fg);

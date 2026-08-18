@@ -118,6 +118,28 @@ test("Button has the expected role + variant data attribute", async ({ page }) =
   await expect(primary).toHaveRole("button");
 });
 
+test("Danger Button carries its danger outline at rest and goes solid on hover", async ({ page }) => {
+  const host = page.locator(".host--omks-web");
+  const danger = host.getByRole("button", { name: "Delete" });
+
+  const resting = await danger.evaluate((el) => {
+    const cs = globalThis.getComputedStyle(el as HTMLButtonElement);
+    return {
+      borderTopColor: cs.borderTopColor,
+      borderTopStyle: cs.borderTopStyle,
+      borderTopWidth: cs.borderTopWidth,
+      color: cs.color,
+    };
+  });
+  expect(resting.borderTopColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(resting.borderTopColor).toBe(resting.color);
+  expect(resting.borderTopWidth).toBe("1px");
+  expect(resting.borderTopStyle).toBe("solid");
+
+  await danger.hover();
+  await expect(danger).toHaveCSS("background-color", resting.borderTopColor);
+});
+
 test("Checkbox label has truncation styles + does not overflow its parent", async ({ page }) => {
   // Two independent things to prove:
   //   1. The label carries the truncation styles (white-space: nowrap +
