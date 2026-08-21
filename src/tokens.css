@@ -44,6 +44,16 @@
   --ds-tone-info-bg: rgba(37, 99, 235, 0.12);
   --ds-tone-neutral-fg: #525252;
   --ds-tone-neutral-bg: rgba(82, 82, 82, 0.10);
+  /* idle (v0.15) — a sixth register, weaker than neutral. neutral says
+     "this does not apply"; idle says "no reading has been taken yet". The
+     two coexist on the same screen (an inspection sheet has rows that were
+     excluded and rows nobody has looked at), so they cannot share a token.
+     Deliberately NOT added to `BadgeTone`: no badge or toast states this
+     register — only the shape-carried Status primitives (`StatusGlyph`) do,
+     and widening the badge union would force every consumer's exhaustive
+     mapping to grow for a register its badges never take. */
+  --ds-tone-idle-fg: #9ca3af;
+  --ds-tone-idle-bg: rgba(156, 163, 175, 0.08);
 
   /* Accent (primary action, switch ON, slider track-fill, checked checkbox) */
   --ds-accent: #2563eb;
@@ -76,6 +86,13 @@
   --ds-control-padding-x-lg: 12px;
 
   /* Radii — purpose-bound. */
+  /* Below control (v0.15): a chip is a small inline tile whose own side is
+     shorter than a control's height, so a control's radius rounds it into a
+     pill and erases the tile reading. Hosts whose control radius already is
+     the chip radius map both onto the same variable; the level exists so a
+     host with generous control corners (robot-inspection-web: 12px) can keep
+     its chips square-cornered. */
+  --ds-radius-chip: 6px;
   --ds-radius-control: 6px;
   --ds-radius-card: 8px;
   /* Larger than a card: dialogs and the map viewer's framed surfaces. */

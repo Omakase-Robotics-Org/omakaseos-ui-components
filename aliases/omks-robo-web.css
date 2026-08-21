@@ -47,6 +47,11 @@
   --ds-tone-info-bg: var(--color-primary-soft);
   --ds-tone-neutral-fg: var(--color-text-muted);
   --ds-tone-neutral-bg: var(--color-on-ink-muted);
+  /* idle (v0.15) — "no reading taken yet", a rung below neutral. The brand
+     SoT's weakest ink is --color-text-subtle, and the wash is derived from it
+     the same way --ds-bubble-bg-system is, so the hue stays the palette's. */
+  --ds-tone-idle-fg: var(--color-text-subtle, var(--color-text-muted));
+  --ds-tone-idle-bg: color-mix(in srgb, var(--color-text-muted) 6%, transparent);
 
   /* Accent — primary action. */
   --ds-accent: var(--color-primary);
@@ -63,6 +68,10 @@
    * the host does not own). */
   --ds-radius-card: var(--radius-card);
   --ds-radius-control: var(--radius-control);
+  /* This brand's control corner IS its chip corner (both 6px), so the two
+     levels resolve to one variable here; the level exists for hosts whose
+     controls are rounder than their chips. */
+  --ds-radius-chip: var(--radius-control, 6px);
   --ds-radius-pill: 999px;
 
   --ds-shadow-card: var(--shadow-card);

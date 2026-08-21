@@ -35,6 +35,13 @@
   --ds-tone-info-bg: rgba(163, 163, 163, 0.1);
   --ds-tone-neutral-fg: var(--text-muted);
   --ds-tone-neutral-bg: rgba(82, 82, 82, 0.1);
+  /* idle (v0.15) — "no reading taken yet", a rung below neutral. This host
+     already has the register in its palette: --status-stopped is the grey a
+     service that was never started renders in. The wash is derived from it
+     with color-mix rather than written as a fourth translucent literal, so
+     the frozen-literal list above does not have to grow. */
+  --ds-tone-idle-fg: var(--status-stopped, var(--text-muted));
+  --ds-tone-idle-bg: color-mix(in srgb, var(--status-stopped, var(--text-muted)) 8%, transparent);
 
   /* Accent — status_server_webui's "running" green doubles as the accent
    * because the host UI is operator-facing and the green dominates. The
@@ -46,6 +53,9 @@
 
   /* Radii */
   --ds-radius-control: var(--radius-sm);
+  /* This host's smallest radius serves both levels (its controls are already
+     tight), so chip and control resolve to the same variable. */
+  --ds-radius-chip: var(--radius-sm);
   --ds-radius-card: var(--radius-md);
   --ds-radius-lg: var(--radius-lg);
   --ds-radius-pill: 100px;
