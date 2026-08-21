@@ -86,10 +86,14 @@
   --glyph-ink: var(--ds-tone-neutral-fg);
 }
 
-/* idle — the same emptiness with an open line and no mark at all. */
+/* idle — the same emptiness with an open line and no mark at all. The fill
+   is the register's own wash (--ds-tone-idle-bg): every host bridges it as an
+   extremely faint tint (alpha well under 0.1), so the glyph still reads as
+   "empty" while the register is no longer a dead token. */
 .glyph[data-tone="idle"] {
   --glyph-ring-style: dashed;
   --glyph-ring: var(--ds-border);
+  --glyph-fill: var(--ds-tone-idle-bg);
   --glyph-ink: var(--ds-tone-idle-fg);
 }
 

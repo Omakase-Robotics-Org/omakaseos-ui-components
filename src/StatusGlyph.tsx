@@ -17,7 +17,7 @@
  * | `danger`  | solid       | none (filled) | `✕`  |
  * | `warning` | none        | dashed        | `!`  |
  * | `neutral` | none        | solid         | `—`  |
- * | `idle`    | none        | dashed        | none |
+ * | `idle`    | faint wash  | dashed        | none |
  *
  * `warning` and `idle` share a line style and are separated by presence of a
  * mark — the pair reads as "open, and someone is on it" against "nobody has

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { StatusGlyph } from "./StatusGlyph";
@@ -53,5 +55,17 @@ describe("StatusGlyph", () => {
   it("is an image, not a live region — a cell of a table is not an announcement", () => {
     render(<StatusGlyph tone="warning" ariaLabel="pending" />);
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("binds idle's fill to the --ds-tone-idle-bg register instead of leaving it a dead token", () => {
+    // jsdom does not apply the real stylesheet (see the e2e spec's header
+    // comment), so this reads the CSS module source directly rather than a
+    // computed style — the runtime resolution is proven in
+    // spec/shape-status-primitives.e2e.spec.ts instead.
+    const cssPath = resolve(__dirname, "./StatusGlyph.module.css");
+    const css = readFileSync(cssPath, "utf8");
+    const idleBlock = /\.glyph\[data-tone="idle"\]\s*\{([^}]*)\}/.exec(css)?.[1];
+    expect(idleBlock).toBeDefined();
+    expect(idleBlock).toMatch(/--glyph-fill:\s*var\(--ds-tone-idle-bg\)/);
   });
 });

@@ -142,6 +142,36 @@ test("StatusGlyph: only danger is a solid disc; the other four are unfilled or w
   }
 });
 
+test("StatusGlyph: idle's fill resolves to the --ds-tone-idle-bg token, not a hardcoded transparent", async ({
+  page,
+}) => {
+  const idleGlyph = glyph(page, HOSTS.inspection, "idle");
+  const idleFill = await computed(idleGlyph, "background-color");
+
+  // Probe: what does this host itself resolve `var(--ds-tone-idle-bg)` to,
+  // read from an unrelated element in the same cascade scope? If the glyph
+  // is truly bound to the register (rather than some fixed literal that
+  // happens to look faint), the two must match exactly, on every host.
+  const probeFill = await page.evaluate((hostSelector) => {
+    const host = document.querySelector(hostSelector);
+    if (host === null) {
+      throw new Error(`host not found: ${hostSelector}`);
+    }
+    const probe = document.createElement("span");
+    probe.style.backgroundColor = "var(--ds-tone-idle-bg)";
+    host.appendChild(probe);
+    const value = window.getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return value;
+  }, HOSTS.inspection);
+
+  expect(idleFill).toBe(probeFill);
+  // And the register is still a wash, not a fill that would make idle read
+  // as "settled" the way success does.
+  expect(alphaOf(idleFill)).toBeGreaterThan(0);
+  expect(alphaOf(idleFill)).toBeLessThan(0.1);
+});
+
 test("StatusGlyph: every register occupies an identical box, so a column cannot jitter", async ({
   page,
 }) => {
