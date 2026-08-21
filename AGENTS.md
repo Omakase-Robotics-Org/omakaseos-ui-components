@@ -56,7 +56,9 @@ own `components/` directory.
    by fill, line style, opacity or shape — see `StatusGlyph` /
    `RankChip` / `SegmentedMeter` for the pattern, and note that a
    `border-style` claim is invisible to jsdom and therefore needs an
-   e2e assertion.
+   e2e assertion. Concretely: `StatusBadge` (and any primitive that carries
+   state through hue alone) cannot be used for state discrimination on this
+   host — reach for `StatusGlyph` instead.
 
    **The aui surface (`src/aui/`, shadcn theme tokens, CSS Modules).**
    The vendored shadcn-style assistant-ui registry components under

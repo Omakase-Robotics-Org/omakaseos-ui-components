@@ -295,6 +295,12 @@ Three deliberate API choices:
   badge where there is room to write it. `GlyphTone` is `BadgeTone` minus
   `info` (a glyph is a reading; "info" is not a reading) plus `idle`.
 
+On a monotone host, a primitive that carries its state through hue alone
+(`StatusBadge` and similar) cannot be used for state discrimination — every
+tone resolves to the same grey register set here. Use `StatusGlyph` (or
+`RankChip` / `SegmentedMeter`) wherever the reading itself, not just a label
+next to it, has to be told apart.
+
 `idle` is a new sixth register (`--ds-tone-idle-*`): `neutral` says "this does
 not apply", `idle` says "no reading has been taken yet". Both appear on the
 same sheet, so they cannot share a token. It is deliberately **not** added to
