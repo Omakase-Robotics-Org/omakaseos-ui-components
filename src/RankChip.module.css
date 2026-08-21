@@ -1,0 +1,69 @@
+/* ---------- RankChip ----------
+ * Side length is component-intrinsic geometry (a chip has to fit inside a
+ * table row, so it must not share --ds-control-height-*), kept as a
+ * component-local custom property.
+ *
+ * The corner is --ds-radius-chip, the level added in v0.15 below control: a
+ * 24px tile rounded at a generous host's control radius (12px on
+ * robot-inspection-web) is a pill, and a pill is not a tile — it loses the
+ * "rank" reading the square corner carries. Hosts whose control radius
+ * already is their chip radius map both onto one variable.
+ *
+ * All three ranks keep the SAME outer box (`border-box` plus a border on
+ * every state) so a column of chips does not shift when a rank changes. */
+
+.chip {
+  --chip-side: 24px;
+  --chip-border-style: solid;
+  --chip-border-color: var(--ds-border);
+  --chip-fill: transparent;
+  --chip-ink: var(--ds-text);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--chip-side);
+  height: var(--chip-side);
+  border: 1px var(--chip-border-style) var(--chip-border-color);
+  border-radius: var(--ds-radius-chip);
+  background: var(--chip-fill);
+  color: var(--chip-ink);
+  /* Mono + tabular figures: a column of chips is read as a column, so the
+     glyphs have to sit on the same advance width whether they are letters or
+     digits. */
+  font-family: var(--ds-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: calc(var(--chip-side) * 0.55);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.chip[data-size="sm"] {
+  --chip-side: 20px;
+}
+
+/* high — filled with the accent, ink inverted. The heaviest mark the palette
+   can make without introducing a colour. */
+.chip[data-rank="high"] {
+  --chip-fill: var(--ds-accent);
+  --chip-border-color: var(--ds-accent);
+  --chip-ink: var(--ds-text-on-accent);
+}
+
+/* medium — outlined at full border weight, primary ink. */
+.chip[data-rank="medium"] {
+  --chip-border-color: var(--ds-border);
+  --chip-ink: var(--ds-text);
+}
+
+/* low — the line opens and the ink recedes. Both, not just one: a dashed
+   border alone is nearly indistinguishable from solid at 20px, and muted ink
+   alone loses the ordering when the chip is read out of context. */
+.chip[data-rank="low"] {
+  --chip-border-style: dashed;
+  --chip-border-color: var(--ds-border);
+  --chip-ink: var(--ds-text-muted);
+}

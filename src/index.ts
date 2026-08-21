@@ -35,6 +35,15 @@
  *            `omksos_web/reports/monitor-scope-coherence/`, ruling B, and
  *            `src/PanelScope.tsx` for why the check is a context read.
  *
+ * v0.15:     StatusGlyph, RankChip, SegmentedMeter — the shape-carried Status
+ *            vocabulary, plus a third host alias
+ *            (`aliases/robot-inspection-web.css`). The acceptance-inspection
+ *            web app is fully desaturated by design, so a register cannot be
+ *            stated as a hue: these three state it as fill, line style and
+ *            opacity instead, which also survives a greyscale printout and
+ *            colour-vision deficiency on the two existing hosts. See
+ *            `omksos_web/reports/ui-components-inspect-theme/README.md`.
+ *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
  */
@@ -61,6 +70,24 @@ export type { FactDirection, FactSize, FactProps } from "./Fact";
 // file header for the distinction (grid cell vs surface within a page).
 export { Panel } from "./Panel";
 export type { PanelProps } from "./Panel";
+
+// v0.15: the shape-carried Status vocabulary — a register, a rank and a
+// division stated without hue. Reach for StatusGlyph over StatusBadge where
+// the register is one cell of a dense table and the word does not fit; see
+// each file's header for the shape-to-meaning table.
+export { StatusGlyph } from "./StatusGlyph";
+export type { GlyphTone, GlyphSize, StatusGlyphProps } from "./StatusGlyph";
+
+export { RankChip } from "./RankChip";
+export type { RankLevel, RankChipSize, RankChipProps } from "./RankChip";
+
+export { SegmentedMeter } from "./SegmentedMeter";
+export type {
+  SegmentWeight,
+  MeterSegment,
+  SegmentedMeterSize,
+  SegmentedMeterProps,
+} from "./SegmentedMeter";
 
 export { ButtonRow } from "./ButtonRow";
 

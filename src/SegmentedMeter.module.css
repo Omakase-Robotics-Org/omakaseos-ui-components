@@ -1,0 +1,60 @@
+/* ---------- SegmentedMeter ----------
+ * Thickness is component-intrinsic geometry (a bar is not a control), kept as
+ * a component-local custom property.
+ *
+ * The track is --ds-border-subtle: the unaccounted part of the whole is a
+ * faint separator-weight wash INSIDE a surface, which is exactly that token's
+ * purpose. Not --ds-surface-inset: on a host that renders the meter on an
+ * inset panel an inset-coloured track disappears.
+ *
+ * The four weights are the surface's own ink at four strengths, derived with
+ * color-mix from --ds-text rather than bound to four new tokens. Two reasons:
+ * the tiers are RELATIVE (their whole meaning is the ordering, so they must
+ * move together when a host changes its ink), and on the desaturated host
+ * this reproduces the source design's values exactly (#f2f3f5 at
+ * .90/.55/.30/.16) without that host having to declare them. */
+
+.meter {
+  --meter-thickness: 6px;
+
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  /* min-width: 0 so a meter in a flex row shrinks with its cell instead of
+     forcing the row wider (AGENTS.md rule 5). */
+  min-width: 0;
+  height: var(--meter-thickness);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-border-subtle);
+  /* The pill's corners clip the first and last segment, so the run of
+     segments reads as one bar rather than as blocks in a container. */
+  overflow: hidden;
+}
+
+.meter[data-size="sm"] {
+  --meter-thickness: 4px;
+}
+
+.segment {
+  /* The inline width is the segment's share of the whole; flex must not
+     redistribute it (a shrunk segment would state a different division). */
+  flex: 0 0 auto;
+  height: 100%;
+}
+
+.segment[data-weight="full"] {
+  background: color-mix(in srgb, var(--ds-text) 90%, transparent);
+}
+
+.segment[data-weight="strong"] {
+  background: color-mix(in srgb, var(--ds-text) 55%, transparent);
+}
+
+.segment[data-weight="medium"] {
+  background: color-mix(in srgb, var(--ds-text) 30%, transparent);
+}
+
+.segment[data-weight="faint"] {
+  background: color-mix(in srgb, var(--ds-text) 16%, transparent);
+}

@@ -1,0 +1,102 @@
+/* ---------- StatusGlyph ----------
+ * Diameter and border width are component-intrinsic geometry, kept as
+ * component-local custom properties rather than --ds-* tokens: a glyph is not
+ * a control (it must fit INSIDE a table row's line box, so sharing
+ * --ds-control-height-* would make every in-row glyph exactly overflow it),
+ * and the sizes are not a host density decision.
+ *
+ * Every state keeps the SAME outer box (`border-box` sizing plus a
+ * transparent border on the filled state) so a column of glyphs does not
+ * jitter as readings arrive. That is the one property jsdom cannot show and
+ * `spec/shape-status-primitives.e2e.spec.ts` measures.
+ *
+ * Ring colours are derived from the register's own --ds-tone-*-fg with
+ * color-mix rather than bound to a second token: the ring is the register's
+ * ink at reduced strength, so a host that shifts the register shifts both
+ * together and cannot get a ring that disagrees with its mark. */
+
+.glyph {
+  --glyph-diameter: 22px;
+  --glyph-border: 1px;
+  /* Set per tone below. `transparent` keeps the filled state's box identical
+     to the ringed states'. */
+  --glyph-ring: transparent;
+  --glyph-ring-style: solid;
+  --glyph-fill: transparent;
+  --glyph-ink: var(--ds-text);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--glyph-diameter);
+  height: var(--glyph-diameter);
+  border: var(--glyph-border) var(--glyph-ring-style) var(--glyph-ring);
+  border-radius: var(--ds-radius-pill);
+  background: var(--glyph-fill);
+  color: var(--glyph-ink);
+  font-family: var(--ds-font-sans);
+  line-height: 1;
+  /* A glyph is read, never selected — a drag across a table of them would
+     otherwise pick up a run of ✓✕! characters. */
+  user-select: none;
+}
+
+.glyph[data-size="sm"] {
+  --glyph-diameter: 18px;
+}
+
+.glyph[data-size="lg"] {
+  --glyph-diameter: 28px;
+}
+
+/* success — a check inside a soft wash, ringed faintly. The only state with
+   both a fill and a ring: a passed check is the resting state of a finished
+   sheet, so it has to read as settled without shouting. */
+.glyph[data-tone="success"] {
+  --glyph-fill: var(--ds-tone-success-bg);
+  --glyph-ring: color-mix(in srgb, var(--ds-tone-success-fg) 40%, transparent);
+  --glyph-ink: var(--ds-tone-success-fg);
+}
+
+/* danger — the one solid disc on the screen, so a failure is findable by
+   weight alone while scrolling. The mark inverts to the ink that sits on a
+   saturated fill (--ds-text-on-accent), which is the only foreground token
+   whose purpose is exactly that. */
+.glyph[data-tone="danger"] {
+  --glyph-fill: var(--ds-tone-danger-fg);
+  --glyph-ink: var(--ds-text-on-accent);
+}
+
+/* warning — dashed and unfilled: an open check is a line not yet closed. The
+   ring is heavier than the others so the dashes are legible at 18px. */
+.glyph[data-tone="warning"] {
+  --glyph-border: 1.5px;
+  --glyph-ring-style: dashed;
+  --glyph-ring: color-mix(in srgb, var(--ds-tone-warning-fg) 70%, transparent);
+  --glyph-ink: var(--ds-tone-warning-fg);
+}
+
+/* neutral — a closed but empty ring: the check does not apply here. Bound to
+   --ds-border, not to the tone's own ink: this ring states "there is a cell
+   here and nothing goes in it", which is a rule, not a register. */
+.glyph[data-tone="neutral"] {
+  --glyph-ring: var(--ds-border);
+  --glyph-ink: var(--ds-tone-neutral-fg);
+}
+
+/* idle — the same emptiness with an open line and no mark at all. */
+.glyph[data-tone="idle"] {
+  --glyph-ring-style: dashed;
+  --glyph-ring: var(--ds-border);
+  --glyph-ink: var(--ds-tone-idle-fg);
+}
+
+.mark {
+  /* Proportional to the diameter so the three sizes are one drawing scaled,
+     not three drawings. 0.55 keeps the em dash inside the ring at `sm`. */
+  font-size: calc(var(--glyph-diameter) * 0.55);
+  font-weight: 700;
+  line-height: 1;
+}
