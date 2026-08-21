@@ -62,6 +62,13 @@ const FROZEN_LITERALS: Record<string, string[]> = {
     "--ds-tone-success-bg",
     "--ds-tone-warning-bg",
   ],
+  // robot-inspection-web (v0.15) was authored under this guard, so it has no
+  // literals to freeze: the host palette (`--ri-*`) owns every value,
+  // including the geometry the older two hosts write inline (--ds-radius-pill)
+  // and the translucent washes they derive by hand. An entry appearing here
+  // later means a colour decision moved INTO the alias — the thing this file
+  // exists to catch.
+  "robot-inspection-web.css": [],
 };
 
 type Declaration = { prop: string; value: string };

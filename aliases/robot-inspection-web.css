@@ -1,0 +1,155 @@
+/**
+ * @file Alias map: robot-inspection-web (`--ri-*`) tokens → --ds-* tokens.
+ *
+ * Drop this once into the consuming app, AFTER the stylesheet that declares
+ * its `--ri-*` brand variables. Library components read --ds-* and resolve
+ * through these aliases without touching the app's brand SoT.
+ *
+ * ## What this host is
+ *
+ * The acceptance-inspection web app (InspecLog): a SINGLE dark, fully
+ * desaturated theme. There is no light mode and no `[data-theme]` switch —
+ * the palette is three greys of surface, three of ink, and one warm-silver
+ * accent, and status is carried by SHAPE, LINE STYLE and OPACITY rather than
+ * by hue (see `StatusGlyph` / `RankChip` / `SegmentedMeter`). That is why
+ * every `--ds-tone-*-fg` below resolves to a grey: on this host "danger" is
+ * not red, it is the register a filled disc with an ✕ in it renders in.
+ *
+ * ## The mapping is the whole file
+ *
+ * Every declaration resolves through `var(--ri-*)`; there are no bare
+ * literals at all (`spec/alias-purity.spec.ts` freezes that — its entry for
+ * this file is the empty list). A colour written here instead of in the host
+ * palette would make this file a second source of truth for what a surface
+ * looks like. The host palette is therefore expected to declare the full
+ * `--ri-*` set the README's "robot-inspection-web" snippet lists; a missing
+ * one falls through to the library default in `src/tokens.css`, which is
+ * LIGHT — i.e. visibly wrong on this host rather than quietly plausible.
+ *
+ * ## Deliberate non-mappings
+ *
+ * Spacing (`--ds-space-*`), control sizing (`--ds-control-*`), type scale
+ * (`--ds-font-size-*`, `--ds-line-height-*`), `--ds-focus-ring-width`,
+ * `--ds-disabled-opacity` and `--ds-transition-fast` are NOT redeclared: the
+ * host palette does not own density or the type ramp, so the library
+ * fallbacks apply — the same stance the other two aliases take.
+ */
+:root {
+  /* Surfaces & foreground.
+   *
+   * Three surface steps: --ri-surface-0 is the page ground the app paints on
+   * <body>, so the library's surface vocabulary starts one step in — a card
+   * is surface-1 and a recess inside it is surface-2. (Ground -> card ->
+   * recess is the same ordering the other two hosts map, and it is why
+   * --ds-surface is not surface-0: a Card painted in the page ground would
+   * have no edge but its border.) */
+  --ds-surface: var(--ri-surface-1);
+  --ds-surface-inset: var(--ri-surface-2);
+  --ds-surface-hover: var(--ri-surface-hover);
+  --ds-surface-active: var(--ri-surface-active);
+
+  /* Two rules, not one border and a guessed weaker one: --ri-rule is the
+   * visible edge between surfaces, --ri-hairline the whisper INSIDE one.
+   * This host separates panes with hairlines and almost no shadow, so
+   * --ds-border-subtle carries a lot of the layout here. */
+  --ds-border: var(--ri-rule);
+  --ds-border-subtle: var(--ri-hairline);
+  --ds-border-strong: var(--ri-text-muted);
+
+  --ds-text: var(--ri-text);
+  --ds-text-secondary: var(--ri-text-muted);
+  --ds-text-muted: var(--ri-text-muted);
+  --ds-text-disabled: var(--ri-text-dim);
+  /* The accent is a near-white silver, so the ink on top of it inverts to the
+   * page ground. The host names that inversion itself (--ri-on-accent) rather
+   * than the alias assuming "the darkest surface": which colour is legible on
+   * the accent is a palette decision. */
+  --ds-text-on-accent: var(--ri-on-accent);
+
+  /* Tones — the desaturated register set. The host palette names them by the
+   * reading they report (ok / ng / pending / na / idle), and this file is
+   * where that vocabulary meets the library's semantic one:
+   *
+   *   ok      -> success   a check was taken and passed
+   *   ng      -> danger    a check was taken and failed
+   *   pending -> warning   a check is open and wants attention
+   *   na      -> neutral   the check does not apply here
+   *   idle    -> idle      nobody has looked yet (v0.15's sixth register)
+   *
+   * `info` has no inspection reading behind it — it is the app's "here is a
+   * fact" register — so the palette declares it directly. */
+  --ds-tone-success-fg: var(--ri-tone-ok-fg);
+  --ds-tone-success-bg: var(--ri-tone-ok-bg);
+  --ds-tone-danger-fg: var(--ri-tone-ng-fg);
+  --ds-tone-danger-bg: var(--ri-tone-ng-bg);
+  --ds-tone-warning-fg: var(--ri-tone-pending-fg);
+  --ds-tone-warning-bg: var(--ri-tone-pending-bg);
+  --ds-tone-neutral-fg: var(--ri-tone-na-fg);
+  --ds-tone-neutral-bg: var(--ri-tone-na-bg);
+  --ds-tone-idle-fg: var(--ri-tone-idle-fg);
+  --ds-tone-idle-bg: var(--ri-tone-idle-bg);
+  --ds-tone-info-fg: var(--ri-tone-info-fg);
+  --ds-tone-info-bg: var(--ri-tone-info-bg);
+
+  /* Accent — the app's one non-grey decision, and it is still a grey: warm
+   * silver. It fills primary buttons, the checked control, the filled rank
+   * chip, and the focus outline. */
+  --ds-accent: var(--ri-accent);
+  --ds-accent-hover: var(--ri-accent-hover);
+  --ds-accent-soft: var(--ri-accent-soft);
+  /* The host's focus ring is the accent at full strength (a 1px silver
+   * outline, offset) rather than a translucent halo: on a near-black ground a
+   * halo does not read. Width stays the library default. */
+  --ds-focus-ring-color: var(--ri-accent);
+
+  /* Radii — generous, and the reason --ds-radius-chip exists as a level of
+   * its own (v0.15): controls round at 12px here, which on a 24px chip would
+   * be a pill. */
+  --ds-radius-chip: var(--ri-radius-chip);
+  --ds-radius-control: var(--ri-radius-control);
+  --ds-radius-card: var(--ri-radius-card);
+  --ds-radius-lg: var(--ri-radius-lg);
+  --ds-radius-pill: var(--ri-radius-pill);
+
+  /* Shadows — this host separates surfaces with hairlines, so a card has no
+   * shadow at all (--ri-shadow-card is `none`) and only a floating layer
+   * lifts. Mapping both keeps a component that reads --ds-shadow-card flat
+   * here instead of inheriting the library's light-host lift. */
+  --ds-shadow-card: var(--ri-shadow-card);
+  --ds-shadow-overlay: var(--ri-shadow-overlay);
+
+  /* Typography — the host owns both stacks (the other two hosts only own a
+   * mono). Figures render tabular in the primitives that state counts. */
+  --ds-font-sans: var(--ri-font-sans);
+  --ds-font-mono: var(--ri-font-mono);
+
+  /* Chat bubbles (v0.4) — this host has no conversation surface today, but a
+   * primitive it does not use must still not render as a white block on a
+   * near-black page if a future screen mounts one. The accent wash carries
+   * the outgoing turn (as on both other hosts), the incoming turn lands on
+   * the recess, and the two full-width registers step down from there. */
+  --ds-bubble-radius: var(--ri-radius-control);
+  --ds-bubble-bg-user: var(--ri-accent-soft);
+  --ds-bubble-fg-user: var(--ri-text);
+  --ds-bubble-bg-assistant: var(--ri-surface-2);
+  --ds-bubble-fg-assistant: var(--ri-text);
+  --ds-bubble-bg-system: var(--ri-hairline);
+  --ds-bubble-fg-system: var(--ri-text-muted);
+  --ds-bubble-bg-tool: var(--ri-tone-pending-bg);
+  --ds-bubble-fg-tool: var(--ri-text);
+  --ds-bubble-meta-fg: var(--ri-text-muted);
+  --ds-caret-color: var(--ri-text-muted);
+
+  /* Stage primitives (v0.5) — same reasoning as the bubbles above. The stage
+   * ground is the page ground, tiles are cards, avatar slots are recesses,
+   * and the name strip / caption sit on the palette's scrim. */
+  --ds-stage-bg: var(--ri-surface-0);
+  --ds-stage-tile-bg: var(--ri-surface-1);
+  --ds-stage-tile-avatar-bg: var(--ri-surface-2);
+  --ds-stage-tile-name-bg: var(--ri-scrim);
+  --ds-stage-tile-radius: var(--ri-radius-card);
+  --ds-stage-speaking-ring: var(--ri-accent);
+  --ds-caption-bg: var(--ri-scrim);
+  --ds-caption-fg: var(--ri-text);
+  --ds-caption-speaker-fg: var(--ri-text-muted);
+}

@@ -34,15 +34,18 @@ import {
   MessageBubble,
   Panel,
   ParticipantTile,
+  RankChip,
   RealtimeEventLog,
   ReservedText,
   Section,
   SectionHeader,
+  SegmentedMeter,
   Select,
   SignalBars,
   Slider,
   Spinner,
   StatusBadge,
+  StatusGlyph,
   Switch,
   Textarea,
   Toast,
@@ -52,7 +55,13 @@ import {
   Transcript,
   TypingIndicator,
 } from "../src/index";
-import type { BadgeTone, RealtimeEventEntry } from "../src/index";
+import type {
+  BadgeTone,
+  GlyphTone,
+  MeterSegment,
+  RankLevel,
+  RealtimeEventEntry,
+} from "../src/index";
 
 import "./hosts.css";
 
@@ -641,6 +650,180 @@ function PageSectionsPanel({ host }: { host: string }) {
   );
 }
 
+/* ---------------- v0.15: the shape-carried Status vocabulary ----------------
+ *
+ * These three exist because a register has to be readable with no hue
+ * available. That is a claim about RENDERED fill, line style and opacity, so
+ * the demo has to carry it: jsdom reports no computed border-style and no
+ * resolved color-mix, and the primitives are told apart by nothing else.
+ * `spec/shape-status-primitives.e2e.spec.ts` measures this panel. */
+
+const GLYPH_TONES: ReadonlyArray<{ tone: GlyphTone; name: string }> = [
+  { tone: "success", name: "OK" },
+  { tone: "danger", name: "NG" },
+  { tone: "warning", name: "pending" },
+  { tone: "neutral", name: "not applicable" },
+  { tone: "idle", name: "unchecked" },
+];
+
+/** All five registers, plus the three sizes. Every glyph must occupy an
+ * identical box: a column of them in a sheet must not jitter as readings
+ * arrive, which is the property only a real browser can measure. */
+function StatusGlyphDemo() {
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div data-testid="glyph-row" style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        {GLYPH_TONES.map(({ tone, name }) => (
+          <span
+            key={tone}
+            data-testid={`glyph-${tone}`}
+            style={{
+              display: "grid",
+              gap: 4,
+              justifyItems: "center",
+              fontSize: 11,
+              color: "var(--ds-text-muted)",
+            }}
+          >
+            <StatusGlyph tone={tone} ariaLabel={name} />
+            {tone}
+          </span>
+        ))}
+      </div>
+      <div data-testid="glyph-sizes" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <StatusGlyph tone="success" size="sm" ariaLabel="OK small" />
+        <StatusGlyph tone="success" size="md" ariaLabel="OK medium" />
+        <StatusGlyph tone="success" size="lg" ariaLabel="OK large" />
+      </div>
+    </div>
+  );
+}
+
+const RANKS: ReadonlyArray<{ rank: RankLevel; token: string }> = [
+  { rank: "high", token: "A" },
+  { rank: "medium", token: "B" },
+  { rank: "low", token: "C" },
+];
+
+/** filled > outlined > dashed. The ordering is the whole point, so all three
+ * are shown together and at both sizes. */
+function RankChipDemo() {
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        {RANKS.map(({ rank, token }) => (
+          <span key={rank} data-testid={`rank-${rank}`}>
+            <RankChip rank={rank} ariaLabel={`rank ${token}`}>
+              {token}
+            </RankChip>
+          </span>
+        ))}
+      </div>
+      <div data-testid="rank-small" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <RankChip rank="high" size="sm" ariaLabel="severity 1">1</RankChip>
+        <RankChip rank="medium" size="sm" ariaLabel="severity 2">2</RankChip>
+        <RankChip rank="low" size="sm" ariaLabel="severity 3">3</RankChip>
+      </div>
+    </div>
+  );
+}
+
+const SHEET_SEGMENTS: readonly MeterSegment[] = [
+  { id: "ok", value: 30, weight: "full" },
+  { id: "ng", value: 8, weight: "strong" },
+  { id: "pending", value: 4, weight: "medium" },
+  { id: "na", value: 2, weight: "faint" },
+];
+
+/** Three meters: the full division, the same division against a larger total
+ * (so the untouched remainder shows as track), and the empty whole. */
+function SegmentedMeterDemo() {
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div data-testid="meter-sheet">
+        <SegmentedMeter
+          segments={SHEET_SEGMENTS}
+          ariaLabel="44 checks: 30 passed, 8 failed, 4 open, 2 excluded"
+        />
+      </div>
+      <div data-testid="meter-remainder">
+        <SegmentedMeter
+          segments={SHEET_SEGMENTS}
+          total={60}
+          size="sm"
+          ariaLabel="44 of 60 checks recorded"
+        />
+      </div>
+      <div data-testid="meter-empty">
+        <SegmentedMeter segments={[]} ariaLabel="no checks recorded" />
+      </div>
+    </div>
+  );
+}
+
+/** The three together in the shape they were designed for: a sheet row, in a
+ * cell narrow enough that a meter which did not shrink would push the row
+ * wide (AGENTS.md rule 5). */
+function SheetRowDemo() {
+  return (
+    <div
+      data-testid="sheet-row"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        // border-box so maxWidth is the OUTER width the e2e measures against
+        // (the demo ships no global box-sizing reset).
+        boxSizing: "border-box",
+        maxWidth: 260,
+        padding: 8,
+        border: "1px solid var(--ds-border-subtle)",
+        borderRadius: "var(--ds-radius-card)",
+      }}
+    >
+      <StatusGlyph tone="danger" ariaLabel="NG" />
+      <RankChip rank="high" ariaLabel="rank A">A</RankChip>
+      <span style={{ flex: "1 1 auto", minWidth: 0 }}>
+        <SegmentedMeter
+          segments={SHEET_SEGMENTS}
+          total={60}
+          size="sm"
+          ariaLabel="row progress"
+        />
+      </span>
+    </div>
+  );
+}
+
+function ShapeStatusPanel() {
+  return (
+    <Card>
+      <CardHeader
+        title="Shape-carried status (v0.15)"
+        hint="fill / line style / opacity — no hue"
+      />
+      <div style={{ display: "grid", gap: 16 }}>
+        <div>
+          <Heading level={3}>StatusGlyph</Heading>
+          <StatusGlyphDemo />
+        </div>
+        <div>
+          <Heading level={3}>RankChip</Heading>
+          <RankChipDemo />
+        </div>
+        <div>
+          <Heading level={3}>SegmentedMeter</Heading>
+          <SegmentedMeterDemo />
+        </div>
+        <div>
+          <Heading level={3}>A sheet row</Heading>
+          <SheetRowDemo />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -652,6 +835,7 @@ function App() {
         <LiveStagePanel />
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
+        <ShapeStatusPanel />
         <PageSectionsPanel host="status-webui" />
       </section>
       <section className="host host--omks-web">
@@ -662,7 +846,25 @@ function App() {
         <LiveStagePanel />
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
+        <ShapeStatusPanel />
         <PageSectionsPanel host="omks-web" />
+      </section>
+      {/* The third host (v0.15). It renders the SAME panel set as the two
+          above, including the chat and stage layers it has no screen for
+          today: the claim the harness exists to check is that one set of
+          components sits inside a visually distinct host with no per-host
+          branch, and a panel left out of one column would be a panel whose
+          mapping nobody looks at. */}
+      <section className="host host--robot-inspection-web" data-theme="dark">
+        <h1>host: robot-inspection-web (dark, desaturated)</h1>
+        <MonitorPanel />
+        <BasicsPanel />
+        <RealtimeChatPanel />
+        <LiveStagePanel />
+        <RobotConsolePrimitivesPanel />
+        <FeedbackPrimitivesPanel />
+        <ShapeStatusPanel />
+        <PageSectionsPanel host="robot-inspection-web" />
       </section>
     </div>
   );

@@ -7,14 +7,15 @@ self-evident from the code.
 
 ## What this repo is
 
-A shared React component library consumed by two web apps:
-`omakaseos_service` web and `status_server_webui`. Read [`README.md`](./README.md)
-for the layered surface map and consumption details.
+A shared React component library consumed by three web apps:
+`omakaseos_service` web, `status_server_webui`, and (since v0.15)
+`robot-inspection-web`. Read [`README.md`](./README.md) for the layered
+surface map, the host table, and consumption details.
 
 ## What this repo is NOT
 
 It is **not** a place for app-specific logic, brand colors, or domain
-types. If a primitive can only render correctly inside one of the two
+types. If a primitive can only render correctly inside one of the
 consuming apps, it does not belong here — it belongs in that app's
 own `components/` directory.
 
@@ -26,9 +27,36 @@ own `components/` directory.
 
 2. **Bind to `--ds-*`.** Component CSS must reference design tokens,
    never raw values. If a token is missing, add it to `src/tokens.css`
-   AND both alias files (`aliases/omks-robo-web.css`,
-   `aliases/status-server-webui.css`) in the same change. A library
-   token without a host bridge is a silent regression.
+   AND **every** alias file (`aliases/omks-robo-web.css`,
+   `aliases/status-server-webui.css`,
+   `aliases/robot-inspection-web.css`) in the same change. A library
+   token without a host bridge is a silent regression: the component
+   falls back to the library default, which is LIGHT — on a dark host
+   that is a visible break, and on a light host it is a silent one.
+
+   **An alias maps; it does not decide.** Every `--ds-*` declaration in
+   an alias must resolve through `var(...)` at a variable the host's
+   palette owns. `spec/alias-purity.spec.ts` freezes the pre-existing
+   bare literals per file, so a NEW literal fails CI — and promoting a
+   frozen one to a mapping must shrink that list. Put the value in the
+   host palette and map to it, or add a library default in
+   `src/tokens.css`. Adding a whole new host means a new alias file plus
+   its (ideally empty) entry in that spec's `FROZEN_LITERALS`, plus the
+   `exports` map, plus a scoped copy in `demo/hosts.css` and an entry in
+   `.storybook/preview.ts`'s `HOST_SCOPES`.
+
+   **Not every level has to be mapped.** Where a host palette genuinely
+   does not own a level (density, the type ramp), the library default is
+   the right answer and the non-mapping is documented in the alias
+   header. That is a stated decision, not a gap.
+
+   **A desaturated host is a design constraint, not a theme.**
+   `robot-inspection-web` spends no hue at all, so a primitive that
+   distinguishes its states by colour alone is broken there. Distinguish
+   by fill, line style, opacity or shape — see `StatusGlyph` /
+   `RankChip` / `SegmentedMeter` for the pattern, and note that a
+   `border-style` claim is invisible to jsdom and therefore needs an
+   e2e assertion.
 
    **The aui surface (`src/aui/`, shadcn theme tokens, CSS Modules).**
    The vendored shadcn-style assistant-ui registry components under
@@ -68,6 +96,14 @@ own `components/` directory.
 3. **Both call shapes must compile.** When two consuming apps use
    different idioms for the same concept (e.g. `label=` vs `children`),
    the library accepts both. Add a vitest case for each.
+
+   **A required `ariaLabel` is a design decision, not boilerplate.**
+   Where a primitive's whole meaning is drawn (`StatusGlyph`,
+   `SegmentedMeter`), the name can only come from the caller and the
+   prop is required. Where the primitive renders the caller's own text
+   (`RankChip`), it is optional. Where every instance means the same one
+   thing (`Spinner` — "work is in progress"), it defaults. Pick the case
+   deliberately and say which in the header.
 
 4. **Native elements only — with one bounded exception.** Form controls
    wrap a real `<input>` / `<select>` / `<button>` / `<textarea>`.
@@ -128,7 +164,9 @@ on `5198` first.
 ## Consumer-side green rule
 
 A library change is **not done** until at least one consuming app has
-been bumped to the new tag and that consumer's gate is green. The
+been bumped to the new tag and that consumer's gate is green.
+(v0.15's consumer is `robot-inspection-web` — see
+`omksos_web/reports/robot-inspection-service-bootstrap/`.) The
 library's CI cannot enforce this; treat it as a discipline rule. See
 [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the full procedure.
 

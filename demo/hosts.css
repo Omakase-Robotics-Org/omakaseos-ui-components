@@ -47,7 +47,11 @@
   --ds-tone-info-bg: rgba(163, 163, 163, 0.1);
   --ds-tone-neutral-fg: var(--text-muted);
   --ds-tone-neutral-bg: rgba(82, 82, 82, 0.1);
+  /* v0.15 idle register — match aliases/status-server-webui.css. */
+  --ds-tone-idle-fg: var(--status-stopped, var(--text-muted));
+  --ds-tone-idle-bg: color-mix(in srgb, var(--status-stopped, var(--text-muted)) 8%, transparent);
   --ds-radius-card: var(--radius-md);
+  --ds-radius-chip: var(--radius-sm, 6px);
   --ds-radius-pill: 100px;
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: var(--font-mono);
@@ -116,7 +120,11 @@
   --ds-tone-info-bg: var(--color-primary-soft);
   --ds-tone-neutral-fg: var(--color-text-muted);
   --ds-tone-neutral-bg: var(--color-on-ink-muted);
+  /* v0.15 idle register — match aliases/omks-robo-web.css. */
+  --ds-tone-idle-fg: var(--color-text-subtle, var(--color-text-muted));
+  --ds-tone-idle-bg: color-mix(in srgb, var(--color-text-muted) 6%, transparent);
   --ds-radius-card: var(--radius-card);
+  --ds-radius-chip: var(--radius-control, 6px);
   --ds-radius-pill: 999px;
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -147,6 +155,125 @@
   color: var(--color-text);
 }
 
+/* ---- robot-inspection-web host: dark, desaturated, single-theme ----
+ *
+ * The acceptance-inspection app's `--ri-*` palette, reproduced verbatim (the
+ * values a consuming app copies out of README's snippet), followed by the
+ * SAME --ds-* mappings aliases/robot-inspection-web.css declares. The alias is
+ * the SoT; this block is its scoped copy, exactly as the two hosts above are.
+ *
+ * Unlike them there is no light variant and no [data-theme] switch: this app
+ * ships one dark theme by design. */
+.host--robot-inspection-web {
+  --ri-surface-0: #0a0b0c;
+  --ri-surface-1: #131518;
+  --ri-surface-2: #1b1e22;
+  --ri-surface-hover: #202429;
+  --ri-surface-active: #262b31;
+  --ri-hairline: rgba(255, 255, 255, 0.06);
+  --ri-rule: rgba(255, 255, 255, 0.14);
+  --ri-text: #f2f3f5;
+  --ri-text-muted: #9aa0a6;
+  --ri-text-dim: #5b6067;
+  --ri-accent: #e5e7eb;
+  --ri-accent-hover: #f7f8fa;
+  --ri-accent-soft: rgba(229, 231, 235, 0.12);
+  --ri-on-accent: #0a0b0c;
+  --ri-tone-ok-fg: #f2f3f5;
+  --ri-tone-ok-bg: rgba(242, 243, 245, 0.1);
+  --ri-tone-ng-fg: #f2f3f5;
+  --ri-tone-ng-bg: rgba(242, 243, 245, 0.18);
+  --ri-tone-pending-fg: #c1c5cb;
+  --ri-tone-pending-bg: rgba(255, 255, 255, 0.06);
+  --ri-tone-na-fg: #8a9099;
+  --ri-tone-na-bg: rgba(255, 255, 255, 0.04);
+  --ri-tone-idle-fg: #5b6067;
+  --ri-tone-idle-bg: rgba(255, 255, 255, 0.02);
+  --ri-tone-info-fg: #f2f3f5;
+  --ri-tone-info-bg: rgba(255, 255, 255, 0.08);
+  --ri-scrim: rgba(0, 0, 0, 0.72);
+  --ri-radius-chip: 6px;
+  --ri-radius-control: 12px;
+  --ri-radius-card: 18px;
+  --ri-radius-lg: 22px;
+  --ri-radius-pill: 999px;
+  --ri-font-sans: "Inter", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --ri-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --ri-shadow-card: none;
+  --ri-shadow-overlay: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  --ds-surface: var(--ri-surface-1);
+  --ds-surface-inset: var(--ri-surface-2);
+  --ds-surface-hover: var(--ri-surface-hover);
+  --ds-surface-active: var(--ri-surface-active);
+  --ds-border: var(--ri-rule);
+  --ds-border-subtle: var(--ri-hairline);
+  --ds-border-strong: var(--ri-text-muted);
+  --ds-text: var(--ri-text);
+  --ds-text-secondary: var(--ri-text-muted);
+  --ds-text-muted: var(--ri-text-muted);
+  --ds-text-disabled: var(--ri-text-dim);
+  --ds-text-on-accent: var(--ri-on-accent);
+  --ds-tone-success-fg: var(--ri-tone-ok-fg);
+  --ds-tone-success-bg: var(--ri-tone-ok-bg);
+  --ds-tone-danger-fg: var(--ri-tone-ng-fg);
+  --ds-tone-danger-bg: var(--ri-tone-ng-bg);
+  --ds-tone-warning-fg: var(--ri-tone-pending-fg);
+  --ds-tone-warning-bg: var(--ri-tone-pending-bg);
+  --ds-tone-neutral-fg: var(--ri-tone-na-fg);
+  --ds-tone-neutral-bg: var(--ri-tone-na-bg);
+  --ds-tone-idle-fg: var(--ri-tone-idle-fg);
+  --ds-tone-idle-bg: var(--ri-tone-idle-bg);
+  --ds-tone-info-fg: var(--ri-tone-info-fg);
+  --ds-tone-info-bg: var(--ri-tone-info-bg);
+  --ds-accent: var(--ri-accent);
+  --ds-accent-hover: var(--ri-accent-hover);
+  --ds-accent-soft: var(--ri-accent-soft);
+  --ds-focus-ring-color: var(--ri-accent);
+  --ds-radius-chip: var(--ri-radius-chip);
+  --ds-radius-control: var(--ri-radius-control);
+  --ds-radius-card: var(--ri-radius-card);
+  --ds-radius-lg: var(--ri-radius-lg);
+  --ds-radius-pill: var(--ri-radius-pill);
+  --ds-shadow-card: var(--ri-shadow-card);
+  --ds-shadow-overlay: var(--ri-shadow-overlay);
+  --ds-font-sans: var(--ri-font-sans);
+  --ds-font-mono: var(--ri-font-mono);
+
+  /* v0.4 chat bubble bindings — match aliases/robot-inspection-web.css. */
+  --ds-bubble-radius: var(--ri-radius-control);
+  --ds-bubble-bg-user: var(--ri-accent-soft);
+  --ds-bubble-fg-user: var(--ri-text);
+  --ds-bubble-bg-assistant: var(--ri-surface-2);
+  --ds-bubble-fg-assistant: var(--ri-text);
+  --ds-bubble-bg-system: var(--ri-hairline);
+  --ds-bubble-fg-system: var(--ri-text-muted);
+  --ds-bubble-bg-tool: var(--ri-tone-pending-bg);
+  --ds-bubble-fg-tool: var(--ri-text);
+  --ds-bubble-meta-fg: var(--ri-text-muted);
+  --ds-caret-color: var(--ri-text-muted);
+
+  /* v0.5 stage bindings — match aliases/robot-inspection-web.css. */
+  --ds-stage-bg: var(--ri-surface-0);
+  --ds-stage-tile-bg: var(--ri-surface-1);
+  --ds-stage-tile-avatar-bg: var(--ri-surface-2);
+  --ds-stage-tile-name-bg: var(--ri-scrim);
+  --ds-stage-tile-radius: var(--ri-radius-card);
+  --ds-stage-speaking-ring: var(--ri-accent);
+  --ds-caption-bg: var(--ri-scrim);
+  --ds-caption-fg: var(--ri-text);
+  --ds-caption-speaker-fg: var(--ri-text-muted);
+
+  background: var(--ri-surface-0);
+  color: var(--ri-text);
+  font-family: var(--ri-font-sans);
+}
+
+/* Two columns, three hosts: the third wraps onto row 2 at the SAME column
+ * width the first two have. Deliberately not `repeat(3, 1fr)` — narrowing
+ * every column would change the layout the existing hosts' overflow and
+ * ellipsis e2e assertions were measured in, and this addition must leave both
+ * of them pixel-identical. */
 .harness {
   display: grid;
   grid-template-columns: 1fr 1fr;

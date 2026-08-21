@@ -4,12 +4,21 @@ Shared React component library for omakase-robotics web UIs:
 
 - [`omakaseos_service`](https://github.com/omakase-robotics/omakaseos_service) `packages/web` — the multi-tenant dashboard.
 - [`omakaseos/status_server_webui`](https://github.com/omakase-ai/omakaseos) — the on-robot diagnostic UI.
+- `robot-inspection-web` — the acceptance-inspection app (v0.15).
 
-The library carries **only the visual primitives** that both UIs share, and
+The library carries **only the visual primitives** these UIs share, and
 intentionally carries **no brand colors of its own**. Each consuming app
 provides a small alias CSS file that maps its existing tokens onto the
-library's neutral `--ds-*` token names. Two apps consume one contract; the
+library's neutral `--ds-*` token names. Several apps consume one contract; the
 library's job is to keep that contract honest.
+
+### The three hosts
+
+| Host | Alias | Look | Notes |
+| --- | --- | --- | --- |
+| `omks-robo-web` | `aliases/omks-robo-web.css` | Light, sans, airy | The dashboard's brand SoT is `packages/web/src/brand/tokens.ts` |
+| `status-server-webui` | `aliases/status-server-webui.css` | Dark (with a light override), mono, dense | The robot console's SoT is rssa `src/styles/variables.css`; has a `[data-theme]` switch |
+| `robot-inspection-web` | `aliases/robot-inspection-web.css` | Dark, **fully desaturated**, generous corners | One theme only, by design. Status is carried by shape / line style / opacity, not hue — see "Shape-carried status" below |
 
 > **Catalog (Storybook):** every primitive is browsable in the published
 > Storybook at
@@ -27,7 +36,7 @@ came to be — see `reports/realtime-chat-components-poc/`).
 
 | Layer | Released | Purpose | Components |
 | --- | --- | --- | --- |
-| **Status** | v0.1–v0.2, v0.10, v0.11, v0.12–v0.14 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state. Since v0.12 the layer also states one *composition* rule, settled in v0.14: a `Panel` body takes no container — a `Card` or a nested `Panel` there **throws** — and `Section` is the grouping it does take (a heading, its content, and the rhythm around it, drawing no surface) | `StatusBadge`, `Card` + `CardHeader`, `Section` + `SectionHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast` |
+| **Status** | v0.1–v0.2, v0.10, v0.11, v0.12–v0.15 | Status-monitor and feedback primitives shared by every panel that surfaces robot or service state. Since v0.12 the layer also states one *composition* rule, settled in v0.14: a `Panel` body takes no container — a `Card` or a nested `Panel` there **throws** — and `Section` is the grouping it does take (a heading, its content, and the rhythm around it, drawing no surface). v0.15 adds the shape-carried trio, which states a register with no hue at all | `StatusBadge`, `Card` + `CardHeader`, `Section` + `SectionHeader`, `Panel`, `Fact` + `FactList` + `FactGrid`, `ButtonRow`, `SignalBars`, `ReservedText`, `Spinner`, `Toast`, `StatusGlyph`, `RankChip`, `SegmentedMeter` |
 | **Form** | v0.3, v0.10 | Native-element-based input / layout primitives with overflow-safe defaults and focus rings | `Button`, `Input`, `Select`, `Textarea`, `Heading`, `Toolbar`, `Checkbox`, `Switch`, `Slider`, `Field`, `ToggleSwitch` |
 | **Chat-log** | v0.4 | Past-tense conversation log — what was said, in chronological order. Vocabulary follows the OpenAI Realtime API event roles | `MessageBubble`, `Transcript`, `TypingIndicator`, `ToolCallTrace`, `RealtimeEventLog` |
 | **Live-stage** | v0.5 | In-progress 1:n live conversation — Google Meet-style stage with participant grid + caption strip. Distinct DOM shape from the chat-log layer | `ConversationStage`, `ParticipantTile`, `LiveCaption` |
@@ -71,6 +80,10 @@ import {
 
   // v0.14: a headed group that draws no surface — the way to divide a Panel
   Section, SectionHeader,
+
+  // v0.15: the shape-carried Status vocabulary — a register, a rank and a
+  //         division, each stated without hue
+  StatusGlyph, RankChip, SegmentedMeter,
 } from "@omakase-robotics/ui-components";
 
 // v0.6: canonical assistant-ui surface — separate sub-entry
@@ -96,6 +109,9 @@ import "@omakase-robotics/ui-components/aliases/omks-robo-web.css";
 
 // status_server_webui (dark, operator-facing)
 import "@omakase-robotics/ui-components/aliases/status-server-webui.css";
+
+// robot-inspection-web (dark, desaturated — v0.15)
+import "@omakase-robotics/ui-components/aliases/robot-inspection-web.css";
 
 // AUI surface (v0.6): pre-built Tailwind v4 + shadcn theme stylesheet,
 // scoped under `.aui-root`. Required only when the consumer mounts an
@@ -231,6 +247,61 @@ State is therefore assertable by **role and data attribute**
 (`data-tone` / `data-size` / `data-open`) rather than by a visible label
 string, in every consuming app's tests.
 
+### Shape-carried status (v0.15)
+
+`robot-inspection-web` has no hue to spend: its palette is three greys of
+surface, three of ink, and one warm-silver accent. Five inspection readings
+still have to be told apart in one table cell. Three primitives do that with
+**fill, line style and opacity** — which also means they survive a greyscale
+printout of a report and the common colour-vision deficiencies on the two
+hosts that *do* have colour.
+
+| Primitive | States what | How it separates them |
+| --- | --- | --- |
+| `StatusGlyph` | One register, in the space of one character | `success` washed ring + `✓` · `danger` solid disc + `✕` · `warning` dashed ring + `!` · `neutral` solid empty ring + `—` · `idle` dashed empty ring |
+| `RankChip` | One rank of three, written as the caller's own notation | `high` filled · `medium` outlined · `low` dashed + muted — heaviest to lightest, so the ordering reads |
+| `SegmentedMeter` | How a fixed whole is divided | Four ordered tiers of the surface's own ink (90 / 55 / 30 / 16 %), not four colours |
+
+```tsx
+// Consumers map their domain enum onto the register vocabulary once, at the
+// edge — the same discipline BadgeTone already asks for.
+<StatusGlyph tone="danger" ariaLabel="NG" />          {/* size?: sm | md | lg */}
+<RankChip rank="high" ariaLabel="priority A">A</RankChip>
+<SegmentedMeter
+  total={60}
+  ariaLabel="44 of 60 checks: 30 passed, 8 failed, 4 open, 2 excluded"
+  segments={[
+    { id: "ok", value: 30, weight: "full" },
+    { id: "ng", value: 8, weight: "strong" },
+    { id: "pending", value: 4, weight: "medium" },
+    { id: "na", value: 2, weight: "faint" },
+  ]}
+/>
+```
+
+Three deliberate API choices:
+
+- **`ariaLabel` is required** on `StatusGlyph` and `SegmentedMeter`. The
+  meaning is entirely drawn, and only the consumer knows the words for it
+  ("OK", "不合格", "44 of 60 recorded"). A default would either invent domain
+  vocabulary the library has no business owning, or announce five different
+  marks as "status" five times. `RankChip`'s is optional — its visible token
+  is already text.
+- **`weight` is required on every meter segment**, not derived from position:
+  a three-segment meter would otherwise silently skip a tier, and which
+  category is heaviest is a fact about the caller's data.
+- **`StatusGlyph` is not a `StatusBadge` variant.** Reach for the glyph where
+  the register is one cell of a dense table and the word does not fit; for the
+  badge where there is room to write it. `GlyphTone` is `BadgeTone` minus
+  `info` (a glyph is a reading; "info" is not a reading) plus `idle`.
+
+`idle` is a new sixth register (`--ds-tone-idle-*`): `neutral` says "this does
+not apply", `idle` says "no reading has been taken yet". Both appear on the
+same sheet, so they cannot share a token. It is deliberately **not** added to
+`BadgeTone` — no badge or toast states it, and widening that union would force
+every consumer's exhaustive mapping to grow for a register its badges never
+take.
+
 ### What the host owns (v0.11 feedback primitives)
 
 `Spinner` and `Toast` are presentational: no timers, no state, no portal.
@@ -258,12 +329,12 @@ renders plausibly. The alias map for each host is in `aliases/`.
 | Category | Tokens |
 | --- | --- |
 | Surface & foreground | `--ds-surface`, `--ds-surface-{inset,hover,active}`, `--ds-border`, `--ds-border-strong`, `--ds-text`, `--ds-text-{muted,disabled,on-accent}` |
-| Semantic tones | `--ds-tone-{success,warning,danger,info,neutral}-{fg,bg}` |
+| Semantic tones | `--ds-tone-{success,warning,danger,info,neutral,idle}-{fg,bg}` (`idle` since v0.15) |
 | Accent | `--ds-accent`, `--ds-accent-{hover,soft}` |
 | Focus ring | `--ds-focus-ring-{color,width}` |
 | Spacing scale (4-based) | `--ds-space-{2xs..2xl}` |
 | Control sizing | `--ds-control-height-{sm,md,lg}`, `--ds-control-padding-x-{sm,md,lg}` |
-| Radii (purpose-bound) | `--ds-radius-{control,card,pill}` |
+| Radii (purpose-bound) | `--ds-radius-{chip,control,card,lg,pill}` (`chip` since v0.15 — below control, so a small tile does not round into a pill on a host with generous control corners) |
 | Shadow | `--ds-shadow-{card,overlay}` |
 | Typography (purpose-bound) | `--ds-font-sans`, `--ds-font-mono`, `--ds-font-size-{label,control,body,heading-{1..4}}`, `--ds-line-height-{control,text}` |
 | Disabled / Transition | `--ds-disabled-opacity`, `--ds-transition-fast` |
@@ -272,6 +343,97 @@ renders plausibly. The alias map for each host is in `aliases/`.
 
 Bind to **purpose** (`--ds-control-height-md`), not to **value** (`32px`).
 A host theme can shift density without touching component CSS.
+
+An alias file is a **mapping layer, not a palette**: every `--ds-*`
+declaration in `aliases/*.css` must resolve through `var(...)` at a variable
+the host's own palette owns. `spec/alias-purity.spec.ts` mechanizes that,
+freezing the handful of pre-existing bare literals so a *new* one fails CI —
+a colour decision written into an alias is a second source of truth for what a
+surface looks like.
+
+### The `robot-inspection-web` host palette
+
+`aliases/robot-inspection-web.css` was authored under that guard and therefore
+has **no literals at all**: the host owns every value. A consuming app declares
+the `--ri-*` set below once (before importing the alias), and nothing else:
+
+```css
+/* robot-inspection-web brand SoT. One dark, fully desaturated theme —
+   there is no light variant and no [data-theme] switch. */
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: ground -> card -> recess, then the two interaction steps. */
+  --ri-surface-0: #0a0b0c;
+  --ri-surface-1: #131518;
+  --ri-surface-2: #1b1e22;
+  --ri-surface-hover: #202429;
+  --ri-surface-active: #262b31;
+
+  /* Two rules: hairline whispers inside a surface, rule separates surfaces. */
+  --ri-hairline: rgba(255, 255, 255, 0.06);
+  --ri-rule: rgba(255, 255, 255, 0.14);
+
+  /* Ink, three levels. */
+  --ri-text: #f2f3f5;
+  --ri-text-muted: #9aa0a6;
+  --ri-text-dim: #5b6067;
+
+  /* The one accent — warm silver — and the ink that sits on top of it. */
+  --ri-accent: #e5e7eb;
+  --ri-accent-hover: #f7f8fa;
+  --ri-accent-soft: rgba(229, 231, 235, 0.12);
+  --ri-on-accent: #0a0b0c;
+
+  /* Registers, named for the reading they report. The alias maps
+     ok->success, ng->danger, pending->warning, na->neutral, idle->idle. */
+  --ri-tone-ok-fg: #f2f3f5;
+  --ri-tone-ok-bg: rgba(242, 243, 245, 0.10);
+  --ri-tone-ng-fg: #f2f3f5;
+  --ri-tone-ng-bg: rgba(242, 243, 245, 0.18);
+  --ri-tone-pending-fg: #c1c5cb;
+  --ri-tone-pending-bg: rgba(255, 255, 255, 0.06);
+  --ri-tone-na-fg: #8a9099;
+  --ri-tone-na-bg: rgba(255, 255, 255, 0.04);
+  --ri-tone-idle-fg: #5b6067;
+  --ri-tone-idle-bg: rgba(255, 255, 255, 0.02);
+  --ri-tone-info-fg: #f2f3f5;
+  --ri-tone-info-bg: rgba(255, 255, 255, 0.08);
+
+  /* Overlay ground for floating strips (tile name, caption). */
+  --ri-scrim: rgba(0, 0, 0, 0.72);
+
+  /* Radii — generous, which is why chip is its own level. */
+  --ri-radius-chip: 6px;
+  --ri-radius-control: 12px;
+  --ri-radius-card: 18px;
+  --ri-radius-lg: 22px;
+  --ri-radius-pill: 999px;
+
+  /* Type. Figures render tabular in the primitives that state counts. */
+  --ri-font-sans: "Inter", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --ri-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+  /* Surfaces separate by hairline, so a card does not lift at all; only a
+     floating layer does. */
+  --ri-shadow-card: none;
+  --ri-shadow-overlay: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+```
+
+A missing `--ri-*` falls through to the library default in `src/tokens.css`,
+which is **light** — i.e. visibly wrong on this host rather than quietly
+plausible. That is deliberate: the library ships no dark fallback set, so an
+unmapped token is a bug you see rather than one you ship.
+
+Density, the type ramp, `--ds-focus-ring-width`, `--ds-disabled-opacity` and
+`--ds-transition-fast` are *not* in the `--ri-*` set: this host does not own
+them, so the library fallbacks apply — the same stance the other two aliases
+take toward the levels their palettes do not own.
+
+The demo harness reproduces this palette under
+`.host--robot-inspection-web` in `demo/hosts.css`, which is where to look for
+a working copy.
 
 ### The aui surface (v0.6, CSS Modules since v0.9)
 
@@ -333,12 +495,13 @@ run `bun install --force`.
 ```bash
 bun install
 bun run typecheck         # tsc --noEmit
-bun run test              # vitest --run (175+ tests across 27+ files)
+bun run test              # vitest --run (230+ tests across 38+ files)
 bun run test:e2e          # vite + Playwright; verifies overflow / focus / role / chat / stage /
-                          #   spinner rotation, toast semantics, panel grid spans and fact tiles
-                          #   under both host aliases
+                          #   spinner rotation, toast semantics, panel grid spans and fact tiles,
+                          #   and (v0.15) that the shape-carried registers are pairwise distinct
+                          #   with no hue available — under every host alias,
                           #   in real chromium (the things jsdom cannot show)
-bun run dev               # http://localhost:5198 — themed harness (both apps side by side)
+bun run dev               # http://localhost:5198 — themed harness (all three hosts side by side)
 bun run build             # demo/dist
 bun run storybook         # http://localhost:6006 — story catalog
 bun run build-storybook   # storybook-static/  (CI deploys this to GitHub Pages)
@@ -372,6 +535,8 @@ orchestrator repo (`omakase-robotics/omksos_web`):
 - v0.13, v0.14 — `reports/monitor-scope-coherence/` (ruling B; v0.13's
   ancestor-selector rule was replaced by v0.14's contract + `Section`, and the
   report records why both earlier attempts were rejected)
+- v0.15 — `reports/ui-components-inspect-theme/` (the third host alias, and
+  the shape-carried Status vocabulary the desaturated palette made necessary)
 - Storybook + Pages + repo health — `reports/ui-components-catalog-and-pages-poc/`
 
 The current ship state is mirrored into `docs/shared-ui-components/`
@@ -386,8 +551,8 @@ this repo directly, the following files are intentionally surfaced as
 - `README.md` (this file) — the layered surface map.
 - Each component's `src/<Name>.tsx` JSDoc header — the per-component
   contract (purpose, props, the two-app constraints).
-- `aliases/{omks-robo-web,status-server-webui}.css` — the brand-bridge
-  mapping for each consuming host.
+- `aliases/{omks-robo-web,status-server-webui,robot-inspection-web}.css` —
+  the brand-bridge mapping for each consuming host.
 
 If a task touches a domain primitive, owner ranking should resolve to one
 of the four layers (status / form / chat-log / live-stage) by reading the

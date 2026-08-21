@@ -1,8 +1,9 @@
 # Contributing to `@omakase-robotics/ui-components`
 
-This library is the **single contract** that two apps (`omakaseos_service`
-web and `status_server_webui`) share for visual primitives. Changes here
-ripple to both. The policies below exist to keep that contract honest.
+This library is the **single contract** that three apps (`omakaseos_service`
+web, `status_server_webui`, and `robot-inspection-web`) share for visual
+primitives. Changes here ripple to all of them. The policies below exist to
+keep that contract honest.
 
 ## The consumer-side green rule
 
@@ -32,7 +33,7 @@ Every primitive belongs to exactly one layer:
 
 | Layer | What lives here | What does NOT belong here |
 | --- | --- | --- |
-| **Status** | Pure presentation primitives that appear in dashboards / status panels (badges, cards, fact rows) | Anything interactive beyond a click handler |
+| **Status** | Pure presentation primitives that appear in dashboards / status panels (badges, cards, fact rows, and the shape-carried glyph / chip / meter) | Anything interactive beyond a click handler |
 | **Form** | Native-element-based form / layout primitives (input, select, button, toolbar). Always use a real `<input>`/`<select>`/`<button>` so a11y / IME / mobile pickers come for free | Anything past-tense (chat log) or live (stage); those have their own layer |
 | **Chat-log** | Past-tense conversation rendering: bubbles, transcripts, tool-call traces, event log. Vocabulary is OpenAI Realtime API roles | Anything that represents the in-progress call (who is on the line right now) — that is the live-stage layer |
 | **Live-stage** | In-progress 1:n call rendering: participant grid, speaking indicators, live caption | Anything past-tense; that is chat-log |
@@ -45,14 +46,36 @@ serve both surfaces.
 
 Bind component CSS to `--ds-*` purpose tokens (e.g. `--ds-control-height-md`),
 never to raw values (`32px`). New tokens go in `src/tokens.css` with sane
-fallbacks, and **must** be bridged in both `aliases/omks-robo-web.css`
-and `aliases/status-server-webui.css` in the same PR. Adding a token in
-the library without the bridge is a silent regression: the component
-falls back to the library default in production.
+fallbacks, and **must** be bridged in every alias file
+(`aliases/omks-robo-web.css`, `aliases/status-server-webui.css`,
+`aliases/robot-inspection-web.css`) in the same PR, plus the matching scoped
+copy in `demo/hosts.css`. Adding a token in the library without the bridge is
+a silent regression: the component falls back to the library default in
+production, and those defaults are light.
+
+An alias file **maps; it does not decide**. Every declaration must resolve
+through `var(...)` at a host-owned variable;
+`spec/alias-purity.spec.ts` freezes the pre-existing literals per file and
+fails on new ones. If a value has nowhere to live, it belongs in the host
+palette or in `src/tokens.css` — not in the alias.
 
 If a token is purely internal (used by exactly one component, never
 consumed by host overrides), keep it in the component's CSS module.
-Promote to `tokens.css` when a second component reuses it.
+Promote to `tokens.css` when a second component reuses it. Component-intrinsic
+geometry (a glyph's diameter, a chip's side, a bar's thickness) stays in the
+module on purpose: it must NOT pick up `--ds-control-height-*`, because these
+primitives have to fit *inside* a control or a table row.
+
+### Adding a host
+
+A fourth consuming app means, in one PR: `aliases/<host>.css` (mappings only),
+its entry in `FROZEN_LITERALS` (empty — new aliases have no excuse for
+literals), the `exports` map in `package.json`, a scoped copy of the palette
+and its mappings under `.host--<host>` in `demo/hosts.css`, a third column in
+`demo/main.tsx`'s harness, and an entry in `.storybook/preview.ts`'s
+`HOST_SCOPES` / toolbar. Every primitive must then render plausibly under it —
+including layers that host has no screen for yet, since an unmapped token
+there is a break waiting for the first screen that mounts one.
 
 ## Backwards-compatible call shapes
 
