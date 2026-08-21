@@ -99,3 +99,59 @@ describe("alias <-> demo parity — robot-inspection-web", () => {
     expect(onlyInDemo).toEqual([]);
   });
 });
+
+/**
+ * "Accent/focus family" — the set of --ds-* properties that fall back
+ * SILENTLY to the library's own default the moment a host omits them (no
+ * visual signal at all if the host's real brand accent happens to match the
+ * library default, as omks-web's did — see
+ * reports/demo-omks-web-accent-gap/README.md and, for the sibling gap this
+ * one was found alongside, reports/demo-status-webui-accent-gap/README.md).
+ *
+ * Unlike the byte-identical parity above (robot-inspection-web only), this
+ * is a SUBSET guard that applies to ALL THREE hosts, including the two
+ * "simplified pseudo-brand palette" demo blocks the header comment above
+ * exempts from full parity: whatever accent/focus properties an alias
+ * declares, its demo block must declare too, even if the rest of the block
+ * stays a simplified copy.
+ */
+const ACCENT_FOCUS_PROPS = [
+  "--ds-accent",
+  "--ds-accent-hover",
+  "--ds-accent-soft",
+  "--ds-text-on-accent",
+  "--ds-focus-ring-color",
+];
+
+describe("alias <-> demo parity — accent/focus subset (all hosts)", () => {
+  const demoCss = readFileSync(resolve(repoRoot, "demo/hosts.css"), "utf8");
+
+  const hosts: Array<{ name: string; aliasFile: string; selector: string }> = [
+    { name: "status-webui", aliasFile: "aliases/status-server-webui.css", selector: ".host--status-webui" },
+    { name: "omks-web", aliasFile: "aliases/omks-robo-web.css", selector: ".host--omks-web" },
+    {
+      name: "robot-inspection-web",
+      aliasFile: "aliases/robot-inspection-web.css",
+      selector: ".host--robot-inspection-web",
+    },
+  ];
+
+  for (const host of hosts) {
+    it(`${host.name}: demo block declares every accent/focus --ds-* the alias declares`, () => {
+      const aliasCss = readFileSync(resolve(repoRoot, host.aliasFile), "utf8");
+      const aliasProps = new Set(dsDeclarations(aliasCss).map((d) => d.prop));
+      const demoBlock = selectorBlock(demoCss, host.selector);
+      const demoProps = new Set(dsDeclarations(demoBlock).map((d) => d.prop));
+
+      const aliasAccentFocusProps = ACCENT_FOCUS_PROPS.filter((p) => aliasProps.has(p));
+      // Sanity: this alias declares the whole family. If a future alias
+      // legitimately omits a member, narrow ACCENT_FOCUS_PROPS's
+      // expectation for that host explicitly rather than let this
+      // assertion silently check zero properties.
+      expect(aliasAccentFocusProps).toEqual(ACCENT_FOCUS_PROPS);
+
+      const missing = aliasAccentFocusProps.filter((p) => !demoProps.has(p));
+      expect(missing).toEqual([]);
+    });
+  }
+});
