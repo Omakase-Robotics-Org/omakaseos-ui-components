@@ -27,6 +27,9 @@
   --status-failed: #ef4444;
   --status-warning: #eab308;
   --status-info: #a3a3a3;
+  /* rssa `src/styles/variables.css` (dark) — needed for --ds-focus-ring-color
+     below (fix: demo-status-webui-accent-gap). */
+  --ring-focus: rgba(255, 255, 255, 0.2);
   --font-mono: "SF Mono", "Fira Code", Consolas, monospace;
   --radius-md: 8px;
   --shadow-card: none;
@@ -37,6 +40,8 @@
   --ds-border-subtle: var(--border-subtle);
   --ds-text: var(--text-primary);
   --ds-text-muted: var(--text-muted);
+  /* fix: demo-status-webui-accent-gap — match aliases/status-server-webui.css. */
+  --ds-text-on-accent: var(--bg-primary);
   --ds-tone-success-fg: var(--status-running);
   --ds-tone-success-bg: rgba(34, 197, 94, 0.1);
   --ds-tone-warning-fg: var(--status-warning);
@@ -50,6 +55,13 @@
   /* v0.15 idle register — match aliases/status-server-webui.css. */
   --ds-tone-idle-fg: var(--status-stopped, var(--text-muted));
   --ds-tone-idle-bg: color-mix(in srgb, var(--status-stopped, var(--text-muted)) 8%, transparent);
+  /* Accent (fix: demo-status-webui-accent-gap) — match
+     aliases/status-server-webui.css: this host's "running" green doubles as
+     the accent, NOT the library's default blue. */
+  --ds-accent: var(--status-running);
+  --ds-accent-hover: var(--status-running);
+  --ds-accent-soft: rgba(34, 197, 94, 0.18);
+  --ds-focus-ring-color: var(--ring-focus);
   --ds-radius-card: var(--radius-md);
   --ds-radius-chip: var(--radius-sm, 6px);
   --ds-radius-pill: 100px;
