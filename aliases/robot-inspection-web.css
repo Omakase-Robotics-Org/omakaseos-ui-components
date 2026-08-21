@@ -29,10 +29,16 @@
  * ## Deliberate non-mappings
  *
  * Spacing (`--ds-space-*`), control sizing (`--ds-control-*`), type scale
- * (`--ds-font-size-*`, `--ds-line-height-*`), `--ds-focus-ring-width`,
- * `--ds-disabled-opacity` and `--ds-transition-fast` are NOT redeclared: the
- * host palette does not own density or the type ramp, so the library
- * fallbacks apply — the same stance the other two aliases take.
+ * (`--ds-font-size-*`, `--ds-line-height-*`), `--ds-disabled-opacity` and
+ * `--ds-transition-fast` are NOT redeclared: the host palette does not own
+ * density or the type ramp, so the library fallbacks apply — the same
+ * stance the other two aliases take.
+ *
+ * `--ds-focus-ring-width` USED to be in that list (v0.15.0/.1); it is bridged
+ * as of v0.15.2 because the InspecLog prototype's `:focus-visible` rule
+ * (`theme/global.css`) draws a 1px ring, not the library's 2px default — the
+ * omission was an operator-flagged gap ("欠損は欠陥"), not a design decision
+ * the host had made. See `--ri-focus-ring-width` below.
  */
 :root {
   /* Surfaces & foreground.
@@ -99,8 +105,11 @@
   --ds-accent-soft: var(--ri-accent-soft);
   /* The host's focus ring is the accent at full strength (a 1px silver
    * outline, offset) rather than a translucent halo: on a near-black ground a
-   * halo does not read. Width stays the library default. */
+   * halo does not read. Width is bridged to match the prototype's 1px
+   * `:focus-visible` rule (v0.15.2) — narrower than the library's 2px
+   * default, which this host does not want. */
   --ds-focus-ring-color: var(--ri-accent);
+  --ds-focus-ring-width: var(--ri-focus-ring-width);
 
   /* Radii — generous, and the reason --ds-radius-chip exists as a level of
    * its own (v0.15): controls round at 12px here, which on a 24px chip would

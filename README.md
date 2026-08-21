@@ -385,6 +385,12 @@ the `--ri-*` set below once (before importing the alias), and nothing else:
   --ri-accent-soft: rgba(229, 231, 235, 0.12);
   --ri-on-accent: #0a0b0c;
 
+  /* Focus ring width — 1px on this host (the InspecLog prototype's
+     `:focus-visible { outline: 1px solid var(--il-accent); outline-offset:
+     2px; }`), narrower than the library's 2px default. Color reuses the
+     accent above via --ds-focus-ring-color. */
+  --ri-focus-ring-width: 1px;
+
   /* Registers, named for the reading they report. The alias maps
      ok->success, ng->danger, pending->warning, na->neutral, idle->idle. */
   --ri-tone-ok-fg: #f2f3f5;
@@ -426,10 +432,13 @@ which is **light** — i.e. visibly wrong on this host rather than quietly
 plausible. That is deliberate: the library ships no dark fallback set, so an
 unmapped token is a bug you see rather than one you ship.
 
-Density, the type ramp, `--ds-focus-ring-width`, `--ds-disabled-opacity` and
-`--ds-transition-fast` are *not* in the `--ri-*` set: this host does not own
-them, so the library fallbacks apply — the same stance the other two aliases
-take toward the levels their palettes do not own.
+Density, the type ramp, `--ds-disabled-opacity` and `--ds-transition-fast` are
+*not* in the `--ri-*` set: this host does not own them, so the library
+fallbacks apply — the same stance the other two aliases take toward the
+levels their palettes do not own. `--ds-focus-ring-width` **is** in the set
+(`--ri-focus-ring-width`, since v0.15.2) — the host's prototype draws a 1px
+ring, and letting it fall through to the library's 2px default was a gap, not
+a decision (operator flagged: "欠損は欠陥").
 
 The demo harness reproduces this palette under
 `.host--robot-inspection-web` in `demo/hosts.css`, which is where to look for

@@ -208,6 +208,7 @@
   --ri-accent-hover: #f7f8fa;
   --ri-accent-soft: rgba(229, 231, 235, 0.12);
   --ri-on-accent: #0a0b0c;
+  --ri-focus-ring-width: 1px;
   --ri-tone-ok-fg: #f2f3f5;
   --ri-tone-ok-bg: rgba(242, 243, 245, 0.1);
   --ri-tone-ng-fg: #f2f3f5;
@@ -259,6 +260,7 @@
   --ds-accent-hover: var(--ri-accent-hover);
   --ds-accent-soft: var(--ri-accent-soft);
   --ds-focus-ring-color: var(--ri-accent);
+  --ds-focus-ring-width: var(--ri-focus-ring-width);
   --ds-radius-chip: var(--ri-radius-chip);
   --ds-radius-control: var(--ri-radius-control);
   --ds-radius-card: var(--ri-radius-card);

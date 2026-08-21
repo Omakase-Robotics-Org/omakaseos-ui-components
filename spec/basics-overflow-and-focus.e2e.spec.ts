@@ -205,3 +205,42 @@ test("Slider exposes role=slider, fires value updates, and reflects --ds-slider-
   );
   expect(fill).toBe("25.00%");
 });
+
+test("Button focus ring width resolves per host — 1px on robot-inspection-web (prototype-matched), 2px default elsewhere (v0.15.2)", async ({
+  page,
+}) => {
+  // The InspecLog prototype that robot-inspection-web is modeled on draws
+  //   :focus-visible { outline: 1px solid var(--il-accent); outline-offset: 2px; }
+  // (theme/global.css) — a 1px ring, not the library's 2px default. Through
+  // v0.15.1 the alias only bridged --ds-focus-ring-color, leaving width on
+  // the library fallback; v0.15.2 adds --ri-focus-ring-width so this host
+  // resolves the prototype's width exactly. jsdom cannot see outline width
+  // resolve through :focus-visible at all, so this is e2e-only.
+  const HOSTS = {
+    inspection: ".host--robot-inspection-web",
+    web: ".host--omks-web",
+    robot: ".host--status-webui",
+  } as const;
+
+  async function focusRingWidth(hostSelector: string): Promise<string> {
+    const button = page
+      .locator(`${hostSelector} [data-testid="toolbar-primary"]`)
+      .first();
+    await button.focus();
+    const isFocusVisible = await button.evaluate((el) =>
+      (el as HTMLElement).matches(":focus-visible"),
+    );
+    expect(isFocusVisible).toBe(true);
+    return button.evaluate(
+      (el) => globalThis.getComputedStyle(el as HTMLElement).outlineWidth,
+    );
+  }
+
+  expect(await focusRingWidth(HOSTS.inspection)).toBe("1px");
+
+  // Neither of the other two hosts maps --ds-focus-ring-width, so the
+  // inspection-only bridge must not leak into the shared component CSS:
+  // both stay on the library's 2px default.
+  expect(await focusRingWidth(HOSTS.web)).toBe("2px");
+  expect(await focusRingWidth(HOSTS.robot)).toBe("2px");
+});
