@@ -122,6 +122,8 @@
   --ds-border-subtle: var(--color-border-subtle, #e8e8e8);
   --ds-text: var(--color-text);
   --ds-text-muted: var(--color-text-muted);
+  /* fix: demo-omks-web-accent-gap — match aliases/omks-robo-web.css. */
+  --ds-text-on-accent: var(--color-on-primary, #ffffff);
   --ds-tone-success-fg: var(--color-success);
   --ds-tone-success-bg: var(--color-success-soft);
   --ds-tone-warning-fg: var(--color-warning);
@@ -135,6 +137,21 @@
   /* v0.15 idle register — match aliases/omks-robo-web.css. */
   --ds-tone-idle-fg: var(--color-text-subtle, var(--color-text-muted));
   --ds-tone-idle-bg: color-mix(in srgb, var(--color-text-muted) 6%, transparent);
+  /* Accent (fix: demo-omks-web-accent-gap) — match aliases/omks-robo-web.css.
+     Left unmapped, --ds-accent fell back to the library's default blue
+     (#2563eb / rgb(37,99,235)) — a similar-looking but NOT identical blue to
+     this host's real accent (--color-primary: #0d44da / rgb(13,68,218), the
+     same value source/service/packages/web/src/modules/brand/tokens.ts
+     declares). The demo's Button primary was rendering the library default,
+     not this brand's accent; the two blues are close enough that the drift
+     went unnoticed on screen. --color-ink is not declared by this host
+     (same as the real alias's fallback target), so --ds-accent-hover falls
+     through to --color-primary here exactly as it does for the real
+     consumer. */
+  --ds-accent: var(--color-primary);
+  --ds-accent-hover: var(--color-ink, var(--color-primary));
+  --ds-accent-soft: var(--color-primary-soft);
+  --ds-focus-ring-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
   --ds-radius-card: var(--radius-card);
   --ds-radius-chip: var(--radius-control, 6px);
   --ds-radius-pill: 999px;
