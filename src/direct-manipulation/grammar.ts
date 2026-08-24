@@ -4,8 +4,11 @@
  *
  * This module owns the meaning and priority of map gestures. It refuses to know
  * about pixels, React, renderer objects, camera state, or how an intent changes
- * any consumer's document; surfaces provide metre tolerances and render the
- * same world anchors this grammar hit-tests.
+ * any consumer's document. Surfaces declare their pointer frame: raster
+ * surfaces use metre tolerances, while perspective surfaces may delegate each
+ * class's screen-space distance decision and provide depth-aware anchors. The
+ * metric path is the raster surface's declared frame, not a fallback; NaN
+ * tolerances make an undeclared frame fail loudly.
  *
  * Two invariants are structural here:
  *
@@ -19,21 +22,32 @@
  */
 
 import { BADGE_ANCHOR_OFFSET_SCALE, COARSE_PICK_SCALE } from "./constants";
-import { pathSegments, type Vertex } from "./geometry";
+import {
+  closestPointOnSegment,
+  pathSegments,
+  ringEdges,
+  type Vertex,
+} from "./geometry";
 import {
   areaBadgeAnchor,
   handleBadgeAnchor,
   headingKnobAt,
   insideRing,
-  nearestHandle,
-  nearestPathSegment,
-  nearestRingEdge,
-  nearestVertex,
   type Handle,
 } from "./hit-test";
 
 export type EditMode = "direct" | "append" | "draw-area";
 export type PointerModality = "fine" | "coarse";
+export type EditPickClass = "handle" | "ghost" | "knob" | "badge" | "vertex";
+export type EditScreenPick = (
+  klass: EditPickClass,
+  candidates: readonly Vertex[],
+  modality: PointerModality,
+) => number | null;
+export type EditAnchors = {
+  readonly knobAt: (handle: Handle) => Vertex | null;
+  readonly badgeAt: (at: Vertex) => Vertex;
+};
 
 export type EditSupport =
   | { readonly supported: true }
@@ -71,6 +85,8 @@ export type EditProbe = {
   readonly capabilities: EditCapabilities;
   /** The ring being drawn, used to detect a press on its first vertex. */
   readonly drawing: readonly Vertex[] | null;
+  readonly screenPick?: EditScreenPick;
+  readonly anchors?: EditAnchors;
 };
 
 export type EditAffordance =
@@ -155,19 +171,50 @@ type BadgeTarget = Extract<EditAffordance, { readonly kind: "badge" }>["target"]
 type BadgeCandidate = {
   readonly target: BadgeTarget;
   readonly at: Vertex;
-  readonly distance: number;
 };
 
 type GhostCandidate = {
   readonly pathId: string;
   readonly segmentIndex: number;
   readonly at: Vertex;
-  readonly distance: number;
 };
 
 /** Scale one pick radius for the pointer modality. Anchors never scale. */
 function pickRadius(radiusM: number, modality: PointerModality): number {
   return radiusM * (modality === "coarse" ? COARSE_PICK_SCALE : 1);
+}
+
+/**
+ * The one distance-decision seam for every point-like affordance.
+ *
+ * A screen-space surface owns the pointer frame, including its radii and
+ * coarse scale. Once it declares that frame, a null answer is authoritative;
+ * the metric path is never consulted as a fallback.
+ */
+function pickIndex(
+  probe: EditProbe,
+  klass: EditPickClass,
+  candidates: readonly Vertex[],
+  toleranceM: number,
+): number | null {
+  if (candidates.length === 0) {
+    return null;
+  }
+  if (probe.screenPick !== undefined) {
+    const index = probe.screenPick(klass, candidates, probe.modality);
+    return index !== null && Number.isInteger(index) && index >= 0 && index < candidates.length
+      ? index
+      : null;
+  }
+  const radius = pickRadius(toleranceM, probe.modality);
+  const hits = candidates
+    .map((candidate, index) => ({
+      index,
+      distance: Math.hypot(candidate.x - probe.at.x, candidate.y - probe.at.y),
+    }))
+    .filter((hit) => hit.distance <= radius)
+    .sort((left, right) => left.distance - right.distance);
+  return hits[0]?.index ?? null;
 }
 
 /** Resolve a path's ordered handle ids, dropping ids absent from the scene. */
@@ -196,6 +243,10 @@ function selectedArea(probe: EditProbe): HittableArea | null {
   return probe.scene.areas.find((area) => area.id === id) ?? null;
 }
 
+function handlePosition(handle: Handle): Vertex {
+  return { x: handle.x, y: handle.y };
+}
+
 /**
  * The nearest selected-object badge under this probe.
  *
@@ -206,9 +257,10 @@ function selectedArea(probe: EditProbe): HittableArea | null {
 function badgeUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: "badge" }> | null {
   const anchorOffset = BADGE_ANCHOR_OFFSET_SCALE * probe.tolerance.badgeM;
   const handle = selectedHandle(probe);
-  const handleAnchor = handle === null
+  const handlePos = handle === null ? null : handlePosition(handle);
+  const handleAnchor = handlePos === null
     ? null
-    : handleBadgeAnchor(handle, anchorOffset);
+    : probe.anchors?.badgeAt(handlePos) ?? handleBadgeAnchor(handlePos, anchorOffset);
   const handleCandidates: readonly BadgeCandidate[] =
     handle === null || handleAnchor === null
       ? []
@@ -216,13 +268,15 @@ function badgeUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: 
           {
             target: { kind: "handle", id: handle.id },
             at: handleAnchor,
-            distance: Math.hypot(handleAnchor.x - probe.at.x, handleAnchor.y - probe.at.y),
           },
         ];
   const area = selectedArea(probe);
-  const areaAnchor = area !== null && area.ring.length > 0
+  const areaBase = area !== null && area.ring.length > 0
     ? areaBadgeAnchor(area.ring, anchorOffset)
     : null;
+  const areaAnchor = areaBase === null
+    ? null
+    : probe.anchors?.badgeAt(areaBase) ?? areaBase;
   const areaCandidates: readonly BadgeCandidate[] = area === null
     ? []
     : [
@@ -232,22 +286,24 @@ function badgeUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: 
               {
                 target: { kind: "area" as const, id: area.id },
                 at: areaAnchor,
-                distance: Math.hypot(areaAnchor.x - probe.at.x, areaAnchor.y - probe.at.y),
               },
             ]),
         ...area.ring.map((vertex, index) => {
-          const at = handleBadgeAnchor(vertex, anchorOffset);
+          const at = probe.anchors?.badgeAt(vertex) ?? handleBadgeAnchor(vertex, anchorOffset);
           return {
             target: { kind: "vertex" as const, areaId: area.id, index },
             at,
-            distance: Math.hypot(at.x - probe.at.x, at.y - probe.at.y),
           };
         }),
       ];
-  const radius = pickRadius(probe.tolerance.badgeM, probe.modality);
-  const nearest = [...handleCandidates, ...areaCandidates]
-    .filter((candidate) => candidate.distance <= radius)
-    .sort((left, right) => left.distance - right.distance)[0];
+  const candidates = [...handleCandidates, ...areaCandidates];
+  const index = pickIndex(
+    probe,
+    "badge",
+    candidates.map((candidate) => candidate.at),
+    probe.tolerance.badgeM,
+  );
+  const nearest = index === null ? undefined : candidates[index];
   return nearest === undefined
     ? null
     : { kind: "badge", target: nearest.target, at: nearest.at };
@@ -259,26 +315,32 @@ function knobUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: "
   if (handle === null) {
     return null;
   }
-  const at = headingKnobAt(handle, probe.tolerance.headingArmM);
+  const at = probe.anchors?.knobAt(handle) ?? headingKnobAt(handle, probe.tolerance.headingArmM);
   if (at === null) {
     return null;
   }
-  const radius = pickRadius(probe.tolerance.knobM, probe.modality);
-  return Math.hypot(at.x - probe.at.x, at.y - probe.at.y) <= radius
+  const index = pickIndex(probe, "knob", [at], probe.tolerance.knobM);
+  return index !== null
     ? { kind: "knob", id: handle.id, at }
     : null;
 }
 
 /** The nearest open-path segment under this probe. */
 function ghostUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: "ghost" }> | null {
-  const radius = pickRadius(probe.tolerance.ghostM, probe.modality);
   const candidates: readonly GhostCandidate[] = probe.scene.paths.flatMap((path) => {
-    const hit = nearestPathSegment(pathPoints(probe.scene, path), probe.at, radius);
-    return hit === null
-      ? []
-      : [{ pathId: path.id, segmentIndex: hit.index, at: hit.at, distance: hit.distance }];
+    return pathSegments(pathPoints(probe.scene, path)).map((segment) => ({
+      pathId: path.id,
+      segmentIndex: segment.index,
+      at: closestPointOnSegment(segment.a, segment.b, probe.at),
+    }));
   });
-  const nearest = [...candidates].sort((left, right) => left.distance - right.distance)[0];
+  const index = pickIndex(
+    probe,
+    "ghost",
+    candidates.map((candidate) => candidate.at),
+    probe.tolerance.ghostM,
+  );
+  const nearest = index === null ? undefined : candidates[index];
   return nearest === undefined
     ? null
     : {
@@ -317,33 +379,42 @@ export function resolveAffordance(probe: EditProbe): EditAffordance {
     return knob;
   }
 
-  const handle = nearestHandle(
-    probe.scene.handles,
-    probe.at,
-    pickRadius(probe.tolerance.handleM, probe.modality),
+  const handleIndex = pickIndex(
+    probe,
+    "handle",
+    probe.scene.handles.map(handlePosition),
+    probe.tolerance.handleM,
   );
-  if (handle !== null) {
+  const handle = handleIndex === null ? undefined : probe.scene.handles[handleIndex];
+  if (handle !== undefined) {
     return { kind: "handle", id: handle.id };
   }
 
   const area = selectedArea(probe);
   if (area !== null) {
-    const vertex = nearestVertex(
+    const vertexIndex = pickIndex(
+      probe,
+      "vertex",
       area.ring,
-      probe.at,
-      pickRadius(probe.tolerance.handleM, probe.modality),
+      probe.tolerance.handleM,
     );
-    if (vertex !== null) {
-      return { kind: "vertex", areaId: area.id, index: vertex.index };
+    if (vertexIndex !== null) {
+      return { kind: "vertex", areaId: area.id, index: vertexIndex };
     }
 
-    const edge = nearestRingEdge(
-      area.ring,
-      probe.at,
-      pickRadius(probe.tolerance.ghostM, probe.modality),
+    const edgeCandidates = ringEdges(area.ring).map((edge) => ({
+      edgeIndex: edge.index,
+      at: closestPointOnSegment(edge.a, edge.b, probe.at),
+    }));
+    const edgeIndex = pickIndex(
+      probe,
+      "ghost",
+      edgeCandidates.map((candidate) => candidate.at),
+      probe.tolerance.ghostM,
     );
-    if (edge !== null) {
-      return { kind: "ghost-vertex", areaId: area.id, edgeIndex: edge.index, at: edge.at };
+    const edge = edgeIndex === null ? undefined : edgeCandidates[edgeIndex];
+    if (edge !== undefined) {
+      return { kind: "ghost-vertex", areaId: area.id, edgeIndex: edge.edgeIndex, at: edge.at };
     }
   }
 
@@ -408,8 +479,7 @@ export function resolveClick(probe: EditProbe): EditIntent {
     const first = probe.drawing?.[0];
     const closes =
       first !== undefined &&
-      Math.hypot(first.x - probe.at.x, first.y - probe.at.y) <=
-        pickRadius(probe.tolerance.handleM, probe.modality);
+      pickIndex(probe, "vertex", [first], probe.tolerance.handleM) !== null;
     return closes ? { kind: "close-ring" } : { kind: "draw", at: probe.at };
   }
 

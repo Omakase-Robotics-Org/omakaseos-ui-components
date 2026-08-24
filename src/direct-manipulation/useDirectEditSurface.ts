@@ -26,11 +26,13 @@ import {
   resolveGrip,
   type DragGrip,
   type EditAffordance,
+  type EditAnchors,
   type EditCapabilities,
   type EditIntent,
   type EditMode,
   type EditScene,
   type EditSelection,
+  type EditScreenPick,
   type EditTolerances,
   type PointerModality,
 } from "./grammar";
@@ -42,6 +44,8 @@ export type DirectEditSurfaceOptions = {
   readonly capabilities: EditCapabilities;
   readonly tolerance: EditTolerances;
   readonly drawing: readonly Vertex[] | null;
+  readonly screenPick?: EditScreenPick;
+  readonly anchors?: EditAnchors;
   /** client 座標 → 世界 m。床を外したら null。3D は pickFloor、2D は raster 逆変換。 */
   readonly toWorld: (clientX: number, clientY: number) => Vertex | null;
   /** 完了した 1 ジェスチャにつき高々 1 回。 */
@@ -300,6 +304,8 @@ export function useDirectEditSurface(
       tolerance: current.tolerance,
       capabilities: current.capabilities,
       drawing: current.drawing,
+      screenPick: current.screenPick,
+      anchors: current.anchors,
     };
   }, []);
 

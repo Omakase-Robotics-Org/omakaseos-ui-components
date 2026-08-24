@@ -20,9 +20,12 @@ import {
   resolveGrip,
   type DragGrip,
   type EditAffordance,
+  type EditAnchors,
   type EditCapabilities,
   type EditProbe,
+  type EditPickClass,
   type EditScene,
+  type EditScreenPick,
   type EditTolerances,
 } from "./grammar";
 import { areaBadgeAnchor, handleBadgeAnchor, headingKnobAt } from "./hit-test";
@@ -37,6 +40,14 @@ const TOLERANCE: EditTolerances = {
   knobM: 0.2,
   badgeM: 0.2,
   headingArmM: 1,
+};
+
+const NAN_TOLERANCE: EditTolerances = {
+  handleM: Number.NaN,
+  ghostM: Number.NaN,
+  knobM: Number.NaN,
+  badgeM: Number.NaN,
+  headingArmM: Number.NaN,
 };
 
 /** Three ordered handles and one triangular area, all in world metres. */
@@ -75,6 +86,26 @@ function probe(overrides: Partial<EditProbe> = {}): EditProbe {
 
 function onlyKind(scene: EditScene, at: EditProbe["at"], tolerance: EditTolerances = TOLERANCE) {
   return probe({ scene, at, tolerance });
+}
+
+function proximityScreenPick(
+  target: EditProbe["at"],
+  seen: EditPickClass[] = [],
+): EditScreenPick {
+  return (klass, candidates, modality) => {
+    seen.push(klass);
+    expect(modality).toBe("fine");
+    const nearest = candidates
+      .map((candidate, index) => ({
+        index,
+        distance: Math.hypot(candidate.x - target.x, candidate.y - target.y),
+      }))
+      .reduce(
+        (best, candidate) => candidate.distance < best.distance ? candidate : best,
+        { index: -1, distance: Number.POSITIVE_INFINITY },
+      );
+    return nearest.distance <= 1e-6 ? nearest.index : null;
+  };
 }
 
 describe("direct clicks preserve the click-only grammar", () => {
@@ -416,6 +447,271 @@ describe("the fixed affordance and grip priority", () => {
       expect(resolveAffordance(level.value).kind, level.name).toBe(level.affordance);
       expect(resolveGrip(level.value)?.kind ?? null, level.name).toBe(level.grip);
     }
+  });
+});
+
+describe("screen-space pick delegation", () => {
+  const anchors: EditAnchors = {
+    knobAt: () => ({ x: 50, y: 50 }),
+    badgeAt: () => ({ x: 60, y: 60 }),
+  };
+
+  it("resolves handle, ghost, knob, badge, and vertex with NaN metric tolerances", () => {
+    const handleTarget = { x: 3, y: 4 };
+    expect(
+      resolveAffordance(
+        probe({
+          scene: {
+            handles: [{ id: "screen-handle", x: 3, y: 4 }],
+            paths: [],
+            areas: [],
+          },
+          at: { x: -30, y: -30 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(handleTarget),
+          anchors,
+        }),
+      ),
+    ).toEqual({ kind: "handle", id: "screen-handle" });
+
+    const ghostTarget = { x: 5, y: 0 };
+    expect(
+      resolveAffordance(
+        probe({
+          scene: {
+            handles: [
+              { id: "ghost-start", x: 0, y: 0 },
+              { id: "ghost-end", x: 10, y: 0 },
+            ],
+            paths: [{ id: "screen-path", handleIds: ["ghost-start", "ghost-end"] }],
+            areas: [],
+          },
+          at: { x: 5, y: 2 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(ghostTarget),
+          anchors,
+        }),
+      ),
+    ).toEqual({ kind: "ghost", pathId: "screen-path", segmentIndex: 0, at: ghostTarget });
+
+    const knobTarget = { x: 50, y: 50 };
+    expect(
+      resolveAffordance(
+        probe({
+          scene: {
+            handles: [{ id: "screen-knob", x: 0, y: 0, yaw: 0 }],
+            paths: [],
+            areas: [],
+          },
+          selection: { kind: "handle", id: "screen-knob" },
+          at: { x: -30, y: -30 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(knobTarget),
+          anchors,
+        }),
+      ),
+    ).toEqual({ kind: "knob", id: "screen-knob", at: knobTarget });
+
+    const badgeTarget = { x: 60, y: 60 };
+    expect(
+      resolveAffordance(
+        probe({
+          scene: {
+            handles: [{ id: "screen-badge", x: 0, y: 0 }],
+            paths: [],
+            areas: [],
+          },
+          selection: { kind: "handle", id: "screen-badge" },
+          at: { x: -30, y: -30 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(badgeTarget),
+          anchors,
+        }),
+      ),
+    ).toEqual({
+      kind: "badge",
+      target: { kind: "handle", id: "screen-badge" },
+      at: badgeTarget,
+    });
+
+    const vertexTarget = { x: 10, y: 10 };
+    expect(
+      resolveAffordance(
+        probe({
+          scene: { handles: [], paths: [], areas: [{ id: "screen-area", ring: [
+            { x: 10, y: 10 },
+            { x: 14, y: 10 },
+            { x: 12, y: 14 },
+          ] }] },
+          selection: { kind: "area", id: "screen-area" },
+          at: { x: -30, y: -30 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(vertexTarget),
+          anchors,
+        }),
+      ),
+    ).toEqual({ kind: "vertex", areaId: "screen-area", index: 0 });
+  });
+
+  it("keeps badge above handle and handle above ghost under screen delegation", () => {
+    const badgeTarget = { x: 100, y: 100 };
+    const badgeAnchors: EditAnchors = {
+      knobAt: () => null,
+      badgeAt: () => badgeTarget,
+    };
+    const badgeSeen: EditPickClass[] = [];
+    expect(
+      resolveAffordance(
+        probe({
+          scene: { handles: [{ id: "selected", x: 0, y: 0 }], paths: [], areas: [] },
+          selection: { kind: "handle", id: "selected" },
+          at: { x: 0, y: 0 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(badgeTarget, badgeSeen),
+          anchors: badgeAnchors,
+        }),
+      ),
+    ).toEqual({
+      kind: "badge",
+      target: { kind: "handle", id: "selected" },
+      at: badgeTarget,
+    });
+    expect(badgeSeen).toEqual(["badge"]);
+
+    const handleTarget = { x: 5, y: 0 };
+    const handleSeen: EditPickClass[] = [];
+    expect(
+      resolveAffordance(
+        probe({
+          scene: {
+            handles: [
+              { id: "path-start", x: 0, y: 0 },
+              { id: "path-end", x: 10, y: 0 },
+              { id: "screen-middle", x: 5, y: 0 },
+            ],
+            paths: [{ id: "under-handle", handleIds: ["path-start", "path-end"] }],
+            areas: [],
+          },
+          at: { x: 5, y: 1 },
+          tolerance: NAN_TOLERANCE,
+          screenPick: proximityScreenPick(handleTarget, handleSeen),
+          anchors: badgeAnchors,
+        }),
+      ),
+    ).toEqual({ kind: "handle", id: "screen-middle" });
+    expect(handleSeen).toEqual(["handle"]);
+  });
+
+  it("honors the injected PointHandles answer over a metrically nearer other handle", () => {
+    const authoritative = { x: 10, y: 0 };
+    expect(
+      resolveAffordance(
+        probe({
+          scene: {
+            handles: [
+              { id: "metric-near", x: 0, y: 0 },
+              { id: "screen-authoritative", x: 10, y: 0 },
+            ],
+            paths: [],
+            areas: [],
+          },
+          at: { x: 0.01, y: 0 },
+          screenPick: proximityScreenPick(authoritative),
+        }),
+      ),
+    ).toEqual({ kind: "handle", id: "screen-authoritative" });
+  });
+});
+
+describe("undeclared pointer frame fails loudly", () => {
+  it("returns floor and deselects when screenPick is absent and all metric tolerances are NaN", () => {
+    const cases: readonly EditProbe[] = [
+      probe({
+        scene: { handles: [{ id: "handle", x: 0, y: 0 }], paths: [], areas: [] },
+        at: { x: 0, y: 0 },
+        tolerance: NAN_TOLERANCE,
+      }),
+      probe({
+        scene: {
+          handles: [
+            { id: "ghost-start", x: 0, y: 0 },
+            { id: "ghost-end", x: 10, y: 0 },
+          ],
+          paths: [{ id: "path", handleIds: ["ghost-start", "ghost-end"] }],
+          areas: [],
+        },
+        at: { x: 5, y: 0 },
+        tolerance: NAN_TOLERANCE,
+      }),
+      probe({
+        scene: { handles: [{ id: "knob", x: 0, y: 0, yaw: 0 }], paths: [], areas: [] },
+        selection: { kind: "handle", id: "knob" },
+        at: { x: 1, y: 0 },
+        tolerance: NAN_TOLERANCE,
+      }),
+      probe({
+        scene: { handles: [{ id: "badge", x: 0, y: 0 }], paths: [], areas: [] },
+        selection: { kind: "handle", id: "badge" },
+        at: { x: 1, y: 1 },
+        tolerance: NAN_TOLERANCE,
+      }),
+      probe({
+        scene: {
+          handles: [],
+          paths: [],
+          areas: [{ id: "area", ring: [{ x: 0, y: 0 }, { x: 4, y: 0 }] }],
+        },
+        selection: { kind: "area", id: "area" },
+        at: { x: 0, y: 0 },
+        tolerance: NAN_TOLERANCE,
+      }),
+    ];
+
+    for (const value of cases) {
+      expect(resolveAffordance(value)).toEqual({ kind: "floor" });
+      expect(resolveClick(value)).toEqual({ kind: "deselect" });
+    }
+  });
+});
+
+describe("metric path unchanged", () => {
+  it("keeps representative handle, path-ghost, and badge answers from v0.16.0", () => {
+    const handleProbe = probe({ at: { x: 4, y: 0 } });
+    expect(resolveAffordance(handleProbe)).toEqual({ kind: "handle", id: "h1" });
+    expect(resolveClick(handleProbe)).toEqual({
+      kind: "select",
+      target: { kind: "handle", id: "h1" },
+    });
+
+    const ghostProbe = probe({ at: { x: 2, y: 0.1 } });
+    expect(resolveAffordance(ghostProbe)).toEqual({
+      kind: "ghost",
+      pathId: "route",
+      segmentIndex: 0,
+      at: { x: 2, y: 0 },
+    });
+    expect(resolveGrip(ghostProbe)).toEqual({
+      kind: "insert",
+      pathId: "route",
+      afterIndex: 0,
+      at: { x: 2, y: 0 },
+    });
+
+    const handle = SCENE.handles[0];
+    if (handle === undefined) {
+      throw new Error("fixture has no handle");
+    }
+    const badgeAt = handleBadgeAnchor(handle, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM);
+    const badgeProbe = probe({
+      selection: { kind: "handle", id: handle.id },
+      at: badgeAt,
+    });
+    expect(resolveAffordance(badgeProbe)).toEqual({
+      kind: "badge",
+      target: { kind: "handle", id: handle.id },
+      at: badgeAt,
+    });
+    expect(resolveClick(badgeProbe)).toEqual({ kind: "delete-handle", id: handle.id });
   });
 });
 
