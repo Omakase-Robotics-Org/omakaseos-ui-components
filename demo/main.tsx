@@ -64,6 +64,7 @@ import type {
 } from "../src/index";
 
 import "./hosts.css";
+import { DirectManipulationDemo } from "./direct-manipulation-demo";
 
 function MonitorPanel() {
   return (
@@ -837,6 +838,7 @@ function App() {
         <FeedbackPrimitivesPanel />
         <ShapeStatusPanel />
         <PageSectionsPanel host="status-webui" />
+        <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
@@ -848,6 +850,7 @@ function App() {
         <FeedbackPrimitivesPanel />
         <ShapeStatusPanel />
         <PageSectionsPanel host="omks-web" />
+        <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
           above, including the chat and stage layers it has no screen for
@@ -865,6 +868,7 @@ function App() {
         <FeedbackPrimitivesPanel />
         <ShapeStatusPanel />
         <PageSectionsPanel host="robot-inspection-web" />
+        <DirectManipulationDemo />
       </section>
     </div>
   );
