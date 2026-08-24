@@ -9,7 +9,7 @@
  * a synthetic closing segment.
  */
 import { describe, expect, it } from "vitest";
-import { COARSE_PICK_SCALE } from "./constants";
+import { BADGE_ANCHOR_OFFSET_SCALE, COARSE_PICK_SCALE } from "./constants";
 import {
   cursorFor,
   modeRefusalsFor,
@@ -98,7 +98,7 @@ describe("direct clicks preserve the click-only grammar", () => {
         name: "handle badge",
         value: probe({
           selection: { kind: "handle", id: "h0" },
-          at: handleBadgeAnchor(handle, TOLERANCE.badgeM),
+          at: handleBadgeAnchor(handle, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM),
         }),
         affordance: "badge",
         intent: "delete-handle",
@@ -107,7 +107,7 @@ describe("direct clicks preserve the click-only grammar", () => {
         name: "area badge",
         value: probe({
           selection: { kind: "area", id: "area" },
-          at: areaBadgeAnchor(ring, TOLERANCE.badgeM),
+          at: areaBadgeAnchor(ring, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM),
         }),
         affordance: "badge",
         intent: "delete-area",
@@ -116,7 +116,7 @@ describe("direct clicks preserve the click-only grammar", () => {
         name: "vertex badge",
         value: probe({
           selection: { kind: "area", id: "area" },
-          at: handleBadgeAnchor(ring[0] ?? { x: 10, y: 10 }, TOLERANCE.badgeM),
+          at: handleBadgeAnchor(ring[0] ?? { x: 10, y: 10 }, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM),
         }),
         affordance: "badge",
         intent: "delete-vertex",
@@ -197,6 +197,24 @@ describe("direct clicks preserve the click-only grammar", () => {
     }
   });
 
+  it("clicking a selected handle's exact center deselects - the badge never covers its target", () => {
+    // Regression: with the anchor at 1x the pick radius the badge's pick disc
+    // passed exactly through the handle's center, so re-clicking a selected
+    // handle deleted it instead of deselecting. BADGE_ANCHOR_OFFSET_SCALE
+    // keeps the disc clear of the center by a full pick radius.
+    const center = probe({ selection: { kind: "handle", id: "h1" }, at: { x: 4, y: 0 } });
+    expect(resolveAffordance(center)).toEqual({ kind: "handle", id: "h1" });
+    expect(resolveClick(center)).toEqual({ kind: "deselect" });
+
+    const ring = SCENE.areas[0]?.ring ?? [];
+    const vertexCenter = probe({
+      selection: { kind: "area", id: "area" },
+      at: ring[0] ?? { x: 10, y: 10 },
+    });
+    expect(resolveAffordance(vertexCenter).kind).toBe("vertex");
+    expect(resolveClick(vertexCenter)).toEqual({ kind: "nothing" });
+  });
+
   it("[2] deselects on empty floor whether or not anything was selected", () => {
     expect(resolveClick(probe())).toEqual({ kind: "deselect" });
     expect(resolveClick(probe({ selection: { kind: "handle", id: "h0" } }))).toEqual({
@@ -248,7 +266,7 @@ describe("the fixed affordance and grip priority", () => {
       throw new Error("fixture has no area");
     }
     const badgeHandle = { id: "badge", x: 0, y: 0, yaw: Math.PI / 4 };
-    const badgeAt = handleBadgeAnchor(badgeHandle, TOLERANCE.badgeM);
+    const badgeAt = handleBadgeAnchor(badgeHandle, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM);
     const badgeScene: EditScene = {
       handles: [badgeHandle],
       paths: [{ id: "under-badge", handleIds: ["badge", "other"] }],
@@ -309,7 +327,7 @@ describe("the fixed affordance and grip priority", () => {
         value: probe({
           scene: vertexGhostScene,
           selection: { kind: "area", id: "area" },
-          at: handleBadgeAnchor(overlapRing.ring[0] ?? { x: 10, y: 10 }, TOLERANCE.badgeM),
+          at: handleBadgeAnchor(overlapRing.ring[0] ?? { x: 10, y: 10 }, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM),
         }),
         affordance: "badge",
         grip: null,
@@ -408,19 +426,19 @@ describe("world anchors shared by affordances and renderers", () => {
     if (handle === undefined) {
       throw new Error("fixture has no handle");
     }
-    const handleBadge = handleBadgeAnchor(handle, TOLERANCE.badgeM);
+    const handleBadge = handleBadgeAnchor(handle, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM);
     expect(
       resolveAffordance(
         probe({ selection: { kind: "handle", id: handle.id }, at: handleBadge }),
       ),
     ).toEqual({ kind: "badge", target: { kind: "handle", id: handle.id }, at: handleBadge });
 
-    const areaBadge = areaBadgeAnchor(ring, TOLERANCE.badgeM);
+    const areaBadge = areaBadgeAnchor(ring, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM);
     expect(
       resolveAffordance(probe({ selection: { kind: "area", id: "area" }, at: areaBadge })),
     ).toEqual({ kind: "badge", target: { kind: "area", id: "area" }, at: areaBadge });
 
-    const vertexBadge = handleBadgeAnchor(ring[0] ?? { x: 10, y: 10 }, TOLERANCE.badgeM);
+    const vertexBadge = handleBadgeAnchor(ring[0] ?? { x: 10, y: 10 }, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM);
     expect(
       resolveAffordance(probe({ selection: { kind: "area", id: "area" }, at: vertexBadge })),
     ).toEqual({
@@ -504,7 +522,7 @@ describe("fine and coarse pick tolerances", () => {
     };
     const badgeTolerance = { ...small, badgeM: 0.2 };
     const badgeHandle = badgeSceneHandle();
-    const badgeAnchor = handleBadgeAnchor(badgeHandle, badgeTolerance.badgeM);
+    const badgeAnchor = handleBadgeAnchor(badgeHandle, BADGE_ANCHOR_OFFSET_SCALE * badgeTolerance.badgeM);
     const badgeProbe = {
       x: badgeAnchor.x + 0.3 * Math.SQRT1_2,
       y: badgeAnchor.y + 0.3 * Math.SQRT1_2,
@@ -676,7 +694,7 @@ describe("drag grips and releases", () => {
       resolveGrip(
         probe({
           selection: { kind: "handle", id: handle.id },
-          at: handleBadgeAnchor(handle, TOLERANCE.badgeM),
+          at: handleBadgeAnchor(handle, BADGE_ANCHOR_OFFSET_SCALE * TOLERANCE.badgeM),
         }),
       ),
     ).toBeNull();

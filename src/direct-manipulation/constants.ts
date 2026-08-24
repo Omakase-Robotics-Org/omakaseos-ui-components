@@ -16,3 +16,13 @@ export const BADGE_RADIUS_PX = 8;
 export const BADGE_OFFSET_PX = { x: 11, y: -11 };
 /** Pick-radius multiplier for coarse pointer input. */
 export const COARSE_PICK_SCALE = 1.6;
+/**
+ * Badge anchors sit at this multiple of the badge pick radius from their
+ * target. At 1x the badge's pick disc would pass exactly through the target's
+ * own center, so clicking a selected handle or vertex would resolve to the
+ * badge (delete) instead of the thing itself (deselect / grab) — an
+ * accidental-deletion hazard. At 2x the disc clears the target's center by a
+ * full pick radius. Grammar and renderers must both use it, so the drawn
+ * badge and its hit target stay coincident.
+ */
+export const BADGE_ANCHOR_OFFSET_SCALE = 2;

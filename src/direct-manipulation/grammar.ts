@@ -18,7 +18,7 @@
  * Pure functions only: no React, DOM, renderer, pixels, wire, clock, or random.
  */
 
-import { COARSE_PICK_SCALE } from "./constants";
+import { BADGE_ANCHOR_OFFSET_SCALE, COARSE_PICK_SCALE } from "./constants";
 import { pathSegments, type Vertex } from "./geometry";
 import {
   areaBadgeAnchor,
@@ -196,12 +196,19 @@ function selectedArea(probe: EditProbe): HittableArea | null {
   return probe.scene.areas.find((area) => area.id === id) ?? null;
 }
 
-/** The nearest selected-object badge under this probe. */
+/**
+ * The nearest selected-object badge under this probe.
+ *
+ * Anchors sit at BADGE_ANCHOR_OFFSET_SCALE x the pick radius so the badge's
+ * pick disc never covers its own target's center — clicking the selected
+ * thing itself stays "deselect", never "delete" (see constants.ts).
+ */
 function badgeUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: "badge" }> | null {
+  const anchorOffset = BADGE_ANCHOR_OFFSET_SCALE * probe.tolerance.badgeM;
   const handle = selectedHandle(probe);
   const handleAnchor = handle === null
     ? null
-    : handleBadgeAnchor(handle, probe.tolerance.badgeM);
+    : handleBadgeAnchor(handle, anchorOffset);
   const handleCandidates: readonly BadgeCandidate[] =
     handle === null || handleAnchor === null
       ? []
@@ -214,7 +221,7 @@ function badgeUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: 
         ];
   const area = selectedArea(probe);
   const areaAnchor = area !== null && area.ring.length > 0
-    ? areaBadgeAnchor(area.ring, probe.tolerance.badgeM)
+    ? areaBadgeAnchor(area.ring, anchorOffset)
     : null;
   const areaCandidates: readonly BadgeCandidate[] = area === null
     ? []
@@ -229,7 +236,7 @@ function badgeUnder(probe: EditProbe): Extract<EditAffordance, { readonly kind: 
               },
             ]),
         ...area.ring.map((vertex, index) => {
-          const at = handleBadgeAnchor(vertex, probe.tolerance.badgeM);
+          const at = handleBadgeAnchor(vertex, anchorOffset);
           return {
             target: { kind: "vertex" as const, areaId: area.id, index },
             at,
