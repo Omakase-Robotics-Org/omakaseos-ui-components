@@ -138,6 +138,18 @@ own `components/` directory.
    right answer is almost always "rebuild the request on top of
    AsyncCombobox" or "let the consumer own that synthetic widget".
 
+   **Direct-manipulation is NOT a second exception (v0.16).** The
+   map-editing surface (`/direct-manipulation` kernel + the `Edit*`
+   SVG fragments) composes no synthetic widget at all: there is no
+   native element — and no ARIA composite role — for "an editable
+   route on a map", so the layer deliberately stays on the decoration
+   side of the line. Every drawn affordance hard-codes
+   `aria-hidden="true"` / `focusable="false"`, `useDirectEditSurface`
+   exposes no `role` / `tabIndex` / `aria-*` on its surface props, and
+   reachability is owed by the CONSUMER as native twin controls (row
+   lists, insert/delete buttons). `spec/direct-manipulation-boundary.spec.ts`
+   pins all of this, the same way the combobox grep pins exception #4.
+
 5. **Overflow first.** Every container assumes a long unbroken token
    in its content. `min-width: 0` on flex children, `overflow-wrap:
    anywhere` on text surfaces, `text-overflow: ellipsis` only where
