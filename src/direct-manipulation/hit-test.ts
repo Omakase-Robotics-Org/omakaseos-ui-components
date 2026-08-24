@@ -174,6 +174,23 @@ export function headingKnobAt(handle: Handle, armLengthM: number): Vertex | null
 }
 
 /**
+ * The world position of a handle or vertex's delete badge.
+ *
+ * The badge sits up-right in the world frame, with the diagonal normalised so
+ * `offsetM` is the distance from the handle rather than the displacement on
+ * each axis. Renderers and the editing grammar both use this anchor, keeping
+ * the drawn badge and its hit target coincident by construction.
+ *
+ * @param handle The handle or vertex whose badge is being placed.
+ * @param offsetM Distance from the handle to the badge, in metres.
+ * @returns The badge position in world-frame metres.
+ */
+export function handleBadgeAnchor(handle: Vertex, offsetM: number): Vertex {
+  const displacement = offsetM * Math.SQRT1_2;
+  return { x: handle.x + displacement, y: handle.y + displacement };
+}
+
+/**
  * Whether a probe lies inside a ring, by the even-odd (crossing-number) rule.
  *
  * Used to decide which AREA an operator selected when they click its interior

@@ -11,6 +11,7 @@
 import { describe, it, expect } from "vitest";
 import {
   areaBadgeAnchor,
+  handleBadgeAnchor,
   headingKnobAt,
   insideRing,
   nearestHandle,
@@ -134,6 +135,19 @@ describe("heading knobs", () => {
 
   it("answers nothing for a handle without yaw", () => {
     expect(headingKnobAt({ id: "point", x: 1, y: 2 }, 0.5)).toBeNull();
+  });
+});
+
+describe("handle badge anchors", () => {
+  it("displaces up-right in the world frame by the requested distance", () => {
+    const anchor = handleBadgeAnchor({ x: 1, y: 2 }, 0.5);
+    expect(anchor.x).toBeCloseTo(1 + 0.5 * Math.SQRT1_2, 10);
+    expect(anchor.y).toBeCloseTo(2 + 0.5 * Math.SQRT1_2, 10);
+    expect(Math.hypot(anchor.x - 1, anchor.y - 2)).toBeCloseTo(0.5, 10);
+  });
+
+  it("keeps a zero-offset badge on its handle", () => {
+    expect(handleBadgeAnchor({ x: -3, y: 4 }, 0)).toEqual({ x: -3, y: 4 });
   });
 });
 
