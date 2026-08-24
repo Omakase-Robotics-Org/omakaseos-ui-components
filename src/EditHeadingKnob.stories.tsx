@@ -4,10 +4,9 @@
  * Each state is composed inside a neutral SVG so the exact arm endpoint and
  * the knob's centered state scaling can be inspected by eye.
  */
-import type { ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { EditHeadingKnob } from "./EditHeadingKnob";
-import type { EditHeadingKnobProps } from "./EditHeadingKnob";
+import { renderDirectManipulationGlyphInStoryCanvas } from "./DirectManipulationStoryCanvas";
 
 const meta = {
   title: "DirectManipulation/EditHeadingKnob",
@@ -24,24 +23,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function Canvas({ children }: { children: ReactNode }) {
-  return (
-    <svg
-      width="180"
-      height="120"
-      viewBox="0 0 180 120"
-      style={{ background: "var(--ds-surface-inset)", border: "1px solid var(--ds-border)" }}
-    >
-      {children}
-    </svg>
-  );
-}
-
-const renderKnob = (args: EditHeadingKnobProps) => (
-  <Canvas>
-    <EditHeadingKnob {...args} />
-  </Canvas>
-);
+const renderKnob = renderDirectManipulationGlyphInStoryCanvas(EditHeadingKnob);
 
 export const Idle: Story = {
   args: { x: 40, y: 60, angle: -Math.PI / 5, armPx: 70, state: "idle" },
