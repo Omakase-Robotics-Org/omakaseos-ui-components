@@ -1,0 +1,26 @@
+/* ---------- EditRemoveBadge ----------
+ * Danger is a semantic register already owned by every host. The circle and
+ * mark use the same foreground so the cross cannot disappear on a tinted
+ * background in a desaturated palette.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.badge {
+  fill: var(--ds-tone-danger-bg);
+  stroke: var(--ds-tone-danger-fg);
+  stroke-width: 2;
+  transition:
+    r var(--ds-transition-fast),
+    fill var(--ds-transition-fast),
+    stroke var(--ds-transition-fast);
+}
+
+.mark {
+  fill: none;
+  stroke: var(--ds-tone-danger-fg);
+  stroke-width: 2;
+  stroke-linecap: round;
+}

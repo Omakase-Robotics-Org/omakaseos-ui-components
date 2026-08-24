@@ -1,0 +1,44 @@
+/* ---------- EditHeadingKnob ----------
+ * The arm is intentionally thin and the endpoint uses the EditHandle
+ * grabbable recipe. The state classes are local to the fragment's outer g.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.arm {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke var(--ds-transition-fast);
+}
+
+.knob {
+  fill: var(--ds-surface);
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+  transition:
+    r var(--ds-transition-fast),
+    fill var(--ds-transition-fast),
+    stroke var(--ds-transition-fast);
+}
+
+.hover .arm {
+  stroke: var(--ds-accent-hover);
+}
+
+.hover .knob {
+  fill: var(--ds-surface-hover);
+  stroke: var(--ds-accent-hover);
+}
+
+.dragging .arm {
+  stroke: var(--ds-accent);
+}
+
+.dragging .knob {
+  fill: var(--ds-accent);
+  stroke: var(--ds-accent);
+}

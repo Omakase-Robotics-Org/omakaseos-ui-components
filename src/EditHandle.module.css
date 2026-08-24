@@ -1,0 +1,53 @@
+/* ---------- EditHandle ----------
+ * The ring's size is SVG geometry supplied by the instance. Colors and
+ * motion stay on the design-system registers; the state classes only select
+ * the appropriate register pair. Radius scaling is done in TSX so cx/cy stay
+ * fixed and no SVG transform-origin interpretation can move the grip.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.ring {
+  fill: var(--ds-surface);
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+  transition:
+    r var(--ds-transition-fast),
+    fill var(--ds-transition-fast),
+    stroke var(--ds-transition-fast);
+}
+
+.tick {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition:
+    x1 var(--ds-transition-fast),
+    y1 var(--ds-transition-fast),
+    x2 var(--ds-transition-fast),
+    y2 var(--ds-transition-fast),
+    stroke var(--ds-transition-fast);
+}
+
+.hover .ring {
+  fill: var(--ds-surface-hover);
+  stroke: var(--ds-accent-hover);
+}
+
+.hover .tick {
+  stroke: var(--ds-accent-hover);
+}
+
+.selected .ring,
+.dragging .ring {
+  fill: var(--ds-accent);
+  stroke: var(--ds-accent);
+}
+
+.selected .tick,
+.dragging .tick {
+  stroke: var(--ds-accent);
+}

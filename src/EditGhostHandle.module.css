@@ -1,0 +1,19 @@
+/* ---------- EditGhostHandle ----------
+ * The dashed line is the distinction from an existing handle. Its wash is
+ * the existing soft accent register, not a new ghost-specific token.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.ring {
+  fill: var(--ds-accent-soft);
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  transition:
+    r var(--ds-transition-fast),
+    fill var(--ds-transition-fast),
+    stroke var(--ds-transition-fast);
+}

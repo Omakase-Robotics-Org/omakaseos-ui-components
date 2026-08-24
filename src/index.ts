@@ -89,6 +89,20 @@ export type {
   SegmentedMeterProps,
 } from "./SegmentedMeter";
 
+// v0.16: direct-manipulation visual vocabulary. These are SVG fragments;
+// the headless geometry / grammar surface is exported from ./direct-manipulation.
+export { EditHandle } from "./EditHandle";
+export type { EditHandleProps } from "./EditHandle";
+
+export { EditGhostHandle } from "./EditGhostHandle";
+export type { EditGhostHandleProps } from "./EditGhostHandle";
+
+export { EditHeadingKnob } from "./EditHeadingKnob";
+export type { EditHeadingKnobProps } from "./EditHeadingKnob";
+
+export { EditRemoveBadge } from "./EditRemoveBadge";
+export type { EditRemoveBadgeProps } from "./EditRemoveBadge";
+
 export { ButtonRow } from "./ButtonRow";
 
 // v0.10: promoted from robot-status-server-app — see the file header above.
