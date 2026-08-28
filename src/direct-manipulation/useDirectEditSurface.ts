@@ -276,6 +276,18 @@ function sameModifiers(a: EditModifiers, b: EditModifiers): boolean {
   return a.shift === b.shift && a.alt === b.alt;
 }
 
+function samePending(a: PendingPreview | null, b: PendingPreview | null): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+  return (
+    sameVertex(a.from, b.from) &&
+    sameVertex(a.to, b.to) &&
+    a.resolved.constrained === b.resolved.constrained &&
+    (a.resolved.snap?.kind ?? null) === (b.resolved.snap?.kind ?? null)
+  );
+}
+
 function travelled(press: ActivePress, clientX: number, clientY: number): number {
   return Math.hypot(clientX - press.clientX, clientY - press.clientY);
 }
@@ -297,6 +309,7 @@ export function useDirectEditSurface(
   const [dragFeedback, setDragFeedback] = useState<DragFeedback | null>(null);
   const [marquee, setMarquee] = useState<MarqueePreview | null>(null);
   const [pending, setPending] = useState<PendingPreview | null>(null);
+  const pendingRef = useRef<PendingPreview | null>(null);
   const [dragClass, setDragClass] = useState<GripClass | null>(null);
 
   const pressRef = useRef<ActivePress | null>(null);
@@ -305,6 +318,7 @@ export function useDirectEditSurface(
   const frameIdRef = useRef<number | null>(null);
   const lastClientRef = useRef<{ x: number; y: number } | null>(null);
   const [resident, setResident] = useState(false);
+  const residentRef = useRef(false);
 
   const setCurrentModality = useCallback((next: PointerModality) => {
     if (modalityRef.current === next) {
@@ -323,6 +337,20 @@ export function useDirectEditSurface(
     },
     [setCurrentModality],
   );
+
+  /**
+   * Residence gates the window key listeners. Guarded by a ref because this is
+   * touched on every pointer move: calling setState with an unchanged value
+   * still costs React a render pass, and that would show up as affordance
+   * churn on a stationary pointer.
+   */
+  const setResidentFlag = useCallback((next: boolean) => {
+    if (residentRef.current === next) {
+      return;
+    }
+    residentRef.current = next;
+    setResident(next);
+  }, []);
 
   const setCurrentModifiers = useCallback((next: EditModifiers) => {
     if (sameModifiers(modifiersRef.current, next)) {
@@ -345,12 +373,30 @@ export function useDirectEditSurface(
     setDrag(next);
   }, []);
 
+  /**
+   * Every hover frame runs through these setters, so each one is guarded: a
+   * setState with an unchanged value still costs React a render pass, and on a
+   * stationary pointer that reads as affordance churn.
+   */
+  const dragStateDirtyRef = useRef(false);
   const clearDragState = useCallback(() => {
+    if (!dragStateDirtyRef.current) {
+      return;
+    }
+    dragStateDirtyRef.current = false;
     setDragPreview(null);
     setDragFeedback(null);
     setMarquee(null);
     setDragClass(null);
   }, [setDragPreview]);
+
+  const updatePendingPreview = useCallback((next: PendingPreview | null) => {
+    if (samePending(pendingRef.current, next)) {
+      return;
+    }
+    pendingRef.current = next;
+    setPending(next);
+  }, []);
 
   const probeAt = useCallback((at: Vertex) => {
     const current = optionsRef.current;
@@ -382,19 +428,19 @@ export function useDirectEditSurface(
       const current = optionsRef.current;
       const run = current.drawing;
       if (current.mode === "direct" || at === null || run === null || run.length === 0) {
-        setPending(null);
+        updatePendingPreview(null);
         return;
       }
       const from = run[run.length - 1];
       if (from === undefined) {
-        setPending(null);
+        updatePendingPreview(null);
         return;
       }
       const probe = probeAt(at);
       const resolved = resolvePosition(at, { origin: from, probe, exclude: [] });
-      setPending({ from, to: resolved.at, resolved });
+      updatePendingPreview({ from, to: resolved.at, resolved });
     },
-    [probeAt],
+    [probeAt, updatePendingPreview],
   );
 
   const refreshHover = useCallback(() => {
@@ -423,6 +469,7 @@ export function useDirectEditSurface(
       }
       if (grip.kind === "insert" || grip.kind === "insert-vertex") {
         const resolved = resolveInsertPosition(grip, at, probe);
+        dragStateDirtyRef.current = true;
         setDragPreview(
           grip.kind === "insert"
             ? { kind: "insert", pathId: grip.pathId, afterIndex: grip.afterIndex, at: resolved.at }
@@ -439,6 +486,7 @@ export function useDirectEditSurface(
       }
       if (grip.kind === "rotate") {
         const yaw = resolveRotation(grip, at, probe);
+        dragStateDirtyRef.current = true;
         setDragPreview({ kind: "rotate", id: grip.id, yaw });
         setDragFeedback({
           grip,
@@ -448,6 +496,7 @@ export function useDirectEditSurface(
         return;
       }
       const outcome = marqueeTargets(probe, grip.from, at);
+      dragStateDirtyRef.current = true;
       setDragPreview({ kind: "marquee", from: grip.from, to: at });
       setMarquee({
         from: grip.from,
@@ -497,6 +546,7 @@ export function useDirectEditSurface(
 
       if (!press.live) {
         press.live = true;
+        dragStateDirtyRef.current = true;
         setDragClass(gripClassOf(press.grip));
       }
 
@@ -547,7 +597,7 @@ export function useDirectEditSurface(
       observePointerType(event.pointerType);
       setCurrentModifiers({ shift: event.shiftKey, alt: event.altKey });
       lastClientRef.current = { x: event.clientX, y: event.clientY };
-      setResident(true);
+      setResidentFlag(true);
       if (pressRef.current !== null) {
         return;
       }
@@ -580,7 +630,7 @@ export function useDirectEditSurface(
         press.captured = press.captureTarget.setPointerCapture !== undefined;
       }
     },
-    [clearDragState, observePointerType, probeAt, setCurrentModifiers],
+    [clearDragState, observePointerType, probeAt, setCurrentModifiers, setResidentFlag],
   );
 
   const handlePointerMove: React.PointerEventHandler = useCallback(
@@ -588,7 +638,7 @@ export function useDirectEditSurface(
       observePointerType(event.pointerType);
       setCurrentModifiers({ shift: event.shiftKey, alt: event.altKey });
       lastClientRef.current = { x: event.clientX, y: event.clientY };
-      setResident(true);
+      setResidentFlag(true);
       pendingMoveRef.current = {
         pointerId: event.pointerId,
         clientX: event.clientX,
@@ -619,7 +669,7 @@ export function useDirectEditSurface(
         processFrame();
       }
     },
-    [observePointerType, processPointerMove, setCurrentModifiers],
+    [observePointerType, processPointerMove, setCurrentModifiers, setResidentFlag],
   );
 
   const handlePointerUp: React.PointerEventHandler = useCallback(
@@ -681,9 +731,9 @@ export function useDirectEditSurface(
       observePointerType(event.pointerType);
       setCurrentModifiers({ shift: event.shiftKey, alt: event.altKey });
       lastClientRef.current = { x: event.clientX, y: event.clientY };
-      setResident(true);
+      setResidentFlag(true);
     },
-    [observePointerType, setCurrentModifiers],
+    [observePointerType, setCurrentModifiers, setResidentFlag],
   );
 
   const handlePointerLeave: React.PointerEventHandler = useCallback(
@@ -691,21 +741,21 @@ export function useDirectEditSurface(
       observePointerType(event.pointerType);
       const press = pressRef.current;
       if (press === null || press.pointerId !== event.pointerId) {
-        setResident(false);
+        setResidentFlag(false);
         lastClientRef.current = null;
         updateAffordance({ kind: "none" });
-        setPending(null);
+        updatePendingPreview(null);
         return;
       }
       const target = captureTargetFor(event.currentTarget);
       const captured = target.hasPointerCapture?.(event.pointerId) ?? press.captured;
       if (!captured) {
         discardPress(press, event.currentTarget);
-        setResident(false);
+        setResidentFlag(false);
         lastClientRef.current = null;
       }
     },
-    [discardPress, observePointerType, updateAffordance],
+    [discardPress, observePointerType, setResidentFlag, updateAffordance, updatePendingPreview],
   );
 
   const handleDoubleClick: React.MouseEventHandler = useCallback(
