@@ -19,6 +19,7 @@
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  Avatar,
   Button,
   ButtonRow,
   Card,
@@ -57,6 +58,7 @@ import {
   TypingIndicator,
 } from "../src/index";
 import type {
+  AvatarSize,
   BadgeTone,
   GlyphTone,
   MeterSegment,
@@ -879,6 +881,66 @@ function ShapeStatusPanel() {
   );
 }
 
+/* ---------------- Generic Avatar identity tile ----------------
+ * The fallback glyph is intentionally generic here. A consuming app that
+ * knows whether an identity is a person, agent, or robot supplies that
+ * domain glyph through `fallback`; the shared tile does not carry `kind`. */
+
+const AVATAR_IMAGE_URL =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+const AVATAR_SIZES: readonly AvatarSize[] = ["xs", "sm", "md", "lg"];
+
+function AvatarDemo() {
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      <div
+        data-testid="avatar-branches"
+        style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}
+      >
+        <span data-testid="avatar-image">
+          <Avatar url={AVATAR_IMAGE_URL} name="Operator image" size="md" />
+        </span>
+        <span data-testid="avatar-default">
+          <Avatar url={null} name="Default fallback" size="md" />
+        </span>
+        <span data-testid="avatar-empty">
+          <Avatar url="" name="Empty URL fallback" size="md" />
+        </span>
+        <span data-testid="avatar-custom">
+          <Avatar
+            url={null}
+            name="Custom fallback"
+            size="md"
+            fallback={<span style={{ fontWeight: 700 }}>OP</span>}
+          />
+        </span>
+      </div>
+      <div data-testid="avatar-sizes" style={{ display: "flex", gap: 16, alignItems: "end" }}>
+        {AVATAR_SIZES.map((size) => (
+          <span
+            key={size}
+            data-testid={`avatar-size-${size}`}
+            style={{ display: "grid", gap: 4, justifyItems: "center" }}
+          >
+            <Avatar url={null} name={`Avatar ${size}`} size={size} />
+            <span style={{ fontSize: 11, color: "var(--ds-text-muted)" }}>{size}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AvatarPanel() {
+  return (
+    <Card>
+      <CardHeader title="Avatar" hint="generic identity tile + caller-owned fallback" />
+      <AvatarDemo />
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -891,6 +953,7 @@ function App() {
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
         <ShapeStatusPanel />
+        <AvatarPanel />
         <PageSectionsPanel host="status-webui" />
         <DirectManipulationDemo />
       </section>
@@ -903,6 +966,7 @@ function App() {
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
         <ShapeStatusPanel />
+        <AvatarPanel />
         <PageSectionsPanel host="omks-web" />
         <DirectManipulationDemo />
       </section>
@@ -921,6 +985,7 @@ function App() {
         <RobotConsolePrimitivesPanel />
         <FeedbackPrimitivesPanel />
         <ShapeStatusPanel />
+        <AvatarPanel />
         <PageSectionsPanel host="robot-inspection-web" />
         <DirectManipulationDemo />
       </section>

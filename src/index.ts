@@ -78,6 +78,9 @@ export type { PanelProps } from "./Panel";
 export { StatusGlyph } from "./StatusGlyph";
 export type { GlyphTone, GlyphSize, StatusGlyphProps } from "./StatusGlyph";
 
+export { Avatar } from "./Avatar";
+export type { AvatarSize } from "./Avatar";
+
 export { RankChip } from "./RankChip";
 export type { RankLevel, RankChipSize, RankChipProps } from "./RankChip";
 

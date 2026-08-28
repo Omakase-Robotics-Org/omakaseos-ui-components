@@ -82,6 +82,13 @@
   --ds-space-xl: 16px;
   --ds-space-2xl: 24px;
 
+  /* Avatar tile diameters; hosts may re-theme density without touching
+     component CSS. */
+  --ds-avatar-size-xs: 24px;
+  --ds-avatar-size-sm: 32px;
+  --ds-avatar-size-md: 56px;
+  --ds-avatar-size-lg: 96px;
+
   /* Control sizing — every form control (Input, Select, Textarea single-line,
    * Button, Switch) picks one of these for height; padding follows. */
   --ds-control-height-sm: 24px;
