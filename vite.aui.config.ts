@@ -25,6 +25,26 @@ import dts from "vite-plugin-dts";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
+// This config only ever produces the SHIPPED `dist/aui` artifact — there is
+// no dev-server use of it (the `dev` script points at plain `vite.config.ts`
+// instead). Vite's own `resolveConfig` decides `isProduction` (and, through
+// it, whether @vitejs/plugin-react emits `jsxDEV` calls) from
+// `process.env.NODE_ENV === "production"` — NOT from `--mode` or the
+// `build`/`serve` command (see `vite/dist/node/chunks/node.js`, the
+// `isProduction` assignment). That reads whatever NODE_ENV the *calling*
+// process happens to have, so `bun run build:aui` was non-deterministic:
+// invoked from a plain shell it produced the committed production bundle,
+// but invoked from `spec/aui-preflight-scope.spec.ts`'s `execSync("bun run
+// build:aui")` inside vitest (which sets `NODE_ENV=test` on its own
+// process, inherited by execSync's child) it silently produced a dev build
+// (~88.9 kB, jsxDEV) instead of the production one (~60.7 kB), dirtying the
+// committed `dist/aui/index.js` on every `bun run test`
+// (`reports/aui-dist-dev-build-leak/`). Force it here, at the config
+// itself, so every caller of this config — the `build:aui` script, a plain
+// `vite build --config vite.aui.config.ts`, or this spec's execSync — gets
+// the same deterministic production artifact regardless of ambient env.
+process.env.NODE_ENV = "production";
+
 const here = dirname(fileURLToPath(import.meta.url));
 
 // Anything that is or could become a peer dependency must NOT be bundled
