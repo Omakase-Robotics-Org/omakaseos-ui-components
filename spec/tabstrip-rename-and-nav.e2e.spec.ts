@@ -24,6 +24,12 @@ import { test, expect, type Locator, type Page } from "playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  // Under the land gate the whole suite shares the machine with other
+  // gates; anchor on a hydrated tab before interacting so the first
+  // action does not race the demo bundle's first paint.
+  await expect(
+    page.locator(".host--omks-web [data-testid=\"tabstrip-demo\"]").getByRole("tab").first(),
+  ).toBeVisible({ timeout: 30_000 });
 });
 
 /** The demo's single TabStrip instance, scoped to the light-theme host. */
