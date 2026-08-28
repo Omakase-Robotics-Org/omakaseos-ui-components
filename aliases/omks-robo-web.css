@@ -85,6 +85,11 @@
      component that reads --ds-shadow-overlay (a toast, a popup) then floats the
      way the dashboard's own overlays do. */
   --ds-shadow-overlay: var(--shadow-overlay);
+  /* v0.18: the dashboard's own overlay stacking layer — Popover.module.css /
+     Menu.module.css (the refs this library absorbs) already read
+     var(--z-overlay) directly, so this is a straight name-preserving
+     mapping, not a value match. */
+  --ds-z-overlay: var(--z-overlay);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --ds-fact-label-size: var(--text-fact-label);
   --ds-fact-value-size: var(--text-fact-value);

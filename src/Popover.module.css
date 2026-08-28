@@ -1,0 +1,30 @@
+/* Popover — floating free-content panel. Portaled to document.body and
+   positioned from the anchor rect (fixed), so no call-site ancestry
+   can clip or restyle it. Same shell treatment as Menu's panel; the
+   content inside is the consumer's.
+
+   Ref: .codex/ref/Popover.module.css. Token translation is by VALUE, not
+   name, for the two spacing steps used here: the dashboard's own scale is
+   one rung above this library's (dashboard 2xs=4/xs=6px vs this library's
+   xs=4/sm=6px — see src/tokens.css's Table section for the precedent).
+   So the ref's --space-xs (6px) -> --ds-space-sm (6px), and its
+   --space-2xs (4px) -> --ds-space-xs (4px). Everything else (--z-overlay,
+   --color-surface, --color-border, --radius-card, --shadow-overlay) has a
+   direct --ds-* counterpart at the same purpose. */
+
+.panel {
+  position: fixed;
+  z-index: var(--ds-z-overlay);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-overlay);
+  padding: var(--ds-space-sm);
+  min-width: 220px;
+  /* Wide enough for a filter-condition row; capped to the viewport
+     (the position is clamped too — see anchoredPanelPosition). */
+  max-width: min(92vw, 30rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-xs);
+}

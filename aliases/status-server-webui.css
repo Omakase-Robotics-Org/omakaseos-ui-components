@@ -70,6 +70,14 @@
      has. Mapping it keeps a component that reads --ds-shadow-overlay looking the
      way this host's own toast does. */
   --ds-shadow-overlay: var(--shadow-toast);
+  /* v0.18: rssa `src/styles/variables.css` owns no stacking-layer scale (no
+     --z-* var to trace this to, the same gap this file already has for the
+     spacing scale — see the Table note below). A bare literal here is a
+     frozen exception (spec/alias-purity.spec.ts), consistent with this
+     file's existing stance of literal tone washes / geometry the host
+     palette does not expose as variables. Matches the library default
+     (src/tokens.css) by value rather than inventing a different number. */
+  --ds-z-overlay: 40;
   --ds-font-mono: var(--font-mono);
 
   /* Chat bubbles (v0.4) — operator-facing, dark theme. The "running" green

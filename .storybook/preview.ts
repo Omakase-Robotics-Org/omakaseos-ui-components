@@ -75,6 +75,7 @@ const preview: Preview = {
           "Status",
           "Form",
           "Navigation",
+          "Overlay",
           "Table",
           "Chat-log",
           "Live-stage",

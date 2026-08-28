@@ -44,6 +44,17 @@
  *            colour-vision deficiency on the two existing hosts. See
  *            `omksos_web/reports/ui-components-inspect-theme/README.md`.
  *
+ * v0.18:     Popover, Menu — the two anchored floating-panel primitives the
+ *            dashboard hand-rolled per call site (`.codex/ref/Popover.tsx` /
+ *            `.codex/ref/Menu.tsx`, verbatim-identical `panelPosition`
+ *            functions). Both now consume `src/floating/anchoredPanelPosition`
+ *            — an INTERNAL, four-sided placement core (not exported here;
+ *            Tooltip will be the next consumer) that reproduces the refs'
+ *            math byte-for-byte for their fixed call shape. Portal to
+ *            document.body and reset `PanelScope` around their content
+ *            (`src/PanelScope.tsx`) — an overlay opened from inside a Panel
+ *            is its own top-level surface, not the panel's content.
+ *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
  */
@@ -308,5 +319,14 @@ export type {
   TableCellProps,
   TableNoticeProps,
 } from "./Table";
+
+// v0.18: anchored floating panels — Popover (controlled, free-content,
+// role="dialog") and Menu (uncontrolled, role="menu", roving focus). Both
+// consume the internal `src/floating/anchoredPanelPosition` core; see each
+// file's header for why they are not merged into one component.
+export { Popover } from "./Popover";
+
+export { Menu } from "./Menu";
+export type { MenuItem, MenuTriggerProps } from "./Menu";
 
 import "./tokens.css";

@@ -44,4 +44,4 @@ if ! curl -fs -o /dev/null "$BASE_URL/"; then
 fi
 
 echo "→ running playwright e2e against $BASE_URL"
-LIB_E2E_BASE_URL="$BASE_URL" bun run playwright test --config playwright.config.ts
+LIB_E2E_BASE_URL="$BASE_URL" bun run playwright test --config playwright.config.ts "$@"

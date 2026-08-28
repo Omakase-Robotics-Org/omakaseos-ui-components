@@ -16,7 +16,7 @@
  *     to verify min-width: 0 + ellipsis truncate the LABEL, not push the
  *     control out of view
  */
-import { StrictMode, useState } from "react";
+import { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Avatar,
@@ -33,10 +33,12 @@ import {
   Heading,
   Input,
   LiveCaption,
+  Menu,
   MessageBubble,
   Pager,
   Panel,
   ParticipantTile,
+  Popover,
   RankChip,
   RealtimeEventLog,
   RemovableChip,
@@ -71,6 +73,8 @@ import type {
   AvatarSize,
   BadgeTone,
   GlyphTone,
+  MenuItem,
+  MenuTriggerProps,
   MeterSegment,
   PagerLabels,
   RankLevel,
@@ -1229,6 +1233,191 @@ function TableDemoPanel({ host }: { host: string }) {
   );
 }
 
+/* ---------------- v0.18: anchored floating panels (Popover / Menu) ----------------
+ *
+ * Positioning (flip-above, cross-axis clamp) and the portal's overflow
+ * escape need a real layout engine — jsdom cannot show either
+ * (`src/floating/anchored-position.spec.ts` pins the math directly
+ * instead). This demo mounts `FlipAboveDemo` / `RightClampDemo`'s anchors
+ * at fixed VIEWPORT coordinates (the e2e harness's Playwright viewport is
+ * pinned to 1280x800 — playwright.config.ts) so
+ * spec/overlay-popover-menu.e2e.spec.ts can force a flip and a clamp
+ * without depending on scroll position. Anchors are offset per host
+ * (`index`) only so the three hosts' always-rendered anchor BUTTONS do
+ * not sit at the exact same screen coordinates — each host's Popover is
+ * independent open state, so only one host's PANEL is ever open in any
+ * given check. */
+
+const OVERLAY_HOSTS: ReadonlyArray<{ host: string; index: number }> = [
+  { host: "status-webui", index: 0 },
+  { host: "omks-web", index: 1 },
+  { host: "robot-inspection-web", index: 2 },
+];
+
+/** Anchor pinned near the viewport's bottom edge — the panel cannot fit
+ * below it and `anchoredPanelPosition` flips the resolved side to "top". */
+function FlipAboveDemo({ host, index }: { host: string; index: number }) {
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      data-testid={`overlay-flip-${host}`}
+      style={{ position: "fixed", bottom: 16, left: 24 + index * 260, zIndex: 1 }}
+    >
+      <button type="button" ref={anchorRef} onClick={() => setOpen((value) => !value)}>
+        Near bottom edge
+      </button>
+      <Popover open={open} anchorRef={anchorRef} onRequestClose={() => setOpen(false)} ariaLabel="Flip-above demo">
+        <div style={{ width: 200, height: 160 }} data-testid="overlay-flip-content">
+          Tall enough that it cannot fit below an anchor this close to the
+          bottom edge.
+        </div>
+      </Popover>
+    </div>
+  );
+}
+
+/** Anchor pinned near the viewport's right edge — `align: "start"` would
+ * push the panel's left edge past the viewport, so the cross-axis clamp
+ * (into `[margin, viewport - panelWidth - margin]`) has to engage. */
+function RightClampDemo({ host, index }: { host: string; index: number }) {
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      data-testid={`overlay-clamp-${host}`}
+      style={{ position: "fixed", top: 24 + index * 120, right: 16, zIndex: 1 }}
+    >
+      <button type="button" ref={anchorRef} onClick={() => setOpen((value) => !value)}>
+        Near right edge
+      </button>
+      <Popover open={open} anchorRef={anchorRef} onRequestClose={() => setOpen(false)} ariaLabel="Right-clamp demo">
+        <div style={{ width: 260 }} data-testid="overlay-clamp-content">
+          Wide enough that align:start would place it partly off-screen
+          without the clamp.
+        </div>
+      </Popover>
+    </div>
+  );
+}
+
+/** The portal claim: an `overflow: hidden` ancestor must not clip the
+ * panel, because Popover portals to document.body rather than rendering
+ * inside whatever ancestor the anchor happens to sit in. */
+function OverflowEscapeDemo({ host }: { host: string }) {
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      data-testid={`overlay-overflow-clip-${host}`}
+      style={{ overflow: "hidden", height: 40, border: "1px dashed var(--ds-border)", padding: 4 }}
+    >
+      <button type="button" ref={anchorRef} onClick={() => setOpen((value) => !value)}>
+        Inside an overflow:hidden ancestor
+      </button>
+      <Popover open={open} anchorRef={anchorRef} onRequestClose={() => setOpen(false)} ariaLabel="Overflow-escape demo">
+        <div data-testid="overlay-overflow-content">Not clipped — portaled to document.body.</div>
+      </Popover>
+    </div>
+  );
+}
+
+const MENU_ITEMS: readonly MenuItem[] = [
+  { key: "rename", label: "Rename", onSelect: () => {} },
+  { key: "duplicate", label: "Duplicate", onSelect: () => {} },
+  { key: "delete", label: "Delete", onSelect: () => {}, danger: true },
+];
+
+/** Menu's trigger render prop, closed over `host` so each of the three
+ * copies exposes a stable, host-scoped testid. */
+function menuTrigger(host: string) {
+  return function Trigger(props: MenuTriggerProps) {
+    return (
+      <button
+        type="button"
+        data-testid={`overlay-menu-trigger-${host}`}
+        ref={props.ref}
+        onClick={props.onClick}
+        aria-haspopup={props["aria-haspopup"]}
+        aria-expanded={props["aria-expanded"]}
+      >
+        Actions
+      </button>
+    );
+  };
+}
+
+function MenuDemo({ host }: { host: string }) {
+  return <Menu items={MENU_ITEMS} trigger={menuTrigger(host)} ariaLabel="Robot actions" />;
+}
+
+/** The `dialog[open]` carve-out: a native dialog stacked over an open
+ * Popover. A click (or Escape) inside it must not be treated as "outside"
+ * the popover — `.codex/ref/Popover.tsx`'s own header argues why. */
+function DialogAbovePopoverDemo({ host }: { host: string }) {
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  return (
+    <div data-testid={`overlay-dialog-above-${host}`}>
+      <button type="button" ref={anchorRef} onClick={() => setOpen((value) => !value)}>
+        Open editor
+      </button>
+      <Popover
+        open={open}
+        anchorRef={anchorRef}
+        onRequestClose={() => setOpen(false)}
+        ariaLabel="Editor with a nested dialog"
+      >
+        <button
+          type="button"
+          data-testid="overlay-dialog-open-button"
+          onClick={() => setDialogOpen(true)}
+        >
+          Open library picker
+        </button>
+      </Popover>
+      {dialogOpen ? (
+        <dialog open data-testid="overlay-stacked-dialog">
+          <button
+            type="button"
+            data-testid="overlay-stacked-dialog-pick"
+            onClick={() => setDialogOpen(false)}
+          >
+            Pick an image
+          </button>
+        </dialog>
+      ) : null}
+    </div>
+  );
+}
+
+function OverlayDemoPanel({ host, index }: { host: string; index: number }) {
+  return (
+    <Card>
+      <CardHeader title="Overlay: Popover / Menu (v0.18)" hint="anchored floating panels" />
+      <div style={{ display: "grid", gap: 16 }}>
+        <div>
+          <Heading level={3}>Menu — roving focus</Heading>
+          <MenuDemo host={host} />
+        </div>
+        <div>
+          <Heading level={3}>Popover — inside an overflow:hidden ancestor</Heading>
+          <OverflowEscapeDemo host={host} />
+        </div>
+        <div>
+          <Heading level={3}>Popover — the dialog[open] carve-out</Heading>
+          <DialogAbovePopoverDemo host={host} />
+        </div>
+      </div>
+      {/* Fixed-viewport anchors: rendered as part of this panel but
+          positioned relative to the viewport, not this card. */}
+      <FlipAboveDemo host={host} index={index} />
+      <RightClampDemo host={host} index={index} />
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -1245,6 +1434,7 @@ function App() {
         <PageSectionsPanel host="status-webui" />
         <TabStripDemoPanel host="status-webui" />
         <TableDemoPanel host="status-webui" />
+        <OverlayDemoPanel host="status-webui" index={0} />
         <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
@@ -1260,6 +1450,7 @@ function App() {
         <PageSectionsPanel host="omks-web" />
         <TabStripDemoPanel host="omks-web" />
         <TableDemoPanel host="omks-web" />
+        <OverlayDemoPanel host="omks-web" index={1} />
         <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
@@ -1281,6 +1472,7 @@ function App() {
         <PageSectionsPanel host="robot-inspection-web" />
         <TabStripDemoPanel host="robot-inspection-web" />
         <TableDemoPanel host="robot-inspection-web" />
+        <OverlayDemoPanel host="robot-inspection-web" index={2} />
         <DirectManipulationDemo />
       </section>
     </div>

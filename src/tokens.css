@@ -120,6 +120,16 @@
   --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
   --ds-shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
 
+  /* Stacking — v0.18's anchored floating panels (Popover, Menu; Tooltip to
+     follow) portal to document.body and need to sit above ordinary page
+     content and other library surfaces (Table's sticky header at 5,
+     AsyncCombobox's own dropdown at 50 — a literal in that component's own
+     module, not this token). 40 is a library default only: a host that
+     owns a real overlay layer var (the dashboard's own --z-overlay) maps
+     this token to it in its alias file instead of relying on the
+     fallback. */
+  --ds-z-overlay: 40;
+
   /* Typography — purpose-bound, not t-shirt. */
   --ds-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;

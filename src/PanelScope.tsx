@@ -48,6 +48,28 @@
  *
  * Both directions are pinned in `PanelScope.spec.tsx`.
  *
+ * ## `PanelScopeReset` — the third direction (v0.18)
+ *
+ * Composition and portal placement can also come apart in a THIRD way that
+ * the two bullets above do not cover: a floating overlay (`Popover`, `Menu`)
+ * whose trigger happens to render inside a `Panel`'s body. Composition says
+ * "this trigger is part of the panel's content" (true — arrow keys / focus
+ * order/ layout all treat it that way), but the overlay's PANEL is not: it
+ * portals to `document.body` and renders content the operator experiences as
+ * a fresh top-level surface (an editing popover, a menu), not a second box
+ * nested inside whatever panel happened to own the trigger. Left alone,
+ * `useInsidePanel()` would still read `true` inside it (context passes
+ * through the portal, same as the "rendered inside, portalled out" case
+ * above) and a `Card`-shaped child the overlay's own content renders would
+ * throw for a reason that has nothing to do with what the operator sees.
+ *
+ * `PanelScopeReset` is how an overlay opts back OUT: it re-provides the
+ * context as `false` around its portaled children, regardless of the
+ * ambient value where the overlay itself was rendered. Every anchored
+ * overlay in this library wraps its portaled content in it (see
+ * `Popover.tsx` / `Menu.tsx`) — the same requirement a library `Dialog`
+ * would have for the same reason.
+ *
  * `Panel` also keeps its `data-panel-body` marker on the same element. That
  * attribute is no longer a style hook: it is what the browser-level container
  * scans in the consuming apps address (omksos_web's container-nesting guard) and
@@ -74,6 +96,16 @@ const PanelScopeContext = createContext(false);
 /** Opens the scope around a panel's content. Used by `Panel`; not public API. */
 export function PanelScope({ children }: { children: ReactNode }) {
   return <PanelScopeContext.Provider value={true}>{children}</PanelScopeContext.Provider>;
+}
+
+/**
+ * Closes the scope around a portaled overlay's content, regardless of the
+ * ambient value where the overlay itself was rendered — see the file
+ * header's "`PanelScopeReset` — the third direction" section. Used by
+ * `Popover` and `Menu`; not public API.
+ */
+export function PanelScopeReset({ children }: { children: ReactNode }) {
+  return <PanelScopeContext.Provider value={false}>{children}</PanelScopeContext.Provider>;
 }
 
 /**

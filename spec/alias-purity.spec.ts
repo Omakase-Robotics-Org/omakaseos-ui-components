@@ -61,6 +61,11 @@ const FROZEN_LITERALS: Record<string, string[]> = {
     "--ds-tone-neutral-bg",
     "--ds-tone-success-bg",
     "--ds-tone-warning-bg",
+    // v0.18: rssa `src/styles/variables.css` owns no stacking-layer scale —
+    // no --z-* var to trace an overlay z-index to, so this matches the
+    // library default (src/tokens.css) by value. See
+    // aliases/status-server-webui.css's own comment on this declaration.
+    "--ds-z-overlay",
   ],
   // robot-inspection-web (v0.15) was authored under this guard, so it has no
   // literals to freeze: the host palette (`--ri-*`) owns every value,

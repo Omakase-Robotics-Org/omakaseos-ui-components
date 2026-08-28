@@ -39,6 +39,18 @@
  * (`theme/global.css`) draws a 1px ring, not the library's 2px default — the
  * omission was an operator-flagged gap ("欠損は欠陥"), not a design decision
  * the host had made. See `--ri-focus-ring-width` below.
+ *
+ * `--ds-z-overlay` (v0.18, the anchored-panel stacking layer Popover/Menu
+ * introduce) joins this list rather than becoming a frozen literal: this
+ * file was authored under `spec/alias-purity.spec.ts`'s guard specifically
+ * to have NO bare-literal exceptions (its frozen list is pinned at empty —
+ * see that spec's own comment), and the guard does not special-case a
+ * z-index as "not a colour decision" — any value written here instead of
+ * traced to a `--ri-*` var is the same kind of alias-owned decision the
+ * guard exists to catch, whatever its unit. The host palette owns no
+ * stacking-layer scale at all, so there is no `--ri-*` var to trace this
+ * to; the library default in `src/tokens.css` (40) applies here exactly as
+ * the other non-mapped categories above do.
  */
 :root {
   /* Surfaces & foreground.

@@ -1,0 +1,62 @@
+/* Menu — floating role="menu" panel. Portaled to document.body and
+   positioned from the trigger rect (fixed), so no call-site ancestry
+   can clip or restyle it.
+
+   Ref: .codex/ref/Menu.module.css. Token translation by VALUE for the
+   spacing steps (see Popover.module.css's header for the scale this comes
+   from): the ref's --space-2xs (4px) -> --ds-space-xs (4px); its
+   --space-xs (6px) -> --ds-space-sm (6px); its --space-sm (8px) ->
+   --ds-space-md (8px). --radius-control / --color-hover-wash /
+   --color-danger(-soft) / --color-text-subtle / --text-control already
+   have direct --ds-* counterparts at the same purpose (established by the
+   other components' aliases), so those translate by NAME. */
+
+.panel {
+  position: fixed;
+  z-index: var(--ds-z-overlay);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-overlay);
+  padding: var(--ds-space-xs);
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-sm);
+  width: 100%;
+  border: none;
+  background: none;
+  padding: var(--ds-space-sm) var(--ds-space-md);
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--ds-radius-control);
+  font: inherit;
+  font-size: var(--ds-font-size-control);
+  text-align: left;
+}
+
+.item:hover,
+.item:focus-visible {
+  background: var(--ds-hover-wash);
+  outline: none;
+}
+
+.item[data-danger] {
+  color: var(--ds-tone-danger-fg);
+}
+
+.item[data-danger]:hover,
+.item[data-danger]:focus-visible {
+  background: var(--ds-tone-danger-bg);
+}
+
+.item[disabled] {
+  color: var(--ds-text-subtle);
+  cursor: default;
+  background: none;
+}
