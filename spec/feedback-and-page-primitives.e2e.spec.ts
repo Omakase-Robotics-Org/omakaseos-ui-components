@@ -1,6 +1,7 @@
 /**
- * @file E2E: prove the v0.11 primitives (Spinner, Toast, Panel, FactGrid)
- *           and StatusBadge's opt-in live region behave in a real browser.
+ * @file E2E: prove the v0.11 primitives (Spinner, Toast, Panel, FactGrid),
+ *           FactColumns, and StatusBadge's opt-in live region behave in a
+ *           real browser.
  *
  * vitest's jsdom cannot show:
  *   - a spinner's rendered diameter (the size vocabulary is CSS-only) nor
@@ -14,6 +15,7 @@
  *     still in the DOM; `pointer-events` is a computed style)
  *   - that `fullWidth` actually spans a grid, or that FactGrid lays two
  *     tiles per row: grid tracks do not exist in jsdom
+ *   - that FactColumns reflows from multiple tracks to one at a narrow width
  *
  * The runner is expected to start the demo vite dev server at
  * http://localhost:5198 (LIB_E2E_BASE_URL) before invoking; the harness
@@ -202,6 +204,34 @@ test("FactGrid: a figure is display-sized, a text value steps down", async ({ pa
 
   // Both are monospaced: columns of readings line up.
   expect(await computed(figure, "font-family")).toBe(await computed(text, "font-family"));
+});
+
+test("FactColumns: auto-fit uses multiple tracks wide and one track when narrow", async ({
+  page,
+}) => {
+  const frame = page.locator('.host--omks-web [data-testid="fact-columns-frame"]');
+  const facts = frame.locator("dl > div");
+  await expect(facts).toHaveCount(4);
+
+  const wideFirst = await facts.nth(0).boundingBox();
+  const wideSecond = await facts.nth(1).boundingBox();
+  if (!wideFirst || !wideSecond) {
+    throw new Error("wide FactColumns facts not measurable");
+  }
+  expect(wideSecond.y).toBeCloseTo(wideFirst.y, 0);
+  expect(wideSecond.x).toBeGreaterThan(wideFirst.x);
+
+  await frame.evaluate((element) => {
+    (element as HTMLElement).style.width = "220px";
+  });
+
+  const narrowFirst = await facts.nth(0).boundingBox();
+  const narrowSecond = await facts.nth(1).boundingBox();
+  if (!narrowFirst || !narrowSecond) {
+    throw new Error("narrow FactColumns facts not measurable");
+  }
+  expect(narrowSecond.y).toBeGreaterThan(narrowFirst.y);
+  expect(narrowSecond.x).toBeCloseTo(narrowFirst.x, 0);
 });
 
 test("StatusBadge: only the badge that reports a changing value is a live region", async ({

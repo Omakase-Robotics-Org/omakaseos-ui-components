@@ -128,6 +128,10 @@
   --ds-font-size-heading-1: 24px;
   --ds-line-height-control: 1.4;
   --ds-line-height-text: 1.5;
+  /* Page-scale fact typography (FactColumns) reads these levels. FactGrid's
+     inset-tile figures are a different reading and deliberately do not. */
+  --ds-fact-label-size: 11px;
+  --ds-fact-value-size: 13px;
 
   /* Disabled opacity — applied as `opacity` on the host element so the
    * control retains its layout but reads as inert. */

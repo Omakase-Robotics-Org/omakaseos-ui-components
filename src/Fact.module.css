@@ -28,6 +28,44 @@
   font-weight: 600;
 }
 
+/* The value tone is an ink register, not a decoration on the fact frame. */
+.valueMuted {
+  color: var(--ds-text-muted);
+  font-weight: 400;
+}
+
+/* Missing deliberately stays upright at normal value weight: italic-grey made
+   "never connected" read as a placeholder instead of a hard signal. */
+.valueMissing {
+  color: var(--ds-text-muted);
+  font-weight: 500;
+}
+
+/* When a hint is present, keep it beside the value and let the pair wrap as a
+   unit. This is the PageFactList positioning contract. */
+.valueWithHint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-2xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.valueText {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2xs);
+}
+
 .fact[data-direction="column"] > .value {
   font-size: 13px;
   font-family: var(--ds-font-mono);
@@ -37,6 +75,57 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* ---------- FactColumns ----------
+ * Page-scale facts are the third reading of a fact set: a surfaceless,
+ * auto-fit grid with native label/value semantics. The fixed two-column inset
+ * tile belongs to FactGrid and is deliberately not shared here. */
+
+.columns {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--ds-space-md);
+}
+
+.columns > .fact {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: var(--ds-space-2xs);
+  min-width: 0;
+}
+
+.columns > .fact > .label {
+  font-size: var(--ds-fact-label-size);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.columns > .fact > .value {
+  margin: 0;
+  font-size: var(--ds-fact-value-size);
+  font-weight: 500;
+  color: var(--ds-text);
+  min-width: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-2xs);
+  overflow-wrap: anywhere;
+}
+
+.columns > .fact > .valueMuted {
+  color: var(--ds-text-muted);
+  font-weight: 400;
+}
+
+.columns > .fact > .valueMissing {
+  color: var(--ds-text-muted);
+  font-weight: 500;
 }
 
 /* ---------- FactGrid (v0.11) ----------

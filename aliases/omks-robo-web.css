@@ -85,6 +85,8 @@
      way the dashboard's own overlays do. */
   --ds-shadow-overlay: var(--shadow-overlay);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --ds-fact-label-size: var(--text-fact-label);
+  --ds-fact-value-size: var(--text-fact-value);
 
   /* Chat bubbles (v0.4) — the dashboard already used --color-primary-soft
    * for the customer turn background in RobotConversationSessionDetail.

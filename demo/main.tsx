@@ -27,6 +27,7 @@ import {
   Checkbox,
   ConversationStage,
   Fact,
+  FactColumns,
   FactGrid,
   FactList,
   Heading,
@@ -599,6 +600,30 @@ const TILE_FACTS: ReadonlyArray<{ label: string; value: string; small?: boolean 
   { label: "Root", value: "/var/lib/omakase/recordings", small: true },
 ];
 
+/** FactColumns: page-scale facts with native label/value semantics. The frame
+ * is deliberately capped wide enough for two tracks so the e2e can then
+ * narrow it and prove the auto-fit layout stacks without a component branch. */
+function FactColumnsDemo() {
+  return (
+    <div
+      data-testid="fact-columns-frame"
+      style={{ width: "100%", maxWidth: 520, marginTop: 16 }}
+    >
+      <Heading level={3}>FactColumns</Heading>
+      <FactColumns>
+        <Fact label="Name">G1-042</Fact>
+        <Fact label="Model">Unitree G1</Fact>
+        <Fact label="Channel" tone="muted">
+          OTA
+        </Fact>
+        <Fact label="Firmware" tone="missing" hint="awaiting first report">
+          Not reported yet
+        </Fact>
+      </FactColumns>
+    </div>
+  );
+}
+
 /** Panel (v0.11) in the layout it exists for — a grid of peer sections,
  * one of them spanning every column — with the FactGrid tile pattern
  * inside it. Both are only really visible in a real browser: a grid span
@@ -686,6 +711,7 @@ function PageSectionsPanel({ host }: { host: string }) {
         hint="Panel + FactGrid — the robot console's screen composition, with v0.14's nesting contract"
       />
       <PanelGridDemo host={host} />
+      <FactColumnsDemo />
       {/* Two controls for the panel's sections above.
 
           The card: same component, same call shape, outside any panel body —

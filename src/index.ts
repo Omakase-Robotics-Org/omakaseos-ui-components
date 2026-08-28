@@ -61,10 +61,11 @@ export type { CardProps, CardHeaderProps } from "./Card";
 export { Section, SectionHeader } from "./Section";
 export type { SectionProps, SectionHeaderProps } from "./Section";
 
-// FactGrid (v0.11) is the tile reading of a set of facts; FactList the
-// list reading. See the file header for which to reach for.
-export { Fact, FactList, FactGrid } from "./Fact";
-export type { FactDirection, FactSize, FactProps } from "./Fact";
+// FactGrid (v0.11) is the tile reading of a set of facts; FactList the list
+// reading; FactColumns the page-scale, surfaceless reading. See the file
+// header for which to reach for.
+export { Fact, FactList, FactGrid, FactColumns } from "./Fact";
+export type { FactDirection, FactSize, FactTone, FactProps } from "./Fact";
 
 // v0.11: a titled section of a page grid. NOT a Card variant — see the
 // file header for the distinction (grid cell vs surface within a page).
