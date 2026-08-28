@@ -1,5 +1,5 @@
 /**
- * @file ConfirmDialog — presentational confirm-action shell (v0.18).
+ * @file ConfirmDialog — presentational confirm-action shell (v0.19).
  *
  * Ported from `.codex/ref/ConfirmDialog.tsx`, but DELIBERATELY narrower:
  * the ref owns the entire async lifecycle (`useAsyncFn`, a toast on

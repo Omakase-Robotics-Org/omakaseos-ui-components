@@ -43,7 +43,7 @@ const FROZEN_LITERALS: Record<string, string[]> = {
     // in the file header note).
     "--ds-font-mono",
     "--ds-radius-pill",
-    // v0.18: the dashboard's own Dialog.module.css writes this corner as a
+    // v0.19: the dashboard's own Dialog.module.css writes this corner as a
     // bare 16px literal too (no --radius-dialog var exists on this host),
     // so this is a value match rather than a mapping — see the alias
     // file's own comment on this declaration.
@@ -66,12 +66,12 @@ const FROZEN_LITERALS: Record<string, string[]> = {
     "--ds-tone-neutral-bg",
     "--ds-tone-success-bg",
     "--ds-tone-warning-bg",
-    // v0.18: rssa `src/styles/variables.css` owns no stacking-layer scale —
+    // v0.19: rssa `src/styles/variables.css` owns no stacking-layer scale —
     // no --z-* var to trace an overlay z-index to, so this matches the
     // library default (src/tokens.css) by value. See
     // aliases/status-server-webui.css's own comment on this declaration.
     "--ds-z-overlay",
-    // v0.18: rssa owns no dedicated "ink"/"scrim" var — no var to trace
+    // v0.19: rssa owns no dedicated "ink"/"scrim" var — no var to trace
     // Dialog's ::backdrop to. The value matches this host's own existing
     // native-dialog modals' backdrop (GoalConfirmDialog / SceneRemovalDialog
     // / MapSwitchWizard, rgba(0, 0, 0, 0.55)) rather than a guess. See

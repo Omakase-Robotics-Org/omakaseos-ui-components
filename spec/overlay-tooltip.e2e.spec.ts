@@ -1,5 +1,5 @@
 /**
- * @file E2E: Tooltip (v0.18) — the claims a real pointer timeline and a
+ * @file E2E: Tooltip (v0.19) — the claims a real pointer timeline and a
  * real layout engine have to prove that jsdom cannot: side="right"
  * placement + vertical centering, the collision flip (and the arrow
  * following the RESOLVED side), immediate pointerleave/focus-blur/Escape

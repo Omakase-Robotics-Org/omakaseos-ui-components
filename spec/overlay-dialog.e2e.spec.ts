@@ -1,5 +1,5 @@
 /**
- * @file E2E: Dialog / ConfirmDialog (v0.18) — the claims a real layout/UA
+ * @file E2E: Dialog / ConfirmDialog (v0.19) — the claims a real layout/UA
  * engine has to prove that jsdom cannot (`Dialog.spec.tsx` covers the
  * open/close protocol, ARIA wiring, and DOM-order placement in jsdom; see
  * its own header for the same split `overlay-popover-menu.e2e.spec.ts`

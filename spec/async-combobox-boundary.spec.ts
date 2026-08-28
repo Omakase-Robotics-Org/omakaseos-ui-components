@@ -8,7 +8,7 @@
  * composed with a synthetic `<ul role="listbox">` / `<li role="option">`
  * panel, because `<select>` and `<datalist>` both break at thousands of
  * options (server-fetched candidate lists; see
- * `omksos_web/reports/ui-components-async-combobox-layer/`). v0.18 adds a
+ * `omksos_web/reports/ui-components-async-combobox-layer/`). v0.19 adds a
  * SECOND: `src/AsyncMultiCombobox.tsx`, a multi-choice sibling absorbing
  * the dashboard's `ResourceMultiPicker`.
  *
@@ -66,7 +66,7 @@ const SYNTHETIC_WIDGETS: Record<string, string> = {
   "src/AsyncCombobox.tsx":
     "single-choice type-to-search combobox over an async candidate list — the library's original synthetic widget (v0.7)",
   "src/AsyncMultiCombobox.tsx":
-    "multi-choice type-to-search combobox with a chip-strip selection buffer, absorbing the dashboard's ResourceMultiPicker (v0.18)",
+    "multi-choice type-to-search combobox with a chip-strip selection buffer, absorbing the dashboard's ResourceMultiPicker (v0.19)",
 };
 
 /**

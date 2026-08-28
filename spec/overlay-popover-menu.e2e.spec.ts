@@ -1,5 +1,5 @@
 /**
- * @file E2E: Popover / Menu (v0.18) — the claims a layout engine has to
+ * @file E2E: Popover / Menu (v0.19) — the claims a layout engine has to
  * prove that jsdom cannot.
  *
  * `src/floating/anchored-position.spec.ts` pins `anchoredPanelPosition`'s

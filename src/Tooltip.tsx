@@ -1,5 +1,5 @@
 /**
- * @file Tooltip + TooltipProvider — hand-rolled hover/focus label (v0.18).
+ * @file Tooltip + TooltipProvider — hand-rolled hover/focus label (v0.19).
  *
  * Ported from `.codex/ref/Tooltip.tsx` (the dashboard's
  * `@radix-ui/react-tooltip` implementation this library absorbs) —

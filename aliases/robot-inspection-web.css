@@ -40,7 +40,7 @@
  * omission was an operator-flagged gap ("欠損は欠陥"), not a design decision
  * the host had made. See `--ri-focus-ring-width` below.
  *
- * `--ds-z-overlay` (v0.18, the anchored-panel stacking layer Popover/Menu
+ * `--ds-z-overlay` (v0.19, the anchored-panel stacking layer Popover/Menu
  * introduce) joins this list rather than becoming a frozen literal: this
  * file was authored under `spec/alias-purity.spec.ts`'s guard specifically
  * to have NO bare-literal exceptions (its frozen list is pinned at empty —
@@ -52,7 +52,7 @@
  * to; the library default in `src/tokens.css` (40) applies here exactly as
  * the other non-mapped categories above do.
  *
- * `--ds-radius-dialog` (v0.18, Dialog's own corner — distinct from
+ * `--ds-radius-dialog` (v0.19, Dialog's own corner — distinct from
  * `--ds-radius-card`/`--ds-radius-lg`) joins the same list for the same
  * reason: the README's `--ri-*` snippet's radius ladder tops out at
  * `--ri-radius-lg` (22px, already claimed by `--ds-radius-lg` above), with
@@ -154,7 +154,7 @@
    * here instead of inheriting the library's light-host lift. */
   --ds-shadow-card: var(--ri-shadow-card);
   --ds-shadow-overlay: var(--ri-shadow-overlay);
-  /* v0.18: Tooltip is inverted against this host's own dark surface — its
+  /* v0.19: Tooltip is inverted against this host's own dark surface — its
      near-white ink (--ri-text) as the chip's ground, its darkest surface
      step (--ri-surface-0, the page ground) as the ink on top of it. Value
      matches what this palette already uses for "ink on a light surface"
@@ -163,7 +163,7 @@
      directly rather than the accent-specific token. */
   --ds-tooltip-bg: var(--ri-text);
   --ds-tooltip-fg: var(--ri-surface-0);
-  /* v0.18: Dialog's ::backdrop reads --ds-scrim. The host palette already
+  /* v0.19: Dialog's ::backdrop reads --ds-scrim. The host palette already
      names this exact register --ri-scrim (used below for the stage tile's
      name strip and the caption background) — a direct trace, not a
      derivation. */

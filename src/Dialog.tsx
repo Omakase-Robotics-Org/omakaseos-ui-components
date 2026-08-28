@@ -1,5 +1,5 @@
 /**
- * @file Dialog — modal built on the native `<dialog>` element (v0.18).
+ * @file Dialog — modal built on the native `<dialog>` element (v0.19).
  *
  * Ported from `.codex/ref/Dialog.tsx` (the dashboard implementation this
  * library absorbs). `showModal()` gives focus trapping, Escape handling,
@@ -35,7 +35,7 @@
  * silent fallback the workspace bans. The consumer's own i18n owns the
  * word.
  *
- * `footerStart` (NEW here, v0.18): a start-aligned footer slot. The
+ * `footerStart` (NEW here, v0.19): a start-aligned footer slot. The
  * dashboard's `FormDialog` (`.codex/ref/FormDialog.tsx`) already promises
  * this shape — its `extraActions` prop's own doc comment says "rendered on
  * the left of the footer" — but `FormDialog` only ever spreads
@@ -110,7 +110,7 @@ export type DialogProps = {
   children: ReactNode;
   footer?: ReactNode;
   /**
-   * Start-aligned footer slot (v0.18) — a destructive secondary action
+   * Start-aligned footer slot (v0.19) — a destructive secondary action
    * (e.g. "Remove SSO") that sits on the LEFT of the footer row while
    * `footer`'s cancel/submit pair stays right. See the file header for why
    * this exists as a dedicated prop rather than a footer-fragment

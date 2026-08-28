@@ -44,7 +44,7 @@
  *            colour-vision deficiency on the two existing hosts. See
  *            `omksos_web/reports/ui-components-inspect-theme/README.md`.
  *
- * v0.18:     Popover, Menu — the two anchored floating-panel primitives the
+ * v0.19:     Popover, Menu — the two anchored floating-panel primitives the
  *            dashboard hand-rolled per call site (`.codex/ref/Popover.tsx` /
  *            `.codex/ref/Menu.tsx`, verbatim-identical `panelPosition`
  *            functions). Both now consume `src/floating/anchoredPanelPosition`
@@ -255,7 +255,7 @@ export type {
   UseAsyncCandidatesResult,
 } from "./useAsyncCandidates";
 
-// v0.18: the library's SECOND synthetic ARIA widget — a multi-choice
+// v0.19: the library's SECOND synthetic ARIA widget — a multi-choice
 // sibling to AsyncCombobox, absorbing the dashboard's
 // ResourceMultiPicker. See `spec/async-combobox-boundary.spec.ts`'s
 // `SYNTHETIC_WIDGETS` enumeration for the (now bidirectionally checked)
@@ -357,7 +357,7 @@ export type {
   TableNoticeProps,
 } from "./Table";
 
-// v0.18: anchored floating panels — Popover (controlled, free-content,
+// v0.19: anchored floating panels — Popover (controlled, free-content,
 // role="dialog") and Menu (uncontrolled, role="menu", roving focus). Both
 // consume the internal `src/floating/anchoredPanelPosition` core; see each
 // file's header for why they are not merged into one component.
@@ -366,7 +366,7 @@ export { Popover } from "./Popover";
 export { Menu } from "./Menu";
 export type { MenuItem, MenuTriggerProps } from "./Menu";
 
-// v0.18: Dialog (native <dialog>, portal, footer/footerStart) and
+// v0.19: Dialog (native <dialog>, portal, footer/footerStart) and
 // ConfirmDialog (a presentational confirm shell composed from Dialog +
 // Button — no async lifecycle, toast, or i18n; that stays app-side).
 export { Dialog } from "./Dialog";
@@ -375,7 +375,7 @@ export type { DialogProps, DialogSize } from "./Dialog";
 export { ConfirmDialog } from "./ConfirmDialog";
 export type { ConfirmDialogProps } from "./ConfirmDialog";
 
-// v0.18: Tooltip (hand-rolled, no radix) + TooltipProvider (the shared
+// v0.19: Tooltip (hand-rolled, no radix) + TooltipProvider (the shared
 // open-delay clock sibling tooltips read). See Tooltip.tsx's file header
 // for why this is not built on `@radix-ui/react-tooltip`.
 export { Tooltip, TooltipProvider } from "./Tooltip";

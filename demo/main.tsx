@@ -1240,7 +1240,7 @@ function TableDemoPanel({ host }: { host: string }) {
   );
 }
 
-/* ---------------- v0.18: anchored floating panels (Popover / Menu) ----------------
+/* ---------------- v0.19: anchored floating panels (Popover / Menu) ----------------
  *
  * Positioning (flip-above, cross-axis clamp) and the portal's overflow
  * escape need a real layout engine — jsdom cannot show either
@@ -1402,7 +1402,7 @@ function DialogAbovePopoverDemo({ host }: { host: string }) {
 function OverlayDemoPanel({ host, index }: { host: string; index: number }) {
   return (
     <Card>
-      <CardHeader title="Overlay: Popover / Menu (v0.18)" hint="anchored floating panels" />
+      <CardHeader title="Overlay: Popover / Menu (v0.19)" hint="anchored floating panels" />
       <div style={{ display: "grid", gap: 16 }}>
         <div>
           <Heading level={3}>Menu — roving focus</Heading>
@@ -1425,7 +1425,7 @@ function OverlayDemoPanel({ host, index }: { host: string; index: number }) {
   );
 }
 
-/* ---------------- v0.18: Dialog / ConfirmDialog ----------------
+/* ---------------- v0.19: Dialog / ConfirmDialog ----------------
  *
  * Dialog centering, ::backdrop paint, and the footerStart/Cancel relative
  * position are all layout claims jsdom cannot show (same split
@@ -1570,7 +1570,7 @@ function ConfirmDialogDemo({ host }: { host: string }) {
 function DialogConfirmDemoPanel({ host }: { host: string }) {
   return (
     <Card>
-      <CardHeader title="Overlay: Dialog / ConfirmDialog (v0.18)" hint="native <dialog> modal" />
+      <CardHeader title="Overlay: Dialog / ConfirmDialog (v0.19)" hint="native <dialog> modal" />
       <div style={{ display: "grid", gap: 16 }}>
         <div>
           <Heading level={3}>Dialog — md/lg, footer, footerStart</Heading>
@@ -1585,7 +1585,7 @@ function DialogConfirmDemoPanel({ host }: { host: string }) {
   );
 }
 
-/* ---------------- v0.18: Tooltip / TooltipProvider ----------------
+/* ---------------- v0.19: Tooltip / TooltipProvider ----------------
  *
  * Hover-intent timing, the shared open-delay clock, and the arrow's
  * resolved-side placement all need a real pointer timeline and a real
@@ -1678,7 +1678,7 @@ function TooltipSharedClockDemo({ host }: { host: string }) {
 function TooltipDemoPanel({ host, index }: { host: string; index: number }) {
   return (
     <Card>
-      <CardHeader title="Overlay: Tooltip (v0.18)" hint="hand-rolled hover/focus label, no radix" />
+      <CardHeader title="Overlay: Tooltip (v0.19)" hint="hand-rolled hover/focus label, no radix" />
       <TooltipProvider delayDuration={TOOLTIP_DELAY_MS}>
         <div style={{ display: "grid", gap: 16 }}>
           <div>
@@ -1703,7 +1703,7 @@ function TooltipDemoPanel({ host, index }: { host: string; index: number }) {
   );
 }
 
-/* ---------------- v0.18: AsyncMultiCombobox ----------------
+/* ---------------- v0.19: AsyncMultiCombobox ----------------
  *
  * Chip-row wrapping (one control box growing to N lines, not a broken
  * layout), the candidate panel's width tracking the control box, and
@@ -1773,7 +1773,7 @@ function AsyncMultiComboboxDemoPanel({ host }: { host: string }) {
   return (
     <Card>
       <CardHeader
-        title="Form: AsyncMultiCombobox (v0.18)"
+        title="Form: AsyncMultiCombobox (v0.19)"
         hint="chip-row control box + candidate listbox"
       />
       <AsyncMultiComboboxDemo host={host} />

@@ -1,4 +1,4 @@
-/* Dialog — modal surface built on the native <dialog> element (v0.18).
+/* Dialog — modal surface built on the native <dialog> element (v0.19).
  *
  * Centering is asserted explicitly. The UA stylesheet centers a
  * top-layered <dialog> via `position: fixed; inset: 0; margin: auto`,
@@ -35,7 +35,7 @@
   width: min(480px, calc(100vw - 48px));
   max-height: calc(100vh - 64px);
   border: none;
-  /* Its own step (v0.18) — distinct from --ds-radius-card (8px) and
+  /* Its own step (v0.19) — distinct from --ds-radius-card (8px) and
      --ds-radius-lg (12px). A modal's corner is its own concern; folding
      it into --ds-radius-lg would silently shift the value at every
      EXISTING call site that already reads --ds-radius-lg for its own
@@ -134,7 +134,7 @@
   padding: 0 var(--ds-space-2xl) 20px;
 }
 
-/* footerStart (v0.18, NEW — not in the ref). The dashboard's FormDialog
+/* footerStart (v0.19, NEW — not in the ref). The dashboard's FormDialog
    promises a left-aligned secondary action ("extraActions... rendered on
    the left of the footer" — .codex/ref/FormDialog.tsx) but only ever
    spreads it as the footer fragment's first child, and .footer above has

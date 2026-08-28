@@ -48,7 +48,7 @@
  *
  * Both directions are pinned in `PanelScope.spec.tsx`.
  *
- * ## `PanelScopeReset` — the third direction (v0.18)
+ * ## `PanelScopeReset` — the third direction (v0.19)
  *
  * Composition and portal placement can also come apart in a THIRD way that
  * the two bullets above do not cover: a floating overlay (`Popover`, `Menu`)

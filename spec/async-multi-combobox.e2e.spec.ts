@@ -1,5 +1,5 @@
 /**
- * @file E2E: AsyncMultiCombobox (v0.18) — the claims a real layout +
+ * @file E2E: AsyncMultiCombobox (v0.19) — the claims a real layout +
  * focus engine has to prove that jsdom cannot.
  *
  * `src/AsyncMultiCombobox.spec.tsx` (jsdom) already pins the ARIA wiring,

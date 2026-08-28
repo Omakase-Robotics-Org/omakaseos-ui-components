@@ -79,7 +79,7 @@
      controls are rounder than their chips. */
   --ds-radius-chip: var(--radius-control, 6px);
   --ds-radius-pill: 999px;
-  /* v0.18: the dashboard's own Dialog.module.css writes this corner as a
+  /* v0.19: the dashboard's own Dialog.module.css writes this corner as a
      bare 16px literal (no --radius-dialog var exists on this host either),
      so this is a value match rather than a name-preserving one — the same
      zero-shift the ref migration is for. */
@@ -90,16 +90,16 @@
      component that reads --ds-shadow-overlay (a toast, a popup) then floats the
      way the dashboard's own overlays do. */
   --ds-shadow-overlay: var(--shadow-overlay);
-  /* v0.18: the exact recipe the dashboard's own Dialog.module.css uses for
+  /* v0.19: the exact recipe the dashboard's own Dialog.module.css uses for
      its ::backdrop (color-mix(in srgb, var(--color-ink) 45%, transparent))
      — a straight port, zero-shift. */
   --ds-scrim: color-mix(in srgb, var(--color-ink) 45%, transparent);
-  /* v0.18: the dashboard's own overlay stacking layer — Popover.module.css /
+  /* v0.19: the dashboard's own overlay stacking layer — Popover.module.css /
      Menu.module.css (the refs this library absorbs) already read
      var(--z-overlay) directly, so this is a straight name-preserving
      mapping, not a value match. */
   --ds-z-overlay: var(--z-overlay);
-  /* v0.18: Tooltip.module.css (the ref this library absorbs, minus radix)
+  /* v0.19: Tooltip.module.css (the ref this library absorbs, minus radix)
      reads var(--color-ink) / var(--color-on-ink) directly for exactly this
      purpose — a straight, zero-shift, name-preserving mapping. */
   --ds-tooltip-bg: var(--color-ink);

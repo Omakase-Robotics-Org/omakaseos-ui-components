@@ -113,11 +113,11 @@
   --ds-radius-control: 6px;
   --ds-radius-card: 8px;
   /* Larger than a card: the map viewer's framed surfaces and other large
-     panels. NOT the Dialog primitive (v0.18) — see --ds-radius-dialog
+     panels. NOT the Dialog primitive (v0.19) — see --ds-radius-dialog
      below; this comment used to say "dialogs" before Dialog existed as a
      component with its own step. */
   --ds-radius-lg: 12px;
-  /* Dialog's own corner (v0.18) — distinct from --ds-radius-card (8px)
+  /* Dialog's own corner (v0.19) — distinct from --ds-radius-card (8px)
      and --ds-radius-lg (12px). A modal's corner is its own step: reusing
      --ds-radius-lg would silently shift every existing dialog call site that
      already read that token for their own (non-modal) purpose the moment
@@ -128,7 +128,7 @@
   /* Shadow */
   --ds-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05);
   --ds-shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
-  /* Dialog's ::backdrop (v0.18). The dashboard ref's own recipe is
+  /* Dialog's ::backdrop (v0.19). The dashboard ref's own recipe is
      `color-mix(in srgb, var(--color-ink) 45%, transparent)` — a 45% tint
      of its dedicated "ink" token. This library has no separate ink level
      from --ds-text, so --ds-text plays that role here: the same ratio,
@@ -136,7 +136,7 @@
      host-specific one. */
   --ds-scrim: color-mix(in srgb, var(--ds-text) 45%, transparent);
 
-  /* Stacking — v0.18's anchored floating panels (Popover, Menu, Tooltip)
+  /* Stacking — v0.19's anchored floating panels (Popover, Menu, Tooltip)
      portal to document.body and need to sit above ordinary page
      content and other library surfaces (Table's sticky header at 5,
      AsyncCombobox's own dropdown at 50 — a literal in that component's own
@@ -146,7 +146,7 @@
      fallback. */
   --ds-z-overlay: 40;
 
-  /* Tooltip (v0.18). A tooltip is INVERTED against the surface on all
+  /* Tooltip (v0.19). A tooltip is INVERTED against the surface on all
      three hosts — a dark chip on a light UI, or the reverse on a dark
      one — so it needs its OWN two-token pair rather than reusing
      --ds-surface/--ds-text (which, being the surface it is inverted

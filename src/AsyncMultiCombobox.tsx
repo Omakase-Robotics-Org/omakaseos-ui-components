@@ -1,5 +1,5 @@
 /**
- * @file AsyncMultiCombobox — v0.18: multi-choice, type-to-search picker
+ * @file AsyncMultiCombobox — v0.19: multi-choice, type-to-search picker
  * over an async candidate list, absorbing the dashboard's
  * `ResourceMultiPicker` (`.codex/ref/ResourceMultiPicker.tsx`) into the
  * library.
