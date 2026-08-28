@@ -46,6 +46,12 @@ async function clickSettled(target: Locator): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  // Under the land gate the whole e2e suite runs in parallel workers and the
+  // demo bundle's first paint can exceed a bare 5s expect window; anchor each
+  // test on one hydrated chip before making count/geometry claims.
+  await expect(
+    page.locator('[data-testid="multi-combobox-demo-omks-web"]').getByRole("listitem").first(),
+  ).toBeVisible({ timeout: 30_000 });
 });
 
 for (const host of HOSTS) {
