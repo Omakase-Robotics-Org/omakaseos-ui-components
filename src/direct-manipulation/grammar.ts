@@ -71,11 +71,23 @@ export type PointerModality = "fine" | "coarse";
 /**
  * The classes whose distance decision a screen-space host may own.
  *
- * `snap` is the capture radius for snapping, delegated for the same reason as
- * the pick classes: on a perspective floor, "10 px away" is a different
- * distance near and far.
+ * Two are not pick radii at all, and are delegated for the same reason the
+ * pick radii are - on a perspective floor, "10 px away" is a different world
+ * distance near and far:
+ *
+ *  - `snap`: the capture radius for snapping.
+ *  - `reveal`: the ARMING radius, the distance at which the operator counts as
+ *    having approached a selected target (see {@link revealedKnob}). It is much
+ *    wider than any pick radius, so it cannot be answered by re-using one.
  */
-export type EditPickClass = "handle" | "ghost" | "knob" | "badge" | "vertex" | "snap";
+export type EditPickClass =
+  | "handle"
+  | "ghost"
+  | "knob"
+  | "badge"
+  | "vertex"
+  | "snap"
+  | "reveal";
 
 /**
  * A screen-space distance decision for one class of candidates.
@@ -814,7 +826,25 @@ function badgeGroup(probe: EditProbe): PointGroup | null {
  * it does not hover beside a neighbouring waypoint the operator is trying to
  * grab. Coarse input has no hover to arm with and keeps it whenever selected.
  */
-function knobGroup(probe: EditProbe): PointGroup | null {
+/**
+ * The primary handle's heading knob, when the arming radius reveals it.
+ *
+ * This is the DRAWING answer as much as the picking one, and a host must use it
+ * for both. A knob that is drawn whenever something is selected floats beside
+ * every precise gesture in the neighbourhood — the interference this revision
+ * removes; a knob that appears only while it is itself hovered cannot be found
+ * at all. Between those, the rule is: the operator has come within `revealM` of
+ * the handle the knob belongs to.
+ *
+ * Coarse input has no hover with which to approach anything, so a selected
+ * handle keeps its knob unconditionally, exactly as before.
+ *
+ * @param probe The pointer probe.
+ * @returns The knob's owner and position, or null when it is not revealed.
+ */
+export function revealedKnob(
+  probe: EditProbe,
+): { readonly id: string; readonly at: Vertex } | null {
   const primary = probe.selection.primary;
   if (primary === null || primary.kind !== "handle") {
     return null;
@@ -823,22 +853,38 @@ function knobGroup(probe: EditProbe): PointGroup | null {
   if (handle === undefined) {
     return null;
   }
-  if (probe.modality === "fine" && probe.screenRank === undefined) {
-    const reach = probe.tolerance.revealM + probe.tolerance.headingArmM;
-    const distance = Math.hypot(handle.x - probe.at.x, handle.y - probe.at.y);
-    if (!(distance <= reach)) {
-      return null;
-    }
-  }
   const at = probe.anchors?.knobAt(handle) ?? headingKnobAt(handle, probe.tolerance.headingArmM);
   if (at === null) {
+    return null;
+  }
+  if (probe.modality === "coarse") {
+    return { id: handle.id, at };
+  }
+  // The reach is measured to the HANDLE, not to the knob: the operator arms the
+  // thing, and its knob comes with it. A screen-space host answers this in its
+  // own frame through the `reveal` class, because a metric reach means nothing
+  // on a perspective floor (and its metric tolerances are deliberately NaN).
+  const reached = rank(
+    probe,
+    "reveal",
+    [handlePosition(handle)],
+    probe.tolerance.revealM + probe.tolerance.headingArmM,
+  );
+  return reached === null ? null : { id: handle.id, at };
+}
+
+function knobGroup(probe: EditProbe): PointGroup | null {
+  const knob = revealedKnob(probe);
+  if (knob === null) {
     return null;
   }
   return {
     tie: "knob",
     klass: "knob",
     toleranceM: probe.tolerance.knobM,
-    candidates: [{ at, make: () => ({ kind: "knob", id: handle.id, at }) as const }],
+    candidates: [
+      { at: knob.at, make: () => ({ kind: "knob", id: knob.id, at: knob.at }) as const },
+    ],
   };
 }
 

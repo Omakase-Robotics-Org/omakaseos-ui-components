@@ -47,6 +47,7 @@ import {
   resolveMoveSet,
   resolvePosition,
   resolveRotation,
+  revealedKnob,
   sameTarget,
   type DragGrip,
   type EditAffordance,
@@ -158,6 +159,13 @@ export type DirectEditSurface = {
     readonly "data-edit-drag"?: "true";
   };
   readonly affordance: EditAffordance;
+  /**
+   * The primary handle's heading knob while the arming radius reveals it, or
+   * null. A host draws the knob from THIS and not from the selection: drawing it
+   * whenever something is selected is what put a floating rotation target
+   * beside every precise gesture.
+   */
+  readonly revealedKnob: { readonly id: string; readonly at: Vertex } | null;
   readonly cursor: EditCursor;
   readonly drag: DragPreview | null;
   readonly dragFeedback: DragFeedback | null;
@@ -311,6 +319,8 @@ export function useDirectEditSurface(
   const [pending, setPending] = useState<PendingPreview | null>(null);
   const pendingRef = useRef<PendingPreview | null>(null);
   const [dragClass, setDragClass] = useState<GripClass | null>(null);
+  const [knob, setKnob] = useState<{ readonly id: string; readonly at: Vertex } | null>(null);
+  const knobRef = useRef<{ readonly id: string; readonly at: Vertex } | null>(null);
 
   const pressRef = useRef<ActivePress | null>(null);
   const pendingMoveRef = useRef<PendingMove | null>(null);
@@ -390,6 +400,26 @@ export function useDirectEditSurface(
     setDragClass(null);
   }, [setDragPreview]);
 
+  const updateRevealedKnob = useCallback(
+    (next: { readonly id: string; readonly at: Vertex } | null) => {
+      const current = knobRef.current;
+      if (current === next) {
+        return;
+      }
+      if (
+        current !== null &&
+        next !== null &&
+        current.id === next.id &&
+        sameVertex(current.at, next.at)
+      ) {
+        return;
+      }
+      knobRef.current = next;
+      setKnob(next);
+    },
+    [],
+  );
+
   const updatePendingPreview = useCallback((next: PendingPreview | null) => {
     if (samePending(pendingRef.current, next)) {
       return;
@@ -449,9 +479,16 @@ export function useDirectEditSurface(
       return;
     }
     const at = optionsRef.current.toWorld(last.x, last.y);
-    updateAffordance(at === null ? { kind: "none" } : resolveAffordance(probeAt(at)));
+    if (at === null) {
+      updateAffordance({ kind: "none" });
+      updateRevealedKnob(null);
+    } else {
+      const probe = probeAt(at);
+      updateAffordance(resolveAffordance(probe));
+      updateRevealedKnob(revealedKnob(probe));
+    }
     updatePending(at);
-  }, [probeAt, updateAffordance, updatePending]);
+  }, [probeAt, updateAffordance, updatePending, updateRevealedKnob]);
 
   const updateLiveDrag = useCallback(
     (press: ActivePress, at: Vertex) => {
@@ -529,9 +566,14 @@ export function useDirectEditSurface(
           return;
         }
         const at = current.toWorld(move.clientX, move.clientY);
-        updateAffordance(
-          at === null ? { kind: "none" } : resolveAffordance(probeAt(at)),
-        );
+        if (at === null) {
+          updateAffordance({ kind: "none" });
+          updateRevealedKnob(null);
+        } else {
+          const probe = probeAt(at);
+          updateAffordance(resolveAffordance(probe));
+          updateRevealedKnob(revealedKnob(probe));
+        }
         updatePending(at);
         return;
       }
@@ -558,7 +600,7 @@ export function useDirectEditSurface(
       press.offFloor = false;
       updateLiveDrag(press, at);
     },
-    [probeAt, updateAffordance, updateLiveDrag, updatePending],
+    [probeAt, updateAffordance, updateLiveDrag, updatePending, updateRevealedKnob],
   );
 
   const releaseCapture = useCallback(
@@ -921,6 +963,7 @@ export function useDirectEditSurface(
   return {
     surfaceProps,
     affordance,
+    revealedKnob: knob,
     cursor,
     drag,
     dragFeedback,
