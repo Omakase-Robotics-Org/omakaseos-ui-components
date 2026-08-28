@@ -365,3 +365,138 @@ export function signedArea(ring: readonly Vertex[]): number {
     ringEdges(ring).reduce((sum, edge) => sum + (edge.a.x * edge.b.y - edge.b.x * edge.a.y), 0) / 2
   );
 }
+
+/**
+ * The angular quantum of the Shift constraint for MOVING and PLACING: 45
+ * degrees, so a corridor-following leg lands on an axis or a diagonal.
+ */
+export const AXIS_STEP_RAD = Math.PI / 4;
+
+/**
+ * The angular quantum of the Shift constraint for ROTATING: 15 degrees.
+ *
+ * This is the SoT for the whole suite. The dashboard's native twin control
+ * (the waypoint row's "turn left / turn right" buttons) already steps a pose
+ * by this amount, so the pointer gesture and the button agree by
+ * construction rather than by two constants that happen to match; a consumer
+ * that had its own copy imports this one.
+ */
+export const YAW_STEP_RAD = Math.PI / 12;
+
+/**
+ * `to`, projected onto the nearest ray of `stepRad` radians from `from`.
+ *
+ * The projection is onto the RAY's line through `from`, keeping the travelled
+ * distance along that direction, so a constrained drag tracks the pointer's
+ * extent while its direction is quantised.
+ *
+ * @param from The gesture origin.
+ * @param to The raw pointer position.
+ * @param stepRad The angular quantum, which must be positive and finite.
+ * @returns The constrained position, or `to` unchanged when it coincides with `from`.
+ */
+export function constrainToAxes(from: Vertex, to: Vertex, stepRad: number): Vertex {
+  if (!Number.isFinite(stepRad) || stepRad <= 0) {
+    return to;
+  }
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) {
+    return to;
+  }
+  const angle = snapAngle(Math.atan2(dy, dx), stepRad);
+  const unitX = Math.cos(angle);
+  const unitY = Math.sin(angle);
+  const travelled = dx * unitX + dy * unitY;
+  return { x: from.x + travelled * unitX, y: from.y + travelled * unitY };
+}
+
+/**
+ * `yaw`, rounded to the nearest multiple of `stepRad`.
+ *
+ * @param yaw The raw angle in radians.
+ * @param stepRad The angular quantum, which must be positive and finite.
+ * @returns The quantised angle, or `yaw` unchanged for a degenerate step.
+ */
+export function snapAngle(yaw: number, stepRad: number): number {
+  if (!Number.isFinite(stepRad) || stepRad <= 0 || !Number.isFinite(yaw)) {
+    return yaw;
+  }
+  return Math.round(yaw / stepRad) * stepRad;
+}
+
+/** A declared grid: a pitch in metres and the origin its lines pass through. */
+export type EditGrid = {
+  readonly pitchM: number;
+  readonly origin: Vertex;
+};
+
+/**
+ * Whether a grid is usable as declared. A non-positive or non-finite pitch is
+ * a broken declaration, not a grid to approximate.
+ *
+ * @param grid The grid, or null when the host declared none.
+ * @returns True when the grid can be snapped to.
+ */
+export function isUsableGrid(grid: EditGrid | null): grid is EditGrid {
+  return (
+    grid !== null &&
+    Number.isFinite(grid.pitchM) &&
+    grid.pitchM > 0 &&
+    Number.isFinite(grid.origin.x) &&
+    Number.isFinite(grid.origin.y)
+  );
+}
+
+/**
+ * `at`, moved to the nearest intersection of a declared grid.
+ *
+ * @param at The raw position.
+ * @param grid The declared grid.
+ * @returns The nearest grid intersection, or `at` when the grid is unusable.
+ */
+export function snapToGrid(at: Vertex, grid: EditGrid): Vertex {
+  if (!isUsableGrid(grid)) {
+    return at;
+  }
+  return {
+    x: grid.origin.x + Math.round((at.x - grid.origin.x) / grid.pitchM) * grid.pitchM,
+    y: grid.origin.y + Math.round((at.y - grid.origin.y) / grid.pitchM) * grid.pitchM,
+  };
+}
+
+/** An axis-aligned rectangle in the world frame. */
+export type Rect = {
+  readonly minX: number;
+  readonly minY: number;
+  readonly maxX: number;
+  readonly maxY: number;
+};
+
+/**
+ * The axis-aligned rectangle spanned by two corners, in either order.
+ *
+ * @param from One corner.
+ * @param to The opposite corner.
+ * @returns The normalised rectangle.
+ */
+export function rectBetween(from: Vertex, to: Vertex): Rect {
+  return {
+    minX: Math.min(from.x, to.x),
+    minY: Math.min(from.y, to.y),
+    maxX: Math.max(from.x, to.x),
+    maxY: Math.max(from.y, to.y),
+  };
+}
+
+/**
+ * Whether a point lies within a rectangle, edges included.
+ *
+ * @param rect The rectangle.
+ * @param at The point.
+ * @returns True when the point is inside or on the boundary.
+ */
+export function insideRect(rect: Rect, at: Vertex): boolean {
+  return at.x >= rect.minX && at.x <= rect.maxX && at.y >= rect.minY && at.y <= rect.maxY;
+}
