@@ -269,4 +269,31 @@ export type { ParticipantTileProps } from "./ParticipantTile";
 export { LiveCaption } from "./LiveCaption";
 export type { LiveCaptionProps } from "./LiveCaption";
 
+// Table skin family — a bordered scroller (TableSurface), the <table>
+// that owns all descendant skin (Table), a header cell that carries the
+// span-vs-button sort rule (TableHeaderCell), a ref-forwarding body row
+// (TableRow), a cell (TableCell), and the overflow-notice strip look
+// (TableNotice). See Table.tsx's file header for the shape ruling this
+// family follows (skin from `.table` down via descendant selectors, so a
+// consumer's collection engine can render raw <tr>/<td> DOM underneath it).
+export {
+  TableSurface,
+  Table,
+  TableHeaderCell,
+  TableRow,
+  TableCell,
+  TableNotice,
+} from "./Table";
+export type {
+  TableSurfaceProps,
+  TableProps,
+  TableDensity,
+  TableHeaderCellProps,
+  TableHeaderCellSort,
+  TableSortDirection,
+  TableRowProps,
+  TableCellProps,
+  TableNoticeProps,
+} from "./Table";
+
 import "./tokens.css";

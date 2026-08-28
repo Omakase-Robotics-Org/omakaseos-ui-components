@@ -111,8 +111,13 @@ const RATCHETED_EXPORTS_WITHOUT_OWN_STORY: Record<string, string> = {
   SectionHeader: "call-shape companion of Section — demoed inside Section.stories.tsx",
   FactList: "a Fact layout wrapper — demoed inside Fact.stories.tsx",
   FactGrid: "a Fact layout wrapper — demoed inside Fact.stories.tsx",
+  TableSurface: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
+  TableHeaderCell: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
+  TableRow: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
+  TableCell: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
+  TableNotice: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
 };
-const RATCHET_SIZE = 4;
+const RATCHET_SIZE = 9;
 
 function barrelComponentExports(): readonly string[] {
   const blocks = parseExportBlocks(barrelPath, "src/index.ts");

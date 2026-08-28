@@ -222,4 +222,36 @@
   --ds-caption-bg: rgba(0, 0, 0, 0.85);
   --ds-caption-fg: #ffffff;
   --ds-caption-speaker-fg: #b3b3b3;
+
+  /* ----------------------------------------------------------------
+   * Table primitives
+   *
+   * Ported from the dashboard's DataTable.module.css. `cell-pad-y` /
+   * `cell-pad-y-compact` / `gutter-x` are dedicated tokens rather than
+   * reused --ds-space-* names, so a host can retune a table's own
+   * density without moving every other --ds-space-* consumer in the
+   * library. Their fallbacks were picked by VALUE against the
+   * dashboard's own spacing scale, which is shifted one step from this
+   * library's: dashboard 2xs=4/xs=6/sm=8/md=12/lg=16/xl=20px against
+   * this library's 2xs=2/xs=4/sm=6/md=8/lg=12/xl=16px. That is why the
+   * dashboard's `--cell-pad-y` (= its --space-md, 12px) resolves to
+   * this library's --ds-space-lg (also 12px) rather than its own
+   * (8px) --ds-space-md — matching by value, never by name, is the
+   * whole point. `gutter-x`'s source (the dashboard's --surface-pad-x,
+   * 20px) has no matching --ds-space-* step at all, so it is its own
+   * literal instead of an approximation. */
+  --ds-table-cell-pad-y: var(--ds-space-lg);
+  --ds-table-cell-pad-y-compact: var(--ds-space-sm);
+  --ds-table-gutter-x: 20px;
+  /* Zebra tint and hover wash reuse this library's existing surface
+     vocabulary (a faint tint of the inset ground / the surface hover
+     wash) rather than a hand-picked neutral — the same role the
+     dashboard's own --color-bg / --color-hover-wash play against its
+     own surface ladder. */
+  --ds-table-zebra: color-mix(in srgb, var(--ds-surface-inset) 55%, transparent);
+  --ds-hover-wash: var(--ds-surface-hover);
+  /* A rung below --ds-text-disabled in NAME only — the same weakest ink
+     tier, used here for a decorative glyph (the unsorted sort icon)
+     rather than a disabled control. */
+  --ds-text-subtle: var(--ds-text-disabled);
 }

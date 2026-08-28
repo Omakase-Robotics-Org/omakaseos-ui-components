@@ -166,4 +166,18 @@
   --ds-caption-bg: var(--ri-scrim);
   --ds-caption-fg: var(--ri-text);
   --ds-caption-speaker-fg: var(--ri-text-muted);
+
+  /* Table — hover wash / zebra tint / decorative-icon ink trace to this
+   * host's existing --ri-* vocabulary. --ds-table-cell-pad-y(-compact) and
+   * --ds-table-gutter-x are DELIBERATELY left unmapped: this host declares
+   * no spacing scale at all (see "Deliberate non-mappings" above, which
+   * already applies to --ds-space-*), so there is no --ri-* var to trace a
+   * table cell padding or surface gutter to. Per alias-purity's empty
+   * frozen-literal list for this file, a bare pixel value belongs in the
+   * host palette, not invented here — so Table.module.css's cell-pad-y /
+   * cell-pad-y-compact / gutter-x fall through to src/tokens.css's library
+   * defaults on this host. */
+  --ds-hover-wash: var(--ri-surface-hover);
+  --ds-table-zebra: color-mix(in srgb, var(--ri-surface-2) 55%, transparent);
+  --ds-text-subtle: var(--ri-text-dim);
 }

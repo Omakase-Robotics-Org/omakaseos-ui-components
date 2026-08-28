@@ -96,6 +96,13 @@
   --ds-caption-fg: var(--text-primary);
   --ds-caption-speaker-fg: var(--text-secondary);
 
+  /* Table (match aliases/status-server-webui.css — cell-pad-y/gutter-x
+     are deliberately unmapped there too, this host owns no spacing
+     scale). */
+  --ds-hover-wash: var(--bg-hover);
+  --ds-table-zebra: color-mix(in srgb, var(--bg-inset) 55%, transparent);
+  --ds-text-subtle: var(--text-muted);
+
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -125,6 +132,13 @@
   --color-danger-soft: #fef2f2;
   --radius-card: 10px;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 5%);
+  /* web brand SoT `modules/styles/global.css` — needed for the Table
+     mappings below (match aliases/omks-robo-web.css). */
+  --color-text-subtle: #94a3b8;
+  --color-hover-wash: #f1f5f9;
+  --cell-pad-y: 12px;
+  --space-xs: 6px;
+  --surface-pad-x: 20px;
 
   --ds-surface: var(--color-surface);
   --ds-surface-inset: var(--color-bg);
@@ -194,6 +208,14 @@
   --ds-caption-bg: var(--color-text);
   --ds-caption-fg: var(--color-surface);
   --ds-caption-speaker-fg: color-mix(in srgb, var(--color-surface) 70%, transparent);
+
+  /* Table (match aliases/omks-robo-web.css). */
+  --ds-table-cell-pad-y: var(--cell-pad-y);
+  --ds-table-cell-pad-y-compact: var(--space-xs);
+  --ds-table-gutter-x: var(--surface-pad-x);
+  --ds-table-zebra: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  --ds-hover-wash: var(--color-hover-wash);
+  --ds-text-subtle: var(--color-text-subtle);
 
   background: var(--color-bg);
   color: var(--color-text);
@@ -314,6 +336,13 @@
   --ds-caption-bg: var(--ri-scrim);
   --ds-caption-fg: var(--ri-text);
   --ds-caption-speaker-fg: var(--ri-text-muted);
+
+  /* Table (match aliases/robot-inspection-web.css — cell-pad-y/gutter-x
+     are deliberately unmapped there too, this host owns no spacing
+     scale). */
+  --ds-hover-wash: var(--ri-surface-hover);
+  --ds-table-zebra: color-mix(in srgb, var(--ri-surface-2) 55%, transparent);
+  --ds-text-subtle: var(--ri-text-dim);
 
   background: var(--ri-surface-0);
   color: var(--ri-text);

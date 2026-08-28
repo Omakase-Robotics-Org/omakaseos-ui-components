@@ -1,0 +1,200 @@
+/**
+ * @file Table skin — a single self-contained bordered surface (border +
+ * shadow + radius), styled entirely by DESCENDANT SELECTORS from `.table`
+ * (`.table th`, `.table td`, `.table tbody tr:nth-child(even) td`, ...).
+ * Ported from the dashboard's `DataTable.module.css` (233 lines) — see
+ * `Table.tsx`'s file header for why the shape is descendant selectors
+ * and not per-part typed styling.
+ *
+ * `.surface` merges the ref's `.surface` and `.virtualSurface` (which
+ * differed only by class name): this library does not fork on whether the
+ * consumer virtualizes.
+ *
+ * Token notes (see `src/tokens.css`'s Table section for the full
+ * derivation): `--ds-table-cell-pad-y(-compact)` and `--ds-table-gutter-x`
+ * are dedicated tokens, not reused `--ds-space-*` names, so a host can
+ * retune a table's own density without moving every other `--ds-space-*`
+ * consumer in the library. Everywhere else below (the inter-column
+ * gutter, the heading's vertical inset, the sort-icon gap, the notice's
+ * margin/padding) reads an existing `--ds-space-*` step directly — their
+ * fallback values were chosen to already equal the dashboard's original
+ * pixel values, so no alias mapping is needed for them at all.
+ */
+
+.surface {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  box-shadow: var(--ds-shadow-card);
+  color: var(--ds-text);
+}
+
+/* Fill-height mode: the surface becomes the in-page scroller on both axes
+   with a sticky header, so column context survives scrolling. `min-height:
+   0` lets the flex item shrink below its content so `overflow` actually
+   engages. */
+.surface[data-fill="true"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.surface[data-fill="true"] thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--ds-surface);
+}
+
+/* Sticky-header divider. With `border-collapse: collapse` the header's
+   bottom border belongs to the TABLE grid (painted in the table's own
+   coordinate space), so it stays behind while a sticky `<thead>` scrolls
+   — the header loses its rule on scroll. Paint the divider on the header
+   cell itself via an inset box-shadow, which rides WITH the sticky
+   element and survives the scroll. */
+.surface[data-fill="true"] thead th {
+  box-shadow: inset 0 -1px 0 var(--ds-border);
+}
+
+/* The empty-state gutter (see TableSurface's `padded` prop / EmptyNote's
+   dedup note in Table.tsx). Composes with `fill` — an empty, fill-height
+   table still reads as the same sized card the populated one would. */
+.surface[data-padded="true"] {
+  padding: var(--ds-space-xl) var(--ds-table-gutter-x);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+/* Horizontal rhythm lives on the cells (shared by header + body) so a
+   header label and the cell below it always share the same left edge. */
+.table th,
+.table td {
+  padding-left: var(--ds-space-lg);
+  padding-right: var(--ds-space-lg);
+  text-align: left;
+}
+
+/* End-aligned columns: numbers, dates, and a row's action cluster. */
+.table th[data-align="end"],
+.table td[data-align="end"] {
+  text-align: right;
+}
+
+.table td[data-align="end"] {
+  font-variant-numeric: tabular-nums;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-left: var(--ds-table-gutter-x);
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: var(--ds-table-gutter-x);
+}
+
+.table th {
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.table td {
+  padding-top: var(--ds-table-cell-pad-y);
+  padding-bottom: var(--ds-table-cell-pad-y);
+  border-bottom: 1px solid var(--ds-border);
+  vertical-align: middle;
+  white-space: normal;
+}
+
+/* Compact density halves the body cell padding so a fleet-scale table
+   fits more rows per viewport. Headers stay the same so the column
+   rhythm is constant across density modes. */
+.table[data-density="compact"] td {
+  padding-top: var(--ds-table-cell-pad-y-compact);
+  padding-bottom: var(--ds-table-cell-pad-y-compact);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Zebra striping: a faint tint on even rows aids horizontal scanning.
+   `:nth-child` (not `:nth-of-type`) so a virtualizer's aria-hidden spacer
+   `<tr>` keeps counting through the sequence exactly as a real row would
+   — spacer-row zebra parity is load-bearing, not incidental (see
+   Table.tsx's file header). */
+.table tbody tr:nth-child(even) td {
+  background: var(--ds-table-zebra);
+}
+
+.table tbody tr:hover td {
+  background: var(--ds-hover-wash);
+}
+
+/* Row-navigable rows (TableRow's `clickable`): pointer cursor signals the
+   whole row is the affordance. */
+.table tbody tr[data-clickable="true"] {
+  cursor: pointer;
+}
+
+/* Header label box, shared by both header shapes (TableHeaderCell): a
+   full-width button when the column sorts, a plain span when it does not
+   — see Table.tsx's file header for why a disabled button is wrong here.
+   Element-agnostic on purpose: it sets its own box, border and
+   background, so the two render identically. Horizontal inset comes from
+   the th, so this only owns its vertical height. */
+.heading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-xs);
+  width: 100%;
+  padding: var(--ds-space-xl) 0;
+  border: none;
+  background: transparent;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-size-label);
+  font-weight: 600;
+  text-align: inherit;
+  cursor: default;
+}
+
+.heading[data-align="end"] {
+  justify-content: flex-end;
+}
+
+.heading[data-interactive="true"] {
+  cursor: pointer;
+}
+
+.heading[data-interactive="true"]:hover {
+  color: var(--ds-text);
+}
+
+.sortIcon {
+  flex-shrink: 0;
+  color: var(--ds-text-subtle);
+}
+
+.sortIcon[data-active="true"] {
+  color: var(--ds-accent);
+}
+
+/* TableNotice — a one-line status strip rendered above the table (e.g. a
+   render-cap notice: "showing N of M rows"). */
+.notice {
+  margin: 0 0 var(--ds-space-md);
+  padding: var(--ds-space-xs) var(--ds-space-lg);
+  background: var(--ds-surface);
+  color: var(--ds-text-muted);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  font-size: var(--ds-font-size-label);
+}

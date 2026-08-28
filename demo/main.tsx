@@ -52,6 +52,12 @@ import {
   StatusBadge,
   StatusGlyph,
   Switch,
+  Table,
+  TableCell,
+  TableHeaderCell,
+  TableNotice,
+  TableRow,
+  TableSurface,
   TabStrip,
   Textarea,
   Toast,
@@ -69,6 +75,7 @@ import type {
   PagerLabels,
   RankLevel,
   RealtimeEventEntry,
+  TableSortDirection,
   TabStripEditing,
   TabStripItem,
 } from "../src/index";
@@ -1092,6 +1099,136 @@ function TabStripDemoPanel({ host }: { host: string }) {
   );
 }
 
+type TableDemoRobot = { id: string; name: string; battery: number };
+
+const TABLE_FILL_ROWS: readonly TableDemoRobot[] = Array.from({ length: 24 }, (_, index) => ({
+  id: `g1-${String(index + 1).padStart(3, "0")}`,
+  name: `G1-${String(index + 1).padStart(3, "0")}`,
+  battery: 5 + ((index * 7) % 95),
+}));
+
+const TABLE_WIDE_COLUMNS: readonly string[] = [
+  "Robot",
+  "Site",
+  "Fleet group",
+  "Firmware",
+  "Last check-in",
+  "Battery",
+  "Connection",
+  "Assigned agent",
+];
+
+/**
+ * Table demo (this task): sticky-header + internal scroll (`fill`), a wide
+ * table proving `TableSurface`'s own overflow-x containment, a sortable +
+ * non-sortable header pair, and the notice strip — the shapes
+ * `table-primitives.e2e.spec.ts` measures in a real browser (jsdom has no
+ * layout, scroll, or sticky positioning).
+ */
+function TableDemoPanel({ host }: { host: string }) {
+  const [direction, setDirection] = useState<TableSortDirection>(null);
+  const sortedRows = [...TABLE_FILL_ROWS].sort((a, b) => {
+    if (direction === null) {
+      return 0;
+    }
+    const delta = a.battery - b.battery;
+    return direction === "asc" ? delta : -delta;
+  });
+
+  return (
+    <Card>
+      <CardHeader
+        title="Table"
+        hint="descendant-selector skin — sticky header, fill scroll, overflow-x"
+      />
+      <TableNotice>Showing {TABLE_FILL_ROWS.length} of 4,201 robots.</TableNotice>
+      {/* (a)/(b): a flex column of fixed height is the ancestor `fill`
+          expects (the real consumer's ListPageLayout body plays this
+          role) — `TableSurface fill` becomes the scroller and the
+          `<thead>` sticks inside it. */}
+      <div
+        data-testid="table-fill-demo"
+        style={{ display: "flex", flexDirection: "column", height: 220 }}
+      >
+        <TableSurface fill>
+          <Table>
+            <thead>
+              <tr>
+                <TableHeaderCell>Robot</TableHeaderCell>
+                <TableHeaderCell
+                  align="end"
+                  sort={{
+                    direction,
+                    onSort: () =>
+                      setDirection((prev) =>
+                        prev === "asc" ? "desc" : prev === "desc" ? null : "asc",
+                      ),
+                  }}
+                >
+                  Battery
+                </TableHeaderCell>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.name}</TableCell>
+                  <TableCell align="end">{row.battery}%</TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
+        </TableSurface>
+      </div>
+      {/* (c): a table wide enough that its columns overflow the card —
+          TableSurface's own `overflow-x: auto` must contain that scroll,
+          not the page. */}
+      <div data-testid="table-wide-demo" style={{ marginTop: 16, maxWidth: 420 }}>
+        <TableSurface>
+          <Table>
+            <thead>
+              <tr>
+                {TABLE_WIDE_COLUMNS.map((column) => (
+                  <TableHeaderCell key={column}>{column}</TableHeaderCell>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <TableRow>
+                {TABLE_WIDE_COLUMNS.map((column) => (
+                  <TableCell key={column}>{column} value</TableCell>
+                ))}
+              </TableRow>
+            </tbody>
+          </Table>
+        </TableSurface>
+      </div>
+      {/* (d): a plain, un-scrolled table whose zebra/hover-wash colours are
+          read directly, per host, by the e2e spec. */}
+      <div data-testid={`table-zebra-demo-${host}`} style={{ marginTop: 16 }}>
+        <TableSurface>
+          <Table>
+            <thead>
+              <tr>
+                <TableHeaderCell>Robot</TableHeaderCell>
+                <TableHeaderCell align="end">Battery</TableHeaderCell>
+              </tr>
+            </thead>
+            <tbody>
+              {TABLE_FILL_ROWS.slice(0, 4).map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.name}</TableCell>
+                  <TableCell align="end">{row.battery}%</TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
+        </TableSurface>
+      </div>
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -1107,6 +1244,7 @@ function App() {
         <AvatarPanel />
         <PageSectionsPanel host="status-webui" />
         <TabStripDemoPanel host="status-webui" />
+        <TableDemoPanel host="status-webui" />
         <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
@@ -1121,6 +1259,7 @@ function App() {
         <AvatarPanel />
         <PageSectionsPanel host="omks-web" />
         <TabStripDemoPanel host="omks-web" />
+        <TableDemoPanel host="omks-web" />
         <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
@@ -1141,6 +1280,7 @@ function App() {
         <AvatarPanel />
         <PageSectionsPanel host="robot-inspection-web" />
         <TabStripDemoPanel host="robot-inspection-web" />
+        <TableDemoPanel host="robot-inspection-web" />
         <DirectManipulationDemo />
       </section>
     </div>

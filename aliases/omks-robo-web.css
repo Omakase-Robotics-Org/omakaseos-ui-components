@@ -89,6 +89,22 @@
   --ds-fact-label-size: var(--text-fact-label);
   --ds-fact-value-size: var(--text-fact-value);
 
+  /* Table — DataTable.module.css (source/service packages/web) is the exact
+     source for every mapping below, matched to preserve the existing
+     dashboard rendering pixel-for-pixel. The internal cell gutter
+     (--space-md, 12px), the heading's vertical pad (--surface-pad-y, 16px)
+     and the sort-icon gap (--space-2xs, 4px) are NOT remapped here: this
+     library's own --ds-space-lg / --ds-space-xl / --ds-space-xs fallbacks
+     already equal those dashboard values by construction (see
+     src/tokens.css's Table section), so Table.module.css reads them
+     directly with no alias entry needed at all. */
+  --ds-table-cell-pad-y: var(--cell-pad-y);
+  --ds-table-cell-pad-y-compact: var(--space-xs);
+  --ds-table-gutter-x: var(--surface-pad-x);
+  --ds-table-zebra: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  --ds-hover-wash: var(--color-hover-wash);
+  --ds-text-subtle: var(--color-text-subtle);
+
   /* Chat bubbles (v0.4) — the dashboard already used --color-primary-soft
    * for the customer turn background in RobotConversationSessionDetail.
    * Mapping the user bubble onto the same token preserves that look while

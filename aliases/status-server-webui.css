@@ -101,4 +101,19 @@
   --ds-caption-bg: rgba(0, 0, 0, 0.85);
   --ds-caption-fg: var(--text-primary);
   --ds-caption-speaker-fg: var(--text-secondary);
+
+  /* Table — hover wash / zebra tint / decorative-icon ink trace to this
+   * host's existing vocabulary. --ds-table-cell-pad-y(-compact) and
+   * --ds-table-gutter-x are left unmapped: rssa's own `src/styles/
+   * variables.css` owns no --space-* scale at all (the same stance this
+   * file already takes for --ds-space-*, which it also does not
+   * redeclare), so there is nothing structural to trace a table cell
+   * padding or surface gutter to. Introducing a bare pixel literal here
+   * instead would be a new alias-purity exception on this file rather
+   * than an actual mapping — Table.module.css's cell-pad-y /
+   * cell-pad-y-compact / gutter-x fall through to src/tokens.css's
+   * library defaults on this host. */
+  --ds-hover-wash: var(--bg-hover);
+  --ds-table-zebra: color-mix(in srgb, var(--bg-inset) 55%, transparent);
+  --ds-text-subtle: var(--text-muted);
 }
