@@ -28,23 +28,38 @@ export type EditRemoveBadgeProps = {
     x: number;
     y: number;
   };
+  state: "idle" | "hover";
 };
 
 const MARK_HALF_FACTOR = 0.42;
 
-/** A small danger badge with a two-stroke remove mark. */
+/**
+ * A small danger badge with a two-stroke remove mark.
+ *
+ * This is a COARSE-input affordance: a fine pointer has no delete badge at all
+ * (it removes with Alt-click, the Delete key, or the host's native control), so
+ * nothing destructive floats beside a precise gesture. `hover` exists for the
+ * tablet-with-a-mouse case where a coarse-declared surface is nonetheless
+ * hovered.
+ */
 export function EditRemoveBadge({
   x,
   y,
   radiusPx = BADGE_RADIUS_PX,
   offsetPx = BADGE_OFFSET_PX,
+  state,
 }: EditRemoveBadgeProps) {
   const badgeX = x + offsetPx.x;
   const badgeY = y + offsetPx.y;
   const markHalf = radiusPx * MARK_HALF_FACTOR;
 
   return (
-    <g className={styles.group} aria-hidden="true" focusable="false">
+    <g
+      className={`${styles.group} ${styles[state]}`}
+      data-state={state}
+      aria-hidden="true"
+      focusable="false"
+    >
       <circle className={styles.badge} cx={badgeX} cy={badgeY} r={radiusPx} />
       <path
         className={styles.mark}

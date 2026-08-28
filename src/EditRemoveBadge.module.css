@@ -24,3 +24,14 @@
   stroke-width: 2;
   stroke-linecap: round;
 }
+
+/* Hovered: the danger register inverts, so the destructive outcome is stated
+ * before the press rather than after it. */
+.hover .badge {
+  fill: var(--ds-tone-danger-fg);
+  stroke: var(--ds-tone-danger-fg);
+}
+
+.hover .mark {
+  stroke: var(--ds-surface);
+}

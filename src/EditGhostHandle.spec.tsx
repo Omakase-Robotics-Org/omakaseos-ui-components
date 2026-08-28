@@ -8,7 +8,7 @@ describe("EditGhostHandle", () => {
   it("renders in an SVG with a fixed hidden, non-focusable boundary", () => {
     const { container } = render(
       <svg>
-        <EditGhostHandle x={42} y={18} />
+        <EditGhostHandle x={42} y={18} state="idle" />
       </svg>,
     );
     const group = container.querySelector("svg > g");
@@ -21,7 +21,7 @@ describe("EditGhostHandle", () => {
   it("draws the default hollow dashed ring at the requested center", () => {
     const { container } = render(
       <svg>
-        <EditGhostHandle x={42} y={18} />
+        <EditGhostHandle x={42} y={18} state="idle" />
       </svg>,
     );
     const ring = container.querySelector("circle");
@@ -35,7 +35,7 @@ describe("EditGhostHandle", () => {
   it("accepts an instance radius without changing its center", () => {
     const { container } = render(
       <svg>
-        <EditGhostHandle x={42} y={18} radiusPx={11} />
+        <EditGhostHandle x={42} y={18} radiusPx={11} state="idle" />
       </svg>,
     );
     const ring = container.querySelector("circle");

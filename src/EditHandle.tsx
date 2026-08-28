@@ -20,26 +20,34 @@ import {
 } from "./direct-manipulation/constants";
 import styles from "./EditHandle.module.css";
 
-/** A handle's visual interaction state. */
+/**
+ * A handle's visual interaction state.
+ *
+ * `primary` is a selected handle that is also the selection's PRIMARY: the one
+ * whose heading knob is shown, and the one a single-target command acts on. It
+ * is drawn as a second, outer ring, so which member of a multi-selection owns
+ * those affordances is readable from the shape rather than inferred.
+ */
 export type EditHandleProps = {
   x: number;
   y: number;
   radiusPx?: number;
-  state: "idle" | "hover" | "selected" | "dragging";
+  state: "idle" | "hover" | "selected" | "primary" | "dragging";
   /** Optional decorative direction tick, in radians. */
   heading?: number;
 };
 
-/* Hover is deliberately a small step; selected/dragging use the grammar's
- * shared scale so the drawn and picked vocabularies agree. */
+/* Hover is deliberately a small step; selected/primary/dragging use the
+ * grammar's shared scale so the drawn and picked vocabularies agree. */
 const HANDLE_HOVER_SCALE = 1.15;
 const HANDLE_TICK_LENGTH_FACTOR = 0.65;
+const HANDLE_PRIMARY_RING_GAP_PX = 4;
 
 function scaleFor(state: EditHandleProps["state"]): number {
   if (state === "hover") {
     return HANDLE_HOVER_SCALE;
   }
-  if (state === "selected" || state === "dragging") {
+  if (state === "selected" || state === "primary" || state === "dragging") {
     return HANDLE_SELECTED_SCALE;
   }
   return 1;
@@ -69,6 +77,14 @@ export function EditHandle({
       aria-hidden="true"
       focusable="false"
     >
+      {state === "primary" ? (
+        <circle
+          className={styles.primaryRing}
+          cx={x}
+          cy={y}
+          r={radius + HANDLE_PRIMARY_RING_GAP_PX}
+        />
+      ) : null}
       <circle className={styles.ring} cx={x} cy={y} r={radius} />
       {heading === undefined ? null : (
         <line

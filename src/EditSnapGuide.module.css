@@ -1,0 +1,51 @@
+/* ---------- EditSnapGuide ----------
+ * The guide is a hairline and the marks are small: this is evidence, not
+ * decoration, and it appears at the exact moment the operator is looking at
+ * the position it explains. Weight ordering follows the snap priority - a
+ * caught vertex is the sharpest mark, the grid the quietest.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.guide {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.mark {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.tile {
+  fill: var(--ds-surface);
+  stroke: var(--ds-accent);
+  stroke-width: 1.5;
+}
+
+.dot {
+  fill: var(--ds-accent);
+  stroke: none;
+}
+
+/* The grid is everywhere; its evidence stays the faintest of the four. */
+.grid .dot {
+  fill: var(--ds-text-muted);
+}
+
+.grid .guide {
+  stroke: var(--ds-text-muted);
+}
+
+/* An alignment's whole statement is the shared axis, so its line carries the
+ * full accent weight instead of the hairline's. */
+.align .guide {
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
+}

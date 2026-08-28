@@ -15,7 +15,7 @@ const meta = {
   argTypes: {
     state: {
       control: { type: "inline-radio" },
-      options: ["idle", "hover", "selected", "dragging"],
+      options: ["idle", "hover", "selected", "primary", "dragging"],
     },
   },
 } satisfies Meta<typeof EditHandle>;
@@ -37,6 +37,15 @@ export const Hover: Story = {
 
 export const Selected: Story = {
   args: { x: 90, y: 60, state: "selected" },
+  render: renderHandle,
+};
+
+/**
+ * Selected AND the selection's primary: the second ring says this is the
+ * member that owns the heading knob and any single-target command.
+ */
+export const Primary: Story = {
+  args: { x: 90, y: 60, state: "primary", heading: 0 },
   render: renderHandle,
 };
 

@@ -1,0 +1,17 @@
+/* ---------- EditMarquee ----------
+ * A dashed accent outline over the softest accent wash the design system has.
+ * The wash is deliberately faint: the rectangle exists to show what is being
+ * gathered, and it must not obscure the handles it is gathering.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.rect {
+  fill: var(--ds-accent-soft);
+  fill-opacity: 0.35;
+  stroke: var(--ds-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}

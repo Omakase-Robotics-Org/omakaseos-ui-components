@@ -75,6 +75,31 @@ describe("EditHandle", () => {
     expect(Number(ring()?.getAttribute("r"))).toBeCloseTo(10 * HANDLE_SELECTED_SCALE);
   });
 
+  it("gives the selection's primary a second, outer ring", () => {
+    // Which member of a multi-selection owns the heading knob has to be
+    // readable from the shape; inferring it from "the one with a knob" fails
+    // exactly when the knob is hidden by the arming radius.
+    const selected = render(
+      <svg>
+        <EditHandle x={20} y={30} radiusPx={10} state="selected" />
+      </svg>,
+    );
+    expect(selected.container.querySelectorAll("circle")).toHaveLength(1);
+
+    const primary = render(
+      <svg>
+        <EditHandle x={20} y={30} radiusPx={10} state="primary" />
+      </svg>,
+    );
+    const circles = primary.container.querySelectorAll("circle");
+    expect(circles).toHaveLength(2);
+    expect(primary.container.querySelector("svg > g")).toHaveAttribute("data-state", "primary");
+    const outer = primary.container.querySelector(`circle.${styles.primaryRing}`);
+    expect(Number(outer?.getAttribute("r"))).toBeGreaterThan(10 * HANDLE_SELECTED_SCALE);
+    expect(outer).toHaveAttribute("cx", "20");
+    expect(outer).toHaveAttribute("cy", "30");
+  });
+
   it("draws an optional direction tick from the scaled ring edge", () => {
     const { container } = render(
       <svg>

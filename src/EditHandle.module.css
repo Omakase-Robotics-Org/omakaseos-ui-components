@@ -42,12 +42,26 @@
 }
 
 .selected .ring,
+.primary .ring,
 .dragging .ring {
   fill: var(--ds-accent);
   stroke: var(--ds-accent);
 }
 
 .selected .tick,
+.primary .tick,
 .dragging .tick {
   stroke: var(--ds-accent);
+}
+
+/* The primary's second ring: the selection member that owns the heading knob
+ * and any single-target command. Drawn as a thin outline so it reads as an
+ * annotation of the filled grip rather than a larger grip. */
+.primaryRing {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 1.5;
+  transition:
+    r var(--ds-transition-fast),
+    stroke var(--ds-transition-fast);
 }

@@ -11,7 +11,7 @@ describe("EditRemoveBadge", () => {
   it("renders as an SVG fragment with a fixed hidden, non-focusable boundary", () => {
     const { container } = render(
       <svg>
-        <EditRemoveBadge x={40} y={50} />
+        <EditRemoveBadge x={40} y={50} state="idle" />
       </svg>,
     );
     const group = container.querySelector("svg > g");
@@ -25,7 +25,7 @@ describe("EditRemoveBadge", () => {
     const y = 50;
     const { container } = render(
       <svg>
-        <EditRemoveBadge x={x} y={y} />
+        <EditRemoveBadge x={x} y={y} state="idle" />
       </svg>,
     );
     const badge = container.querySelector("circle");
@@ -38,7 +38,7 @@ describe("EditRemoveBadge", () => {
   it("draws the remove mark as two foreground paths", () => {
     const { container } = render(
       <svg>
-        <EditRemoveBadge x={40} y={50} radiusPx={10} />
+        <EditRemoveBadge x={40} y={50} radiusPx={10} state="idle" />
       </svg>,
     );
     const paths = container.querySelectorAll("path");
@@ -52,7 +52,7 @@ describe("EditRemoveBadge", () => {
   it("accepts a caller offset without changing the anchor contract", () => {
     const { container } = render(
       <svg>
-        <EditRemoveBadge x={40} y={50} offsetPx={{ x: 4, y: 5 }} />
+        <EditRemoveBadge x={40} y={50} offsetPx={{ x: 4, y: 5 }} state="idle" />
       </svg>,
     );
     const badge = container.querySelector("circle");

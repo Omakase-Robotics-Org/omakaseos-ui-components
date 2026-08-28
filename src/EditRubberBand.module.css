@@ -1,0 +1,32 @@
+/* ---------- EditRubberBand ----------
+ * The pending leg is thinner than a committed one (EditHandle's path stroke is
+ * 3): what has not been placed yet must not look placed. The constrained state
+ * thickens it slightly and drops the dash, so "the modifier is holding this
+ * line" is legible without color alone.
+ */
+
+.group {
+  overflow: visible;
+}
+
+.band {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 6 3;
+}
+
+.closing {
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.constrained .band {
+  stroke-width: 2;
+  stroke-dasharray: none;
+}

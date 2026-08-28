@@ -17,3 +17,15 @@
     fill var(--ds-transition-fast),
     stroke var(--ds-transition-fast);
 }
+
+.hover .ring {
+  stroke: var(--ds-accent-hover);
+}
+
+/* The drop destination of a live insertion: a solid outline, because at this
+ * moment the point is no longer hypothetical. */
+.target .ring {
+  stroke: var(--ds-accent);
+  stroke-dasharray: none;
+  stroke-width: 2.5;
+}

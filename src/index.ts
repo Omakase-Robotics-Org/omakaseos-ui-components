@@ -107,6 +107,19 @@ export type { EditHeadingKnobProps } from "./EditHeadingKnob";
 export { EditRemoveBadge } from "./EditRemoveBadge";
 export type { EditRemoveBadgeProps } from "./EditRemoveBadge";
 
+/* The editing glyphs live in the ROOT barrel, never in the
+ * `./direct-manipulation` subpath: that subpath is classified
+ * "kernel-no-components" and mechanically verified to export zero
+ * component-shaped runtime values (spec/storybook-coverage.spec.ts). */
+export { EditMarquee } from "./EditMarquee";
+export type { EditMarqueeProps } from "./EditMarquee";
+
+export { EditSnapGuide } from "./EditSnapGuide";
+export type { EditSnapGuideProps } from "./EditSnapGuide";
+
+export { EditRubberBand } from "./EditRubberBand";
+export type { EditRubberBandProps } from "./EditRubberBand";
+
 export { ButtonRow } from "./ButtonRow";
 
 // v0.10: promoted from robot-status-server-app — see the file header above.
