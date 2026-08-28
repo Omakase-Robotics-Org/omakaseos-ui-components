@@ -112,6 +112,8 @@ export type { SignalBarsProps } from "./SignalBars";
 export { ReservedText } from "./ReservedText";
 export type { ReservedTextTone, ReservedTextProps } from "./ReservedText";
 
+export { EmptyNote } from "./EmptyNote";
+
 // v0.11: feedback primitives. Both are presentational — the host owns the
 // timer and the placement; see each file's header.
 export { Spinner } from "./Spinner";
@@ -123,6 +125,8 @@ export type { ToastProps, ToastTone } from "./Toast";
 // Form & layout primitives (v0.3)
 export { Button } from "./Button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
+
+export { RemovableChip } from "./RemovableChip";
 
 export { Input } from "./Input";
 export type { InputProps, InputSize } from "./Input";

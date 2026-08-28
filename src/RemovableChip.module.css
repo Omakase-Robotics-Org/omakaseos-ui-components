@@ -1,0 +1,54 @@
+/* ---------- RemovableChip ----------
+ * The entire chip is one press target. The flexible label truncates first so
+ * the remove glyph remains inside the chip when a host constrains its width.
+ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  /* 4px gap / 4px 8px padding — matched by VALUE to the proven dashboard chip
+   * (its brand scale names shift by one step from ours: their 2xs is 4px).
+   * Mapping by token NAME here would silently shrink every chip by 2px. */
+  gap: var(--ds-space-xs);
+  padding: var(--ds-space-xs) var(--ds-space-md);
+  background: var(--ds-control-bg);
+  color: var(--ds-control-ink);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-chip);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--ds-font-size-label);
+  max-width: 100%;
+  overflow: hidden;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.chip:hover {
+  background: var(--ds-control-bg-hover);
+  color: var(--ds-control-ink-hover);
+}
+
+.chip:focus-visible {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: 1px;
+}
+
+.chip[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: var(--ds-disabled-opacity);
+}
+
+.label {
+  /* Let the long flex item yield before the fixed-width remove glyph. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove {
+  flex: 0 0 auto;
+  font-size: 1.1em;
+  line-height: 1;
+  color: var(--ds-text-muted);
+}

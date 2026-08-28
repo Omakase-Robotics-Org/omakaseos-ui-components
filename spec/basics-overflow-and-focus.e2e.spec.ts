@@ -247,6 +247,42 @@ test("Checkbox label has truncation styles + does not overflow its parent", asyn
   expect(wrapMeta.scrollWidth).toBeLessThanOrEqual(wrapMeta.clientWidth + 1);
 });
 
+test("RemovableChip keeps its × glyph inside a constrained chip box", async ({ page }) => {
+  const host = page.locator(".host--omks-web");
+  const wrapper = host.locator('[data-testid="long-removable-chip"]').first();
+  const chip = wrapper.locator('button[role="listitem"]');
+  const label = chip.locator('span:not([aria-hidden="true"])');
+  const glyph = chip.locator('span[aria-hidden="true"]');
+
+  await chip.scrollIntoViewIfNeeded();
+  await expect(chip).toHaveAttribute("aria-label", /Remove Organization/);
+
+  const wrapperBox = await wrapper.boundingBox();
+  const chipBox = await chip.boundingBox();
+  const glyphBox = await glyph.boundingBox();
+  const labelMeta = await label.evaluate((el) => {
+    const cs = globalThis.getComputedStyle(el as HTMLElement);
+    return {
+      textOverflow: cs.textOverflow,
+      whiteSpace: cs.whiteSpace,
+      clientWidth: (el as HTMLElement).clientWidth,
+      scrollWidth: (el as HTMLElement).scrollWidth,
+    };
+  });
+  if (!wrapperBox || !chipBox || !glyphBox) {
+    throw new Error("RemovableChip layout not measurable");
+  }
+
+  expect(labelMeta.textOverflow).toBe("ellipsis");
+  expect(labelMeta.whiteSpace).toBe("nowrap");
+  expect(chipBox.width).toBeLessThanOrEqual(wrapperBox.width + 1);
+  expect(labelMeta.scrollWidth).toBeGreaterThan(labelMeta.clientWidth);
+  expect(glyphBox.x).toBeGreaterThanOrEqual(chipBox.x - 0.5);
+  expect(glyphBox.x + glyphBox.width).toBeLessThanOrEqual(
+    chipBox.x + chipBox.width + 1,
+  );
+});
+
 test("Switch carries role=switch (not checkbox)", async ({ page }) => {
   const host = page.locator(".host--omks-web");
   const sw = host.locator('input[role="switch"]').first();

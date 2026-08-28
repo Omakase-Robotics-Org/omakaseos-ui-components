@@ -1,0 +1,6 @@
+/* EmptyNote — muted placeholder text for empty/unavailable content. */
+
+.note {
+  margin: 0;
+  color: var(--ds-text-muted);
+}

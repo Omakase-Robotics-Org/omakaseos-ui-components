@@ -36,6 +36,7 @@ import {
   ParticipantTile,
   RankChip,
   RealtimeEventLog,
+  RemovableChip,
   ReservedText,
   Section,
   SectionHeader,
@@ -98,6 +99,9 @@ const LONG_HEADING =
 
 const LONG_OPTION =
   "Option with a label far longer than the select control width — must ellipsize";
+
+const LONG_CHIP_LABEL =
+  "Organization: THIS_IS_A_VERY_LONG_FILTER_LABEL_THAT_MUST_TRUNCATE_BEFORE_THE_REMOVE_GLYPH";
 
 function BasicsPanel() {
   const [searchValue, setSearchValue] = useState(LONG_VALUE);
@@ -177,6 +181,14 @@ function BasicsPanel() {
             </svg>
           </Button>
         </div>
+      </div>
+
+      <div data-testid="long-removable-chip" style={{ width: 220 }}>
+        <RemovableChip
+          label={LONG_CHIP_LABEL}
+          onRemove={() => {}}
+          removeAriaLabel={`Remove ${LONG_CHIP_LABEL}`}
+        />
       </div>
 
       <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
