@@ -5,12 +5,14 @@
  * (src/<Name>.stories.tsx) so they share their location with the
  * component, the unit spec, and the CSS module — easy to keep aligned.
  *
- * The four story categories (Status, Form, Chat-log, Live-stage)
- * mirror the library's published surface layers:
+ * The five story categories (Status, Form, Chat-log, Live-stage,
+ * DirectManipulation) mirror the library's published surface layers:
  *   - v0.1–v0.2: status primitives
  *   - v0.3:      form / layout primitives
  *   - v0.4:      conversation-log primitives (past-tense transcript)
  *   - v0.5:      live-conversation primitives (1:n stage)
+ *   - v0.16:     direct-manipulation primitives (map-editor SVG fragments
+ *                + the headless editing kernel)
  *
  * The `viteFinal` hook lets us keep the demo's host-aware CSS aliasing
  * working unchanged: each story decorator chooses a host class on the

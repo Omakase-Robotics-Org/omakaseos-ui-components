@@ -76,6 +76,7 @@ const preview: Preview = {
           "Form",
           "Chat-log",
           "Live-stage",
+          "DirectManipulation",
         ],
       },
     },
