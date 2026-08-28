@@ -523,9 +523,18 @@ export function DirectManipulationDemo() {
   const areaSelected = selection.targets.some(
     (target) => target.kind === "area" && target.id === AREA_ID,
   );
+  // The knob is drawn from what the grammar REVEALS, not from "something is
+  // selected": that is the rule that keeps a rotation target from floating
+  // beside a neighbouring waypoint, and drawing it only while it is hovered
+  // would make it impossible to find.
+  const revealedKnob = surface.revealedKnob;
   const headingAnchor =
-    primaryHandle === null ? null : headingKnobAt(primaryHandle, HEADING_ARM_PX);
-  const knobVisible = surface.affordance.kind === "knob" || surfaceDrag?.kind === "rotate";
+    revealedKnob !== null
+      ? revealedKnob.at
+      : primaryHandle === null
+        ? null
+        : headingKnobAt(primaryHandle, HEADING_ARM_PX);
+  const knobVisible = revealedKnob !== null || surfaceDrag?.kind === "rotate";
   const badgesVisible = surface.modality === "coarse";
 
   const selectAppendMode = useCallback(() => {
