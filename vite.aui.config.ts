@@ -51,6 +51,12 @@ export default defineConfig({
       entryRoot: resolve(here, "./src/aui"),
       outDir: resolve(here, "./dist/aui"),
       include: ["src/aui/**/*.ts", "src/aui/**/*.tsx"],
+      // Storybook-only files (module-unit `*.stories.tsx` + the shared
+      // `AuiStoryStage.tsx` mounting helper) live under src/aui/ so stories
+      // sit next to the component they demo, but neither is part of the
+      // published `./aui` surface — excluded so `bun run build:aui` doesn't
+      // leak story .d.ts stubs into dist/aui/ on every story edit.
+      exclude: ["src/aui/**/*.stories.tsx", "src/aui/AuiStoryStage.tsx"],
       tsconfigPath: resolve(here, "./tsconfig.json"),
     }),
   ],

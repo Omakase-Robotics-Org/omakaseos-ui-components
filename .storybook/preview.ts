@@ -77,6 +77,7 @@ const preview: Preview = {
           "Chat-log",
           "Live-stage",
           "DirectManipulation",
+          "Aui",
         ],
       },
     },

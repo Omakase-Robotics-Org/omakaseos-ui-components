@@ -5,14 +5,19 @@
  * (src/<Name>.stories.tsx) so they share their location with the
  * component, the unit spec, and the CSS module — easy to keep aligned.
  *
- * The five story categories (Status, Form, Chat-log, Live-stage,
- * DirectManipulation) mirror the library's published surface layers:
+ * The six story categories (Status, Form, Chat-log, Live-stage,
+ * DirectManipulation, Aui) mirror the library's published surface layers:
  *   - v0.1–v0.2: status primitives
  *   - v0.3:      form / layout primitives
  *   - v0.4:      conversation-log primitives (past-tense transcript)
  *   - v0.5:      live-conversation primitives (1:n stage)
  *   - v0.16:     direct-manipulation primitives (map-editor SVG fragments
  *                + the headless editing kernel)
+ *   - v0.6:      the vendored `src/aui/` assistant-ui surface (Thread /
+ *                MarkdownText / Tool / Reasoning / Voice / shadcn `ui/*`),
+ *                one story file per module under `Aui/*` — see
+ *                `src/aui/AuiStoryStage.tsx` for the shared mounting
+ *                helpers every `Aui/*` story uses.
  *
  * The `viteFinal` hook lets us keep the demo's host-aware CSS aliasing
  * working unchanged: each story decorator chooses a host class on the
