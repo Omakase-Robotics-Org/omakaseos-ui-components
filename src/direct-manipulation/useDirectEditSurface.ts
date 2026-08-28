@@ -59,6 +59,7 @@ import {
   type EditMode,
   type EditModifiers,
   type EditMove,
+  type EditProbe,
   type EditScene,
   type EditScreenMarquee,
   type EditScreenRank,
@@ -211,9 +212,35 @@ type ReleaseOutcome =
   | { readonly kind: "none" };
 
 const NO_MODIFIERS: EditModifiers = { shift: false, alt: false };
+/** The declared delegation: this surface's cursor is the host's own. */
+const HOST_RESTING: EditCursor = { name: "host-resting", value: null };
 
 function captureTargetFor(target: EventTarget): PointerCaptureTarget {
   return target as PointerCaptureTarget;
+}
+
+/**
+ * Take pointer capture, reporting whether it was actually taken.
+ *
+ * Capture is an ENHANCEMENT: it keeps the moves coming while the pointer
+ * wanders outside the element. The gesture is complete without it, and the
+ * browser legitimately refuses it when the id names no live pointer - a
+ * synthetic pointer event (which this library's own coarse browser proof
+ * dispatches) or a pointer released between dispatch and handler. Letting that
+ * throw would abort a press for a reason that changes nothing about what the
+ * gesture means, so the refusal is recorded rather than raised: `captured` is
+ * false and every release path already reads it.
+ */
+function capturePointer(target: PointerCaptureTarget, pointerId: number): boolean {
+  if (target.setPointerCapture === undefined) {
+    return false;
+  }
+  try {
+    target.setPointerCapture(pointerId);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function sameVertex(a: Vertex, b: Vertex): boolean {
@@ -321,6 +348,10 @@ export function useDirectEditSurface(
   const [dragClass, setDragClass] = useState<GripClass | null>(null);
   const [knob, setKnob] = useState<{ readonly id: string; readonly at: Vertex } | null>(null);
   const knobRef = useRef<{ readonly id: string; readonly at: Vertex } | null>(null);
+  // The surface starts delegated: nothing is under the pointer yet, so the
+  // host's own resting cursor governs it.
+  const [cursor, setCursor] = useState<EditCursor>(HOST_RESTING);
+  const cursorRef = useRef<EditCursor>(HOST_RESTING);
 
   const pressRef = useRef<ActivePress | null>(null);
   const pendingMoveRef = useRef<PendingMove | null>(null);
@@ -400,6 +431,15 @@ export function useDirectEditSurface(
     setDragClass(null);
   }, [setDragPreview]);
 
+  const updateCursor = useCallback((next: EditCursor) => {
+    const current = cursorRef.current;
+    if (current.name === next.name && current.value === next.value) {
+      return;
+    }
+    cursorRef.current = next;
+    setCursor(next);
+  }, []);
+
   const updateRevealedKnob = useCallback(
     (next: { readonly id: string; readonly at: Vertex } | null) => {
       const current = knobRef.current;
@@ -473,6 +513,22 @@ export function useDirectEditSurface(
     [probeAt, updatePendingPreview],
   );
 
+  /**
+   * Resolve what is under the pointer AND the cursor that names it, from the
+   * SAME probe. Deriving the cursor separately at render time let the two
+   * disagree - a ghost drawn for an Alt the cursor no longer knew about - and
+   * one probe makes that state unrepresentable.
+   */
+  const resolveUnderPointer = useCallback(
+    (probe: EditProbe, dragging: GripClass | null) => {
+      const affordance = resolveAffordance(probe);
+      updateAffordance(affordance);
+      updateCursor(cursorFor(affordance, { probe, dragging }));
+      return affordance;
+    },
+    [updateAffordance, updateCursor],
+  );
+
   const refreshHover = useCallback(() => {
     const last = lastClientRef.current;
     if (last === null || pressRef.current !== null) {
@@ -481,14 +537,22 @@ export function useDirectEditSurface(
     const at = optionsRef.current.toWorld(last.x, last.y);
     if (at === null) {
       updateAffordance({ kind: "none" });
+      updateCursor(HOST_RESTING);
       updateRevealedKnob(null);
     } else {
       const probe = probeAt(at);
-      updateAffordance(resolveAffordance(probe));
+      resolveUnderPointer(probe, null);
       updateRevealedKnob(revealedKnob(probe));
     }
     updatePending(at);
-  }, [probeAt, updateAffordance, updatePending, updateRevealedKnob]);
+  }, [
+    probeAt,
+    resolveUnderPointer,
+    updateAffordance,
+    updateCursor,
+    updatePending,
+    updateRevealedKnob,
+  ]);
 
   const updateLiveDrag = useCallback(
     (press: ActivePress, at: Vertex) => {
@@ -497,11 +561,13 @@ export function useDirectEditSurface(
         return;
       }
       const probe = probeAt(at);
+      const dragging = gripClassOf(grip);
       if (grip.kind === "move-set") {
         const { moves, resolved } = resolveMoveSet(grip, at, probe);
+        dragStateDirtyRef.current = true;
         setDragPreview({ kind: "move-set", moves });
         setDragFeedback({ grip, resolved, members: moves });
-        updateAffordance(resolveAffordance(probe));
+        resolveUnderPointer(probe, dragging);
         return;
       }
       if (grip.kind === "insert" || grip.kind === "insert-vertex") {
@@ -518,12 +584,13 @@ export function useDirectEditSurface(
               },
         );
         setDragFeedback({ grip, resolved, members: [] });
-        updateAffordance(resolveAffordance(probe));
+        resolveUnderPointer(probe, dragging);
         return;
       }
       if (grip.kind === "rotate") {
         const yaw = resolveRotation(grip, at, probe);
         dragStateDirtyRef.current = true;
+        updateCursor(cursorFor({ kind: "none" }, { probe, dragging }));
         setDragPreview({ kind: "rotate", id: grip.id, yaw });
         setDragFeedback({
           grip,
@@ -534,6 +601,7 @@ export function useDirectEditSurface(
       }
       const outcome = marqueeTargets(probe, grip.from, at);
       dragStateDirtyRef.current = true;
+      updateCursor(cursorFor({ kind: "none" }, { probe, dragging }));
       setDragPreview({ kind: "marquee", from: grip.from, to: at });
       setMarquee({
         from: grip.from,
@@ -547,7 +615,7 @@ export function useDirectEditSurface(
         members: [],
       });
     },
-    [probeAt, setDragPreview, updateAffordance],
+    [probeAt, resolveUnderPointer, setDragPreview, updateCursor],
   );
 
   const processPointerMove = useCallback(
@@ -568,10 +636,11 @@ export function useDirectEditSurface(
         const at = current.toWorld(move.clientX, move.clientY);
         if (at === null) {
           updateAffordance({ kind: "none" });
+          updateCursor(HOST_RESTING);
           updateRevealedKnob(null);
         } else {
           const probe = probeAt(at);
-          updateAffordance(resolveAffordance(probe));
+          resolveUnderPointer(probe, null);
           updateRevealedKnob(revealedKnob(probe));
         }
         updatePending(at);
@@ -600,7 +669,15 @@ export function useDirectEditSurface(
       press.offFloor = false;
       updateLiveDrag(press, at);
     },
-    [probeAt, updateAffordance, updateLiveDrag, updatePending, updateRevealedKnob],
+    [
+      probeAt,
+      resolveUnderPointer,
+      updateAffordance,
+      updateCursor,
+      updateLiveDrag,
+      updatePending,
+      updateRevealedKnob,
+    ],
   );
 
   const releaseCapture = useCallback(
@@ -668,8 +745,7 @@ export function useDirectEditSurface(
       if (grip !== null) {
         press.locked = true;
         press.lockHandler?.(true);
-        press.captureTarget.setPointerCapture?.(event.pointerId);
-        press.captured = press.captureTarget.setPointerCapture !== undefined;
+        press.captured = capturePointer(press.captureTarget, event.pointerId);
       }
     },
     [clearDragState, observePointerType, probeAt, setCurrentModifiers, setResidentFlag],
@@ -742,6 +818,11 @@ export function useDirectEditSurface(
             : { kind: "intent", intent: resolveClick(probeAt(at)) };
 
       discardPress(press, event.currentTarget);
+      if (at !== null) {
+        // The gesture is over: say what is under the pointer NOW rather than
+        // leaving `grabbing` on the surface until it next moves.
+        resolveUnderPointer(probeAt(at), null);
+      }
 
       if (outcome.kind === "refused") {
         current.onRefused?.(outcome.reason);
@@ -754,7 +835,7 @@ export function useDirectEditSurface(
         }
       }
     },
-    [discardPress, observePointerType, probeAt, setCurrentModifiers],
+    [discardPress, observePointerType, probeAt, resolveUnderPointer, setCurrentModifiers],
   );
 
   const handlePointerCancel: React.PointerEventHandler = useCallback(
@@ -771,11 +852,22 @@ export function useDirectEditSurface(
   const handlePointerEnter: React.PointerEventHandler = useCallback(
     (event) => {
       observePointerType(event.pointerType);
-      setCurrentModifiers({ shift: event.shiftKey, alt: event.altKey });
+      // Deliberately NOT a modifier source. Chromium re-dispatches boundary
+      // events after a modifier key changes, and that replayed pointerenter
+      // carries the OLD modifier flags - reading it undid the Alt the operator
+      // was holding while the affordance beneath it stayed armed for insertion.
+      // A modifier belongs to a gesture (down / move / up) or to the key
+      // listeners; entering a region is neither.
       lastClientRef.current = { x: event.clientX, y: event.clientY };
       setResidentFlag(true);
+      // Answer for the position the pointer entered at, so an armed surface
+      // says "click places a point" on arrival rather than after the first move.
+      const at = optionsRef.current.toWorld(event.clientX, event.clientY);
+      if (at !== null) {
+        resolveUnderPointer(probeAt(at), null);
+      }
     },
-    [observePointerType, setCurrentModifiers, setResidentFlag],
+    [observePointerType, probeAt, resolveUnderPointer, setResidentFlag],
   );
 
   const handlePointerLeave: React.PointerEventHandler = useCallback(
@@ -786,6 +878,7 @@ export function useDirectEditSurface(
         setResidentFlag(false);
         lastClientRef.current = null;
         updateAffordance({ kind: "none" });
+        updateCursor(HOST_RESTING);
         updatePendingPreview(null);
         return;
       }
@@ -797,7 +890,14 @@ export function useDirectEditSurface(
         lastClientRef.current = null;
       }
     },
-    [discardPress, observePointerType, setResidentFlag, updateAffordance, updatePendingPreview],
+    [
+      discardPress,
+      observePointerType,
+      setResidentFlag,
+      updateAffordance,
+      updateCursor,
+      updatePendingPreview,
+    ],
   );
 
   const handleDoubleClick: React.MouseEventHandler = useCallback(
@@ -913,26 +1013,6 @@ export function useDirectEditSurface(
     [modality, options.scene],
   );
 
-  // The cursor decision reads the probe's DECLARATIONS (mode, modality,
-  // modifiers, selection) and never its position — the affordance already
-  // carries the hit — so those are what this memo depends on.
-  const cursor = useMemo<EditCursor>(
-    () =>
-      cursorFor(affordance, {
-        probe: probeAt(affordanceProbePosition(affordance)),
-        dragging: dragClass,
-      }),
-    [
-      affordance,
-      dragClass,
-      modality,
-      modifiers,
-      options.mode,
-      options.selection,
-      probeAt,
-    ],
-  );
-
   const surfaceProps = useMemo<DirectEditSurface["surfaceProps"]>(() => {
     const base = {
       onPointerDown: handlePointerDown,
@@ -975,11 +1055,4 @@ export function useDirectEditSurface(
   };
 }
 
-/**
- * A position to build a probe from when only the affordance is at hand. The
- * cursor decision never reads the position, so any point serves; the
- * affordance's own point is used where it carries one.
- */
-function affordanceProbePosition(affordance: EditAffordance): Vertex {
-  return "at" in affordance ? affordance.at : { x: 0, y: 0 };
-}
+

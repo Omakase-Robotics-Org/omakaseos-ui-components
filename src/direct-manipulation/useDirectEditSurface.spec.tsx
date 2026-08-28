@@ -699,12 +699,24 @@ describe("useDirectEditSurface", () => {
 
   it("names its cursor and affordance on the surface, and exposes nothing else", () => {
     const { getByTestId, observed } = renderProbe(optionsFor({ mode: "append" }));
-    const props = surfaceOf(observed).surfaceProps;
+    const surface = getByTestId("surface") as HTMLElement;
 
+    // Before any pointer has arrived there is nothing under it, so the host's
+    // own resting cursor governs the surface - stated, not omitted.
+    expect(surfaceOf(observed).surfaceProps["data-edit-cursor"]).toBe("host-resting");
+    expect(surfaceOf(observed).surfaceProps.style).toEqual({});
+
+    fireEvent.pointerEnter(surface, {
+      pointerId: 1,
+      pointerType: "mouse",
+      clientX: 20,
+      clientY: 4,
+    });
+    const props = surfaceOf(observed).surfaceProps;
     expect(props.style).toEqual({ cursor: "crosshair" });
     expect(props["data-edit-cursor"]).toBe("draw");
-    expect(props["data-edit-affordance"]).toBe("none");
-    expect(getByTestId("surface").getAttribute("data-edit-cursor")).toBe("draw");
+    expect(props["data-edit-affordance"]).toBe("floor");
+    expect(surface.getAttribute("data-edit-cursor")).toBe("draw");
     expect(Object.keys(props).sort()).toEqual([
       "data-edit-affordance",
       "data-edit-cursor",

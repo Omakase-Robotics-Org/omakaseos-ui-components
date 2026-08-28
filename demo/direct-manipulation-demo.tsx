@@ -52,6 +52,7 @@ import {
   pruneSelection,
   redoEdit,
   sameTarget,
+  sameVertex,
   selectTargets,
   undoEdit,
   useDirectEditSurface,
@@ -281,7 +282,10 @@ export function DirectManipulationDemo() {
   );
   const [cameraLocked, setCameraLocked] = useState(false);
   const [status, setStatus] = useState("ready");
-  const [magnet, setMagnet] = useState(true);
+  // The magnet starts OFF in the harness so every other scene reads a raw
+  // pointer position; the snap scenes turn it on through the chrome, which is
+  // also how they prove the toggle works. A product host may well default it on.
+  const [magnet, setMagnet] = useState(false);
   const [gridOn, setGridOn] = useState(false);
   const [gridDeclared, setGridDeclared] = useState(true);
   const [stickyAdd, setStickyAdd] = useState(false);
@@ -320,8 +324,18 @@ export function DirectManipulationDemo() {
   const placeOnRun = useCallback(
     (at: Vertex) => {
       const active: ActiveRun = run ?? { pathId: PATH_ID, endpoint: "tail", placed: 0 };
-      const placedPoint = createPoint(at);
       const points = pathOf(session.current, active.pathId);
+      const previous = active.endpoint === "head" ? points[0] : points[points.length - 1];
+      if (previous !== undefined && sameVertex(previous, at) && run !== null) {
+        // A point on top of the previous one is a DOUBLE CLICK, not an
+        // intention - the convention geometry.ts states for rings, applied to a
+        // run. It is what lets a double click end a run without leaving a
+        // duplicate behind: the first of its two clicks places, the second
+        // coincides and is collapsed, and the dblclick then finishes.
+        setDrawing([at]);
+        return;
+      }
+      const placedPoint = createPoint(at);
       const next =
         active.endpoint === "head" ? [placedPoint, ...points] : [...points, placedPoint];
       commitDocument(withPath(session.current, active.pathId, next));
@@ -404,6 +418,12 @@ export function DirectManipulationDemo() {
           placeOnRun(intent.at);
           return;
         case "draw": {
+          const last = drawing?.[drawing.length - 1];
+          if (last !== undefined && sameVertex(last, intent.at)) {
+            // Same convention as a run: a corner on top of the previous corner
+            // is the second half of a double click.
+            return;
+          }
           const nextDrawing = [...(drawing ?? []), intent.at];
           setDrawing(nextDrawing);
           commitDocument({ ...session.current, ring: nextDrawing });
@@ -562,6 +582,13 @@ export function DirectManipulationDemo() {
       : null;
   const edgePoints = highlightedEdgePoints(highlightedEdge, renderedDocument);
   const activeSnap = surface.dragFeedback?.resolved.snap ?? surface.pending?.resolved.snap ?? null;
+  // A constrained drag has to say so while it is happening: the modifier's
+  // effect is otherwise invisible until the release has already committed it.
+  const dragFeedback = surface.dragFeedback;
+  const constraintGuide =
+    dragFeedback !== null && dragFeedback.resolved.constrained && dragFeedback.grip.kind === "move-set"
+      ? { from: dragFeedback.grip.members[0]?.from ?? dragFeedback.grip.origin, to: dragFeedback.resolved.at }
+      : null;
   const marquee = surface.marquee;
   const pending = surface.pending;
 
@@ -657,7 +684,7 @@ export function DirectManipulationDemo() {
               handleIntent({ kind: "delete-set", targets: selection.targets });
             }}
           >
-            Delete selection
+            Remove selected
           </Button>
           <Button
             size="sm"
@@ -795,6 +822,15 @@ export function DirectManipulationDemo() {
             {marquee === null ? null : (
               <g data-testid="dm-marquee">
                 <EditMarquee from={marquee.from} to={marquee.to} />
+              </g>
+            )}
+            {constraintGuide === null ? null : (
+              <g data-testid="dm-constraint-guide">
+                <EditRubberBand
+                  from={constraintGuide.from}
+                  to={constraintGuide.to}
+                  state="constrained"
+                />
               </g>
             )}
             {pending === null ? null : (

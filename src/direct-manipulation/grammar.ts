@@ -1652,6 +1652,21 @@ export const AREA_MUST_CLOSE = "An area must be closed.";
 /** The refusal a ring with too few corners earns when asked to close. */
 export const AREA_TOO_FEW = "An area needs at least 3 corners before it can be closed.";
 
+/**
+ * Where a placed point lands: the pointer position after the constraint and
+ * the magnet have had their say, measured from the run's last point.
+ *
+ * The rubber band shows this position before the click, so the click must
+ * commit the SAME one. Placing the raw pointer position instead would make the
+ * preview a lie in exactly the cases the operator relies on it - a 45-degree
+ * leg, or a corner landing on an existing vertex.
+ */
+function placementPosition(probe: EditProbe): Vertex {
+  const run = probe.drawing ?? [];
+  const origin = run[run.length - 1] ?? null;
+  return resolvePosition(probe.at, { origin, probe, exclude: [] }).at;
+}
+
 /** Select, toggle, isolate, or deselect — the whole non-destructive click vocabulary. */
 function selectionClick(probe: EditProbe, target: EditTarget): EditIntent {
   if (probe.modifiers.shift) {
@@ -1694,7 +1709,7 @@ export function resolveClick(probe: EditProbe): EditIntent {
     if (affordance.kind === "run-last") {
       return { kind: "finish-run" };
     }
-    return { kind: "place", at: probe.at };
+    return { kind: "place", at: placementPosition(probe) };
   }
 
   if (probe.mode === "draw-area") {
@@ -1707,7 +1722,7 @@ export function resolveClick(probe: EditProbe): EditIntent {
     if (affordance.kind === "run-last") {
       return { kind: "refused", reason: AREA_MUST_CLOSE };
     }
-    return { kind: "draw", at: probe.at };
+    return { kind: "draw", at: placementPosition(probe) };
   }
 
   switch (affordance.kind) {
