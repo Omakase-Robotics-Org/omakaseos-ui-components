@@ -52,6 +52,7 @@ import {
   StatusBadge,
   StatusGlyph,
   Switch,
+  TabStrip,
   Textarea,
   Toast,
   ToggleSwitch,
@@ -68,6 +69,8 @@ import type {
   PagerLabels,
   RankLevel,
   RealtimeEventEntry,
+  TabStripEditing,
+  TabStripItem,
 } from "../src/index";
 
 import "./hosts.css";
@@ -1006,6 +1009,89 @@ function AvatarPanel() {
   );
 }
 
+/* ---------------- v1.13: TabStrip / Tabs ----------------
+ *
+ * jsdom cannot see the two claims that are this component's reason for
+ * existing:
+ *   - the rename editor's slot never jumps (no reflow engine to measure)
+ *   - the active underline visually sits on the slot, over the shared
+ *     tablist rule, and spans the label AND its adornment
+ * so both are measured here in a real browser by
+ * spec/tabstrip-rename-and-nav.e2e.spec.ts. "logs" is the tab used for
+ * both the rename (double-click) and the underline+adornment check —
+ * its adornment is a fixed-size dot, so it contributes the SAME width at
+ * rest/edit-start and at mid-typing/after-commit, and does not disturb
+ * the no-shift equalities the spec checks.
+ */
+type DemoTabId = "overview" | "config" | "logs";
+
+const TABSTRIP_DEMO_ITEMS: readonly TabStripItem<DemoTabId>[] = [
+  { id: "overview", label: "Overview" },
+  { id: "config", label: "Config" },
+  { id: "logs", label: "Logs" },
+];
+
+function TabStripDemoPanel({ host }: { host: string }) {
+  const [value, setValue] = useState<DemoTabId>("overview");
+  const [items, setItems] = useState(TABSTRIP_DEMO_ITEMS);
+  const [editingId, setEditingId] = useState<DemoTabId | null>(null);
+
+  const editing: TabStripEditing<DemoTabId> | null =
+    editingId === null
+      ? null
+      : {
+          id: editingId,
+          defaultValue: items.find((item) => item.id === editingId)?.label ?? "",
+          placeholder: "Untitled view",
+          ariaLabel: "Rename view",
+          onCommit: (name) => {
+            setItems((prev) =>
+              prev.map((item) =>
+                item.id === editingId ? { ...item, label: name || item.label } : item,
+              ),
+            );
+            setEditingId(null);
+          },
+          onCancel: () => setEditingId(null),
+        };
+
+  return (
+    <Card>
+      <CardHeader
+        title="TabStrip (v1.13)"
+        hint="roving tabindex + no-shift in-place rename + underline over the shared rule"
+      />
+      <div data-testid="tabstrip-demo">
+        <TabStrip
+          items={items}
+          value={value}
+          onChange={setValue}
+          idPrefix={`${host}-tabstrip`}
+          ariaLabel="Demo views"
+          itemAdornment={(id) =>
+            id === "logs" ? (
+              <span
+                data-testid="tabstrip-adornment-logs"
+                aria-hidden
+                style={{
+                  marginLeft: 4,
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "var(--ds-tone-danger-fg)",
+                  display: "inline-block",
+                }}
+              />
+            ) : null
+          }
+          editing={editing}
+          onItemDoubleClick={(id) => setEditingId(id)}
+        />
+      </div>
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -1020,6 +1106,7 @@ function App() {
         <ShapeStatusPanel />
         <AvatarPanel />
         <PageSectionsPanel host="status-webui" />
+        <TabStripDemoPanel host="status-webui" />
         <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
@@ -1033,6 +1120,7 @@ function App() {
         <ShapeStatusPanel />
         <AvatarPanel />
         <PageSectionsPanel host="omks-web" />
+        <TabStripDemoPanel host="omks-web" />
         <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
@@ -1052,6 +1140,7 @@ function App() {
         <ShapeStatusPanel />
         <AvatarPanel />
         <PageSectionsPanel host="robot-inspection-web" />
+        <TabStripDemoPanel host="robot-inspection-web" />
         <DirectManipulationDemo />
       </section>
     </div>

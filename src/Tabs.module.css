@@ -1,0 +1,18 @@
+/* Tabs — strip + mounted panel. The dashboard ref's sibling stylesheet was
+   recovered after the initial port: both the surface and the mounted panel
+   are 16px column stacks (the proven consumer rhythm), matched by VALUE to
+   --ds-space-xl (the dashboard's --space-lg is 16px; its scale is shifted
+   one step from ours — mapping by token NAME would tighten both stacks). */
+
+.surface {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-xl);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-xl);
+  min-width: 0;
+}

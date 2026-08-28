@@ -1,0 +1,103 @@
+/* TabStrip — the tablist row shared by Tabs (with panels) and
+   panel-less view switchers. One bottom rule; the active tab's
+   underline sits on top of it via the -1px margin. */
+
+.tablist {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-md);
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.tab,
+.tabEditGhost,
+.tabRenameInput {
+  /* Rename contract: the input must occupy the tab's exact box even
+     when a global reset changes native form-control metrics. */
+  box-sizing: border-box;
+  border: 0 solid transparent;
+  padding: var(--ds-space-sm) var(--ds-space-md);
+  font: inherit;
+  font-weight: 500;
+  line-height: var(--ds-line-height-text);
+}
+
+.tab {
+  appearance: none;
+  background: none;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+  /* Each tab keeps its intrinsic width so the label is never
+     ellipsised; the parent tablist wraps when there is not enough
+     room to show all of them at once. */
+  flex-shrink: 0;
+}
+
+.tab:focus-visible {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: -2px;
+}
+
+.tab[data-active="true"] {
+  color: var(--ds-text);
+}
+
+/* The slot IS the tab unit — label button + per-tab adornments +
+   rename editor under ONE underline and ONE hover wash. The active
+   styling deliberately lives here, not on the label button: an
+   adornment outside the underline reads as "between the tabs" and
+   its scope collapses (round 4). */
+.tabSlot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  padding-right: var(--ds-space-2xs);
+}
+
+.tabSlot:hover .tab,
+.tabSlot:focus-within .tab {
+  color: var(--ds-text);
+}
+
+.tabSlot[data-active="true"] {
+  border-bottom-color: var(--ds-accent);
+}
+
+/* In-place rename, shift-free across the WHOLE interaction: the tab
+   button leaves the flow entirely and a stretchy editor takes the
+   slot. The invisible ghost carries the current draft with the tab's
+   own font/padding, so the slot is exactly as wide as the text being
+   typed — same width at start (draft = old label), continuous while
+   typing, and already final at commit. No jump anywhere. */
+.tabSlot[data-editing] .tab {
+  display: none;
+}
+
+.tabEditStretch {
+  display: inline-grid;
+  align-items: center;
+}
+
+.tabEditGhost {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  white-space: pre;
+}
+
+.tabRenameInput {
+  grid-area: 1 / 1;
+  /* No border of its own: the slot draws the tab unit's underline,
+     so the editor's box matches the label button's exactly. */
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  width: 100%;
+  min-width: 0;
+}
+
+.tabRenameInput:focus {
+  outline: none;
+}

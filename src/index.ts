@@ -209,6 +209,17 @@ export type {
 export { Pager } from "./Pager";
 export type { PagerProps, PagerLabels } from "./Pager";
 
+// v1.13: the tab pattern — a panel-less tablist (roving tabindex,
+// arrow/Home/End traversal, in-place rename) that view switchers share
+// with the strip+panel pair (Tabs). See TabStrip.tsx's file header for
+// the dedup note against Pager (ordinal page traversal, not view
+// selection) and Toolbar (no selection state at all).
+export { TabStrip } from "./TabStrip";
+export type { TabStripItem, TabStripEditing } from "./TabStrip";
+
+export { Tabs } from "./Tabs";
+export type { TabItem } from "./Tabs";
+
 // Pure page-window math Pager is built on. Exported at the barrel because
 // the barrel already exports other lowercase pure helpers this way
 // (`pickStageColumns`, `useAsyncCandidates` above) — not a one-off.
