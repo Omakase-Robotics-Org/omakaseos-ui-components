@@ -72,6 +72,17 @@
  *            provides deliberately DROPPED (the 2026-07-08 sidebar
  *            incident) — see Tooltip.tsx's file header for the full
  *            reasoning.
+ *            AsyncMultiCombobox — the dashboard's `ResourceMultiPicker`
+ *            (`.codex/ref/ResourceMultiPicker.tsx`) absorbed as the
+ *            library's second synthetic ARIA widget (see the
+ *            `SYNTHETIC_WIDGETS` enumeration in
+ *            `spec/async-combobox-boundary.spec.ts`, which now scans
+ *            bidirectionally rather than pinning a single exception
+ *            file). Reuses `AsyncCombobox`'s `useAsyncCandidates` race
+ *            guard and the library `RemovableChip` for its selection
+ *            chips (operator ruling: the ref's own two-element 999px
+ *            pill is retired in favor of RemovableChip's one press
+ *            target).
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
@@ -243,6 +254,14 @@ export type {
   UseAsyncCandidatesOptions,
   UseAsyncCandidatesResult,
 } from "./useAsyncCandidates";
+
+// v0.18: the library's SECOND synthetic ARIA widget — a multi-choice
+// sibling to AsyncCombobox, absorbing the dashboard's
+// ResourceMultiPicker. See `spec/async-combobox-boundary.spec.ts`'s
+// `SYNTHETIC_WIDGETS` enumeration for the (now bidirectionally checked)
+// boundary both widgets share.
+export { AsyncMultiCombobox } from "./AsyncMultiCombobox";
+export type { AsyncMultiComboboxProps } from "./AsyncMultiCombobox";
 
 // Navigation primitives — number-pager (ordinal traversal through one
 // dataset's pages) and the shared inline-link appearance (drill-down /

@@ -1,0 +1,155 @@
+/**
+ * AsyncMultiCombobox — chip-row + growing search input inside one bordered
+ * control box, with a candidate listbox panel beneath it.
+ *
+ * Ported from `.codex/ref/ResourceMultiPicker.module.css`, remapped onto
+ * this library's `--ds-*` vocabulary BY VALUE — never by the dashboard's
+ * own token NAME, because the two spacing scales are offset by one step.
+ * `tokens.css`'s own comment on `--ds-table-cell-pad-y` states the exact
+ * correspondence this file also uses: dashboard 2xs=4/xs=6/sm=8/md=12/
+ * lg=16/xl=20px against this library's 2xs=2/xs=4/sm=6/md=8/lg=12/xl=16px.
+ * Every declaration below that carries a "ref:" comment states the ref's
+ * literal px value and which library step matches it BY VALUE.
+ *
+ * Chips are NOT styled here — see AsyncMultiCombobox.tsx's file header:
+ * the ref's own two-element 999px pill is retired, replaced by the
+ * library `RemovableChip` (its own module owns `--ds-radius-chip` and the
+ * `--ds-control-*` ink/bg quartet already).
+ */
+
+.wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The bordered control: a wrapping row of chips followed by the search
+   input, behaving as one token-input box. */
+.control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* ref: gap: var(--space-xs) = dashboard's OWN xs step = 6px by value
+     = this library's sm (6px). Mapping the NAME "xs" onto "--ds-space-xs"
+     (4px) would silently shrink the gap — the exact mistake amendment 3
+     forbids. */
+  gap: var(--ds-space-sm);
+  min-width: 0;
+  /* ref: padding: 4px 8px = dashboard 2xs/sm by value = library xs/md. */
+  padding: var(--ds-space-xs) var(--ds-space-md);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  transition:
+    border-color var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast);
+}
+
+/* Focus ring on the BOX (:focus-within), not the input — ref's own
+   decision. The ref reads one dashboard token (--color-focus-ring) for
+   both the border tint and the ring; this library already states the two
+   roles separately (AsyncCombobox's own input does the same), so the
+   nearest-purpose substitute here is that same pair rather than a single
+   token. */
+.wrap:focus-within .control {
+  outline: none;
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+
+.wrap[data-invalid="true"] .control {
+  border-color: var(--ds-tone-danger-fg);
+}
+
+.wrap[data-disabled="true"] .control {
+  /* ref: opacity 0.6 literal. Nearest-purpose token is --ds-disabled-opacity
+     (0.55) — the same token AsyncCombobox's own disabled input reads —
+     rather than introducing a second, one-off disabled-opacity literal. */
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+}
+
+/* Wraps each chip so its onMouseDown-preventDefault guard (see
+   AsyncMultiCombobox.tsx) never joins the control's own flex layout. */
+.chipSlot {
+  display: contents;
+}
+
+/* The search input shares the control box; it grows to fill the row so
+   the click target spans the remaining width. */
+.input {
+  flex: 1;
+  min-width: 6rem;
+  border: 0;
+  /* ref: padding: 2px 0 — matches --ds-space-2xs (2px) exactly. */
+  padding: var(--ds-space-2xs) 0;
+  background: transparent;
+  color: var(--ds-text);
+  font: inherit;
+  line-height: var(--ds-line-height-control);
+}
+
+.input:focus-visible,
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--ds-text-muted);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+/* Dropdown panel — absolutely positioned under the control. Kept in the
+   DOM when closed (display:none) so aria-controls stays resolvable
+   (ref's own comment; ported verbatim). */
+.panel {
+  position: absolute;
+  /* ref: calc(100% + 4px) = dashboard 2xs by value = library xs. */
+  top: calc(100% + var(--ds-space-xs));
+  left: 0;
+  right: 0;
+  z-index: var(--ds-z-overlay);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  box-shadow: var(--ds-shadow-overlay);
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+}
+
+.wrap[data-open="true"] .panel {
+  display: block;
+}
+
+.listbox {
+  list-style: none;
+  margin: 0;
+  /* ref: padding: 4px 0 = dashboard 2xs by value = library xs. */
+  padding: var(--ds-space-xs) 0;
+}
+
+.option {
+  display: block;
+  /* ref: padding: 4px 12px = dashboard 2xs/md by value = library xs/lg. */
+  padding: var(--ds-space-xs) var(--ds-space-lg);
+  cursor: pointer;
+  color: var(--ds-text);
+}
+
+.option[data-active="true"] {
+  background: var(--ds-hover-wash);
+}
+
+.note {
+  /* ref: padding: 6px 12px = dashboard xs/md by value = library sm/lg. */
+  padding: var(--ds-space-sm) var(--ds-space-lg);
+  margin: 0;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-size-label);
+}

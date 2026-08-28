@@ -19,6 +19,7 @@
 import { StrictMode, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
+  AsyncMultiCombobox,
   Avatar,
   Button,
   ButtonRow,
@@ -74,6 +75,8 @@ import {
   TypingIndicator,
 } from "../src/index";
 import type {
+  AsyncComboboxOption,
+  AsyncComboboxSearchFn,
   AvatarSize,
   BadgeTone,
   GlyphTone,
@@ -1700,6 +1703,84 @@ function TooltipDemoPanel({ host, index }: { host: string; index: number }) {
   );
 }
 
+/* ---------------- v0.18: AsyncMultiCombobox ----------------
+ *
+ * Chip-row wrapping (one control box growing to N lines, not a broken
+ * layout), the candidate panel's width tracking the control box, and
+ * whether a pointer pick truly keeps focus on the input (`document.
+ * activeElement`) are all claims jsdom cannot show — no layout engine,
+ * no `document.activeElement` semantics matching a real browser's focus
+ * model across a synchronous DOM removal. Measured instead by
+ * `spec/async-multi-combobox.e2e.spec.ts`.
+ *
+ * Six pre-selected chips (this demo's initial `selected`) inside a
+ * `maxWidth: 320` frame is the shape the wrapping claim needs: enough
+ * chips that the control box MUST wrap to a second (or third) line
+ * rather than merely being wide, in a container narrow enough that
+ * wrapping is forced deterministically regardless of viewport width.
+ */
+
+const MULTI_COMBOBOX_CANDIDATES: readonly AsyncComboboxOption[] = [
+  { value: "tag-aurora", label: "Aurora" },
+  { value: "tag-beacon", label: "Beacon" },
+  { value: "tag-cascade", label: "Cascade" },
+  { value: "tag-drift", label: "Drift" },
+  { value: "tag-ember", label: "Ember" },
+  { value: "tag-flare", label: "Flare" },
+  { value: "tag-glow", label: "Glow" },
+  { value: "tag-haze", label: "Haze" },
+];
+
+const MULTI_COMBOBOX_CATALOG: Readonly<Record<string, string>> = Object.fromEntries(
+  MULTI_COMBOBOX_CANDIDATES.map((option) => [option.value, option.label]),
+);
+
+const multiComboboxSearchFn: AsyncComboboxSearchFn = (query) =>
+  Promise.resolve(
+    MULTI_COMBOBOX_CANDIDATES.filter((option) =>
+      option.label.toLowerCase().includes(query.toLowerCase()),
+    ),
+  );
+
+function AsyncMultiComboboxDemo({ host }: { host: string }) {
+  const [selected, setSelected] = useState<string[]>([
+    "tag-aurora",
+    "tag-beacon",
+    "tag-cascade",
+    "tag-drift",
+    "tag-ember",
+    "tag-flare",
+  ]);
+  return (
+    <div data-testid={`multi-combobox-demo-${host}`} style={{ maxWidth: 320 }}>
+      <AsyncMultiCombobox
+        id={`${host}-multi-combobox`}
+        selected={selected}
+        onChange={setSelected}
+        searchFn={multiComboboxSearchFn}
+        resolveLabel={(key) => MULTI_COMBOBOX_CATALOG[key]}
+        placeholder="Add a tag…"
+        loadingLabel="Searching…"
+        noResultsLabel="No matches"
+        listboxLabel="Tags"
+        removeLabel={(label) => `Remove ${label}`}
+      />
+    </div>
+  );
+}
+
+function AsyncMultiComboboxDemoPanel({ host }: { host: string }) {
+  return (
+    <Card>
+      <CardHeader
+        title="Form: AsyncMultiCombobox (v0.18)"
+        hint="chip-row control box + candidate listbox"
+      />
+      <AsyncMultiComboboxDemo host={host} />
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -1719,6 +1800,7 @@ function App() {
         <OverlayDemoPanel host="status-webui" index={0} />
         <DialogConfirmDemoPanel host="status-webui" />
         <TooltipDemoPanel host="status-webui" index={0} />
+        <AsyncMultiComboboxDemoPanel host="status-webui" />
         <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
@@ -1737,6 +1819,7 @@ function App() {
         <OverlayDemoPanel host="omks-web" index={1} />
         <DialogConfirmDemoPanel host="omks-web" />
         <TooltipDemoPanel host="omks-web" index={1} />
+        <AsyncMultiComboboxDemoPanel host="omks-web" />
         <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
@@ -1761,6 +1844,7 @@ function App() {
         <OverlayDemoPanel host="robot-inspection-web" index={2} />
         <DialogConfirmDemoPanel host="robot-inspection-web" />
         <TooltipDemoPanel host="robot-inspection-web" index={2} />
+        <AsyncMultiComboboxDemoPanel host="robot-inspection-web" />
         <DirectManipulationDemo />
       </section>
     </div>
