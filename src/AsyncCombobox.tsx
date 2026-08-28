@@ -48,16 +48,10 @@
  *     noResultsLabel="No matches"
  *   />
  */
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from "react";
 import styles from "./AsyncCombobox.module.css";
+import { useAsyncCandidates } from "./useAsyncCandidates";
 
 export type AsyncComboboxSize = "sm" | "md" | "lg";
 
@@ -168,94 +162,41 @@ export function AsyncCombobox(props: AsyncComboboxProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const [results, setResults] = useState<readonly AsyncComboboxOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
   // The "active option" (= the row that Enter would commit). Index
   // is over the panel's render order: 0 is the synthetic "any" row,
   // 1..N are the searchFn results.
   const [activeIndex, setActiveIndex] = useState(0);
 
-  /**
-   * Monotonic request counter so a late response from an older
-   * search cannot overwrite a fresher one. Any time we begin a new
-   * fetch we ++ this counter and the inflight callback compares its
-   * captured value before painting.
-   */
-  const requestSeqRef = useRef(0);
-  /** Active AbortController for the in-flight fetch (if any). */
-  const abortRef = useRef<AbortController | null>(null);
-  /** Pending debounce timer id. */
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Outer wrap element so click-outside detection works. */
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  const cancelInflight = useCallback(() => {
-    if (abortRef.current !== null) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
-    if (debounceTimerRef.current !== null) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-  }, []);
+  // Debounced, race-safe candidate fetch — the sequence counter,
+  // AbortController-per-request, and stale-response drop all live in
+  // the headless hook now; see `useAsyncCandidates.ts` for the
+  // extraction (v0.7's internal race guard, lifted so the dashboard's
+  // multi-select picker can share it instead of reimplementing it).
+  const {
+    options: results,
+    loading,
+    search: requestSearch,
+    cancel: cancelInflight,
+  } = useAsyncCandidates(searchFn, { debounceMs });
 
-  /**
-   * Issue a (debounced) search. The actual fetch fires after
-   * `debounceMs` of idle time; an earlier search in the same window
-   * is cancelled (its abort signal fires + its sequence becomes
-   * stale).
-   */
-  const requestSearch = useCallback(
-    (nextQuery: string) => {
-      cancelInflight();
-      setLoading(true);
-      const seq = ++requestSeqRef.current;
-      const controller = new AbortController();
-      abortRef.current = controller;
-      debounceTimerRef.current = setTimeout(() => {
-        debounceTimerRef.current = null;
-        searchFn(nextQuery, controller.signal)
-          .then((items) => {
-            // Drop the response if a newer search has been started.
-            if (seq !== requestSeqRef.current) {
-              return;
-            }
-            setResults(items);
-            setLoading(false);
-            // Reset highlight to the synthetic "any" row whenever the
-            // result set changes, to keep keyboard navigation
-            // predictable.
-            setActiveIndex(0);
-          })
-          .catch((err: unknown) => {
-            if (seq !== requestSeqRef.current) {
-              return;
-            }
-            // AbortError is the expected outcome of cancellation —
-            // don't surface it to the user. Anything else falls back
-            // to "no results" so the panel remains usable.
-            if (
-              err instanceof DOMException &&
-              err.name === "AbortError"
-            ) {
-              return;
-            }
-            setResults([]);
-            setLoading(false);
-          });
-      }, debounceMs);
-    },
-    [cancelInflight, debounceMs, searchFn],
-  );
-
-  // Cleanup: cancel any pending work on unmount.
-  useEffect(() => {
-    return () => {
-      cancelInflight();
-    };
-  }, [cancelInflight]);
+  // Reset highlight to the synthetic "any" row whenever the result set
+  // changes (a fresh fetch resolved, or a fetch failed and fell back to
+  // empty), to keep keyboard navigation predictable and never pointing
+  // past the end of a shrunk row list. This MUST happen synchronously
+  // in the same render pass that observes the new `results` reference
+  // (React's "adjust state during render" pattern), not in a
+  // `useEffect`: a passive effect can be deferred past an intervening
+  // render — e.g. an ArrowDown keypress's own `setActiveIndex` commit —
+  // and would then clobber that keypress's freshly-set index instead of
+  // the stale one it was meant to replace.
+  const prevResultsRef = useRef(results);
+  if (prevResultsRef.current !== results) {
+    prevResultsRef.current = results;
+    setActiveIndex(0);
+  }
 
   // Render-list assembly. The "any" sentinel is row 0 so its
   // activeIndex addressing is invariant even when the search returns
@@ -278,7 +219,6 @@ export function AsyncCombobox(props: AsyncComboboxProps) {
 
   const commit = (next: AsyncComboboxOption) => {
     cancelInflight();
-    setLoading(false);
     setEditing(false);
     setQuery("");
     setOpen(false);
@@ -301,7 +241,6 @@ export function AsyncCombobox(props: AsyncComboboxProps) {
 
   const revert = () => {
     cancelInflight();
-    setLoading(false);
     setEditing(false);
     setQuery("");
     setOpen(false);

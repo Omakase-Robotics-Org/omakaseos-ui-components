@@ -184,6 +184,18 @@ export type {
   AsyncComboboxSize,
 } from "./AsyncCombobox";
 
+// Headless race guard AsyncCombobox is built on — see the file header
+// for why this now exists as a standalone export (v0.7's internal
+// race-guard machinery, previously duplicated by the dashboard's own
+// `useResourceCandidates`, is lifted here so both call sites share one
+// tested implementation).
+export { useAsyncCandidates } from "./useAsyncCandidates";
+export type {
+  CandidateScheduler,
+  UseAsyncCandidatesOptions,
+  UseAsyncCandidatesResult,
+} from "./useAsyncCandidates";
+
 // Conversation log primitives (v0.4) — past-tense transcript.
 // Use these when rendering a sequence of finalized utterances the user
 // can scroll through. For the LIVE 1:n stage, see v0.5 below.
