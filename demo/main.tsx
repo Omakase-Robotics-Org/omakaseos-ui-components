@@ -137,6 +137,48 @@ function BasicsPanel() {
         />
       </Toolbar>
 
+      <div data-testid="button-contracts" style={{ display: "grid", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button variant="secondary" data-testid="button-secondary">Secondary</Button>
+          <Button variant="subtle" data-testid="button-subtle">Subtle</Button>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <Button variant="subtle" data-testid="button-icon-with-label">
+            <svg
+              data-testid="button-icon-with-label-svg"
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path d="M3 8h10M8 3v10" />
+            </svg>
+            Inspect
+          </Button>
+          <Button
+            variant="subtle"
+            aria-label="Open details"
+            data-testid="button-icon-only"
+          >
+            <svg
+              data-testid="button-icon-only-svg"
+              aria-hidden="true"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path d="M3 8h10M8 3v10" />
+            </svg>
+          </Button>
+        </div>
+      </div>
+
       <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
         <span style={{ display: "grid", gap: 4 }}>
           <label style={{ fontSize: 12, color: "var(--ds-text-muted)" }} htmlFor="region">

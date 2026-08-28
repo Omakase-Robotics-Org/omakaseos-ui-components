@@ -1,7 +1,7 @@
 /**
  * @file Storybook stories for Button.
  *
- * Variants: primary | secondary | neutral | ghost | accent | warning | danger.
+ * Variants: primary | secondary | neutral | subtle | ghost | accent | warning | danger.
  * Sizes: sm | md | lg. `truncate` defaults true so a long label ellipsizes
  * inside narrow toolbars.
  */
@@ -16,7 +16,7 @@ const meta = {
   argTypes: {
     variant: {
       control: { type: "inline-radio" },
-      options: ["primary", "secondary", "neutral", "ghost", "accent", "warning", "danger"],
+      options: ["primary", "secondary", "neutral", "subtle", "ghost", "accent", "warning", "danger"],
     },
     size: { control: { type: "inline-radio" }, options: ["sm", "md", "lg"] },
     disabled: { control: "boolean" },
@@ -30,10 +30,14 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {};
 export const Secondary: Story = { args: { variant: "secondary" } };
 export const Neutral: Story = { args: { variant: "neutral" } };
+export const Subtle: Story = { args: { variant: "subtle" } };
 export const Ghost: Story = { args: { variant: "ghost" } };
 export const Accent: Story = { args: { variant: "accent" } };
 export const Warning: Story = { args: { variant: "warning" } };
 export const Danger: Story = { args: { variant: "danger" } };
+export const AriaDisabled: Story = {
+  args: { "aria-disabled": true, children: "Unavailable" },
+};
 
 export const Sizes: Story = {
   render: (args) => (
@@ -61,7 +65,7 @@ export const LongLabelTruncates: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 8 }}>
-      {(["primary", "secondary", "neutral", "ghost", "accent", "warning", "danger"] as const).map((v) => (
+      {(["primary", "secondary", "neutral", "subtle", "ghost", "accent", "warning", "danger"] as const).map((v) => (
         <Button key={v} variant={v}>{v}</Button>
       ))}
     </div>

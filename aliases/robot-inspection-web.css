@@ -71,6 +71,11 @@
    * than the alias assuming "the darkest surface": which colour is legible on
    * the accent is a palette decision. */
   --ds-text-on-accent: var(--ri-on-accent);
+  /* Desaturated controls map to muted ink and adjacent host surface steps. */
+  --ds-control-ink: var(--ri-text-muted);
+  --ds-control-ink-hover: var(--ri-text);
+  --ds-control-bg: var(--ri-surface-2);
+  --ds-control-bg-hover: var(--ri-surface-hover);
 
   /* Tones — the desaturated register set. The host palette names them by the
    * reading they report (ok / ng / pending / na / idle), and this file is

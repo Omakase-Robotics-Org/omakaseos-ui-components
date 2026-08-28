@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "./Button";
 
@@ -36,6 +36,11 @@ describe("Button", () => {
     expect(container.querySelector("button")?.getAttribute("data-variant")).toBe("neutral");
   });
 
+  it("renders the subtle variant data attribute", () => {
+    const { container } = render(<Button variant="subtle">Clear all</Button>);
+    expect(container.querySelector("button")?.getAttribute("data-variant")).toBe("subtle");
+  });
+
   it("truncates by default and opts out via truncate={false}", () => {
     const { container, rerender } = render(<Button>label</Button>);
     expect(container.querySelector('[data-truncate="true"]')).not.toBeNull();
@@ -48,6 +53,35 @@ describe("Button", () => {
     render(<Button onClick={onClick}>Run</Button>);
     screen.getByRole("button").click();
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("guards onClick for aria-disabled true and forwards it for absent or false", () => {
+    const onClick = vi.fn();
+    const { rerender } = render(
+      <Button aria-disabled="true" onClick={onClick}>
+        Unavailable
+      </Button>,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(onClick).not.toHaveBeenCalled();
+
+    rerender(
+      <Button aria-disabled={true} onClick={onClick}>
+        Unavailable
+      </Button>,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(onClick).not.toHaveBeenCalled();
+
+    rerender(<Button onClick={onClick}>Available</Button>);
+    fireEvent.click(screen.getByRole("button"));
+    rerender(
+      <Button aria-disabled={false} onClick={onClick}>
+        Available
+      </Button>,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    expect(onClick).toHaveBeenCalledTimes(2);
   });
 
   it("respects type=submit when explicitly set", () => {

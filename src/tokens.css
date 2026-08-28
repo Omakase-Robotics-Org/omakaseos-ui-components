@@ -32,6 +32,12 @@
   --ds-text-muted: #6b7280;
   --ds-text-disabled: #9ca3af;
   --ds-text-on-accent: #ffffff;
+  /* Low-emphasis controls use a quieter ink than --ds-text, with a tinted
+     control ground and its hover step for inline affordances. */
+  --ds-control-ink: #404040;
+  --ds-control-ink-hover: #111111;
+  --ds-control-bg: #f5f5f5;
+  --ds-control-bg-hover: #ececec;
 
   /* Semantic tones (used by StatusBadge, also by destructive Button) */
   --ds-tone-success-fg: #16a34a;

@@ -1,5 +1,5 @@
 /**
- * @file Button — primary action / secondary / ghost / danger variants.
+ * @file Button — primary action / secondary / subtle / ghost / danger variants.
  *
  * The library deliberately does NOT carry an icon prop or busy-state prop
  * (those belong to higher-level wrappers like ActionButton in the dashboard).
@@ -22,6 +22,7 @@ import styles from "./Button.module.css";
  *   used to call "neutral"; kept under the new name for clarity.
  * - neutral: alias of "secondary" for dashboards that already speak
  *   that vocabulary; the rendered DOM is identical.
+ * - subtle: low-emphasis bordered control for inline affordances.
  * - ghost: borderless, hover-only background. Lowest emphasis.
  * - accent: soft-filled with the accent color (low-emphasis CTA, used
  *   by the dashboard for "open dialog / library" entries).
@@ -33,6 +34,7 @@ export type ButtonVariant =
   | "primary"
   | "secondary"
   | "neutral"
+  | "subtle"
   | "ghost"
   | "accent"
   | "warning"
@@ -53,8 +55,13 @@ export function Button({
   type,
   className,
   children,
+  onClick,
+  "aria-disabled": ariaDisabled,
   ...rest
 }: ButtonProps) {
+  // CSS's pointer-events guard misses Enter/Space on a focused button.
+  const isAriaDisabled = ariaDisabled === true || ariaDisabled === "true";
+
   return (
     <button
       type={type ?? "button"}
@@ -62,6 +69,8 @@ export function Button({
       data-variant={variant ?? "secondary"}
       data-size={size ?? "md"}
       data-truncate={truncate === false ? undefined : "true"}
+      aria-disabled={ariaDisabled}
+      onClick={isAriaDisabled ? undefined : onClick}
       {...rest}
     >
       <span className={styles.label}>{children}</span>

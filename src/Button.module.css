@@ -49,6 +49,12 @@
   white-space: nowrap;
 }
 
+/* Direct-child icons — the library-level fix for what consumers previously patched with local wrapper elements. */
+.label > svg,
+.label > img {
+  vertical-align: middle;
+}
+
 /* Variants */
 .button[data-variant="primary"] {
   background: var(--ds-accent);
@@ -72,6 +78,18 @@
 .button[data-variant="secondary"]:hover,
 .button[data-variant="neutral"]:hover {
   background: var(--ds-surface-hover);
+}
+
+/* subtle — low-emphasis bordered control for inline affordances (sign-out, clear-all) — reads as a button without competing with CTAs. */
+.button[data-variant="subtle"] {
+  background: var(--ds-surface);
+  color: var(--ds-control-ink);
+  border-color: var(--ds-border);
+}
+.button[data-variant="subtle"]:hover {
+  background: var(--ds-control-bg);
+  color: var(--ds-control-ink-hover);
+  border-color: var(--ds-control-ink-hover);
 }
 
 .button[data-variant="ghost"] {

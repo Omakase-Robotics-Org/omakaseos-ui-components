@@ -13,6 +13,7 @@
   --bg-primary: #000000;
   --bg-card: #0c0c0c;
   --bg-inset: #181818;
+  --bg-hover: #222222;
   --text-primary: #ffffff;
   --text-secondary: #b3b3b3;
   --text-muted: #737373;
@@ -40,6 +41,11 @@
   --ds-border-subtle: var(--border-subtle);
   --ds-text: var(--text-primary);
   --ds-text-muted: var(--text-muted);
+  /* v0.16 subtle Button controls — match aliases/status-server-webui.css. */
+  --ds-control-ink: var(--text-secondary);
+  --ds-control-ink-hover: var(--text-primary);
+  --ds-control-bg: var(--bg-inset);
+  --ds-control-bg-hover: var(--bg-hover);
   /* fix: demo-status-webui-accent-gap — match aliases/status-server-webui.css. */
   --ds-text-on-accent: var(--bg-primary);
   --ds-tone-success-fg: var(--status-running);
@@ -104,6 +110,10 @@
   --color-border-subtle: #f1f5f9;
   --color-text: #040607;
   --color-text-muted: #64748b;
+  --color-control-bg: #f1f5f9;
+  --color-control-bg-hover: #e2e8f0;
+  --color-control-text: #334155;
+  --color-control-text-hover: #475569;
   --color-on-ink-muted: #e2e8f0;
   --color-primary: #0d44da;
   --color-primary-soft: #f0f0ff;
@@ -122,6 +132,11 @@
   --ds-border-subtle: var(--color-border-subtle, #e8e8e8);
   --ds-text: var(--color-text);
   --ds-text-muted: var(--color-text-muted);
+  /* v0.16 subtle Button controls — match aliases/omks-robo-web.css. */
+  --ds-control-ink: var(--color-control-text);
+  --ds-control-ink-hover: var(--color-control-text-hover);
+  --ds-control-bg: var(--color-control-bg);
+  --ds-control-bg-hover: var(--color-control-bg-hover);
   /* fix: demo-omks-web-accent-gap — match aliases/omks-robo-web.css. */
   --ds-text-on-accent: var(--color-on-primary, #ffffff);
   --ds-tone-success-fg: var(--color-success);
@@ -244,6 +259,11 @@
   --ds-text-muted: var(--ri-text-muted);
   --ds-text-disabled: var(--ri-text-dim);
   --ds-text-on-accent: var(--ri-on-accent);
+  /* v0.16 subtle Button controls — match aliases/robot-inspection-web.css. */
+  --ds-control-ink: var(--ri-text-muted);
+  --ds-control-ink-hover: var(--ri-text);
+  --ds-control-bg: var(--ri-surface-2);
+  --ds-control-bg-hover: var(--ri-surface-hover);
   --ds-tone-success-fg: var(--ri-tone-ok-fg);
   --ds-tone-success-bg: var(--ri-tone-ok-bg);
   --ds-tone-danger-fg: var(--ri-tone-ng-fg);

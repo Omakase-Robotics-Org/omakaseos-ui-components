@@ -17,7 +17,7 @@
  * http://localhost:5198 (LIB_E2E_BASE_URL) before invoking; the harness
  * tears it down after.
  */
-import { test, expect } from "playwright/test";
+import { test, expect, type Locator } from "playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -116,6 +116,79 @@ test("Button has the expected role + variant data attribute", async ({ page }) =
   const primary = host.locator('[data-testid="toolbar-primary"]').first();
   await expect(primary).toHaveAttribute("data-variant", "primary");
   await expect(primary).toHaveRole("button");
+});
+
+test("Subtle Button resolves a distinct color register in every host and changes on hover", async ({
+  page,
+}) => {
+  const HOSTS = [
+    ".host--status-webui",
+    ".host--omks-web",
+    ".host--robot-inspection-web",
+  ] as const;
+
+  async function colors(button: Locator) {
+    return button.evaluate((el) => {
+      const cs = globalThis.getComputedStyle(el as HTMLButtonElement);
+      return {
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+        borderTopColor: cs.borderTopColor,
+      };
+    });
+  }
+
+  for (const hostSelector of HOSTS) {
+    const host = page.locator(hostSelector);
+    const subtle = host.locator('[data-testid="button-subtle"]').first();
+    const secondary = host.locator('[data-testid="button-secondary"]').first();
+    const subtleResting = await colors(subtle);
+    const secondaryResting = await colors(secondary);
+
+    expect(subtleResting.color).not.toBe(secondaryResting.color);
+
+    await subtle.hover();
+    await expect.poll(async () => (await colors(subtle)).color).not.toBe(subtleResting.color);
+    const subtleHover = await colors(subtle);
+
+    await secondary.hover();
+    await expect
+      .poll(async () => (await colors(secondary)).backgroundColor)
+      .not.toBe(secondaryResting.backgroundColor);
+    const secondaryHover = await colors(secondary);
+
+    expect(subtleHover).not.toEqual(secondaryHover);
+  }
+});
+
+test("Button centers bare SVG children, including icon-only buttons", async ({ page }) => {
+  const HOSTS = [
+    ".host--status-webui",
+    ".host--omks-web",
+    ".host--robot-inspection-web",
+  ] as const;
+  const ICON_BUTTONS = [
+    ["button-icon-with-label", "button-icon-with-label-svg"],
+    ["button-icon-only", "button-icon-only-svg"],
+  ] as const;
+
+  for (const hostSelector of HOSTS) {
+    const host = page.locator(hostSelector);
+    for (const [buttonTestId, iconTestId] of ICON_BUTTONS) {
+      const button = host.locator(`[data-testid="${buttonTestId}"]`).first();
+      const icon = button.locator(`[data-testid="${iconTestId}"]`).first();
+      await button.scrollIntoViewIfNeeded();
+      const buttonBox = await button.boundingBox();
+      const iconBox = await icon.boundingBox();
+      if (!buttonBox || !iconBox) {
+        throw new Error(`Could not measure ${buttonTestId} in ${hostSelector}`);
+      }
+
+      const buttonCenter = buttonBox.y + buttonBox.height / 2;
+      const iconCenter = iconBox.y + iconBox.height / 2;
+      expect(Math.abs(iconCenter - buttonCenter)).toBeLessThanOrEqual(1.75);
+    }
+  }
 });
 
 test("Danger Button carries its danger outline at rest and goes solid on hover", async ({ page }) => {

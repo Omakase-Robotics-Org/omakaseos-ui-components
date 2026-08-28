@@ -23,6 +23,11 @@
   --ds-text-muted: var(--text-muted);
   --ds-text-disabled: var(--text-muted);
   --ds-text-on-accent: var(--bg-primary);
+  /* Low-emphasis controls follow the host's emphasis and surface ladders. */
+  --ds-control-ink: var(--text-secondary);
+  --ds-control-ink-hover: var(--text-primary);
+  --ds-control-bg: var(--bg-inset);
+  --ds-control-bg-hover: var(--bg-hover);
 
   /* Tones — alpha values mirror the dashboard for visual consistency. */
   --ds-tone-success-fg: var(--status-running);
