@@ -53,8 +53,15 @@ export type EditCommandKeysOptions = {
  * Whether the event's target is somewhere the operator is typing.
  *
  * Delete inside a text field means "erase a character" and must never mean
- * "remove the selected waypoints". Checked by tag and by `isContentEditable`,
- * because a rich-text host is not an `<input>`.
+ * "remove the selected waypoints".
+ *
+ * Three signals, because no one of them covers the ground: the tag (an
+ * `<input>` / `<select>` / `<textarea>`), the live `isContentEditable`
+ * property, and the `contenteditable` ATTRIBUTE. The attribute is not
+ * redundant - `isContentEditable` is a rendering-dependent property that some
+ * environments do not implement at all (jsdom is one, which is how this guard
+ * was found to miss a rich-text host), and an author who wrote the attribute
+ * has declared the intent either way.
  */
 export function isTextEntry(target: EventTarget | null): boolean {
   if (target === null || typeof target !== "object") {
@@ -63,8 +70,13 @@ export function isTextEntry(target: EventTarget | null): boolean {
   const element = target as {
     readonly tagName?: unknown;
     readonly isContentEditable?: unknown;
+    readonly getAttribute?: (name: string) => string | null;
   };
   if (element.isContentEditable === true) {
+    return true;
+  }
+  const declared = element.getAttribute?.("contenteditable");
+  if (declared !== undefined && declared !== null && declared.toLowerCase() !== "false") {
     return true;
   }
   const tagName = typeof element.tagName === "string" ? element.tagName.toUpperCase() : "";
