@@ -1,0 +1,31 @@
+/* Pager — number-pager footer for paginated lists.
+ *
+ * Centred under the table/list it paginates. Never sticky / fixed —
+ * content-flow, sitting at the foot of whatever scroll container the
+ * consumer places it in.
+ */
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--ds-space-sm);
+  margin-top: var(--ds-space-md);
+}
+
+.summary {
+  font-size: var(--ds-font-size-control);
+  color: var(--ds-text-muted);
+  margin: 0 var(--ds-space-sm);
+}
+
+.numbers {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2xs);
+}
+
+.numberCurrent {
+  font-weight: 700;
+}

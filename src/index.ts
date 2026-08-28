@@ -135,6 +135,12 @@ export { RemovableChip } from "./RemovableChip";
 export { Input } from "./Input";
 export type { InputProps, InputSize } from "./Input";
 
+// Box-owns-the-chrome search field (ported from the dashboard FilterBar
+// prominent-register search box). Label-less by design — see the file
+// header for why `ariaLabel` is required and `type` is not a prop.
+export { SearchInput } from "./SearchInput";
+export type { SearchInputProps, SearchInputSize } from "./SearchInput";
+
 export { Select } from "./Select";
 export type { SelectProps, SelectSize } from "./Select";
 
@@ -195,6 +201,21 @@ export type {
   UseAsyncCandidatesOptions,
   UseAsyncCandidatesResult,
 } from "./useAsyncCandidates";
+
+// Navigation primitives — number-pager (ordinal traversal through one
+// dataset's pages) and the shared inline-link appearance (drill-down /
+// back-link registers). See each file's header for its dedup notes
+// against ButtonRow / Toolbar / TabStrip / Button / StatusBadge.
+export { Pager } from "./Pager";
+export type { PagerProps, PagerLabels } from "./Pager";
+
+// Pure page-window math Pager is built on. Exported at the barrel because
+// the barrel already exports other lowercase pure helpers this way
+// (`pickStageColumns`, `useAsyncCandidates` above) — not a one-off.
+export { pageWindow } from "./page-window";
+
+export { LinkAppearance } from "./LinkAppearance";
+export type { LinkAppearanceTone, LinkAppearanceProps } from "./LinkAppearance";
 
 // Conversation log primitives (v0.4) — past-tense transcript.
 // Use these when rendering a sequence of finalized utterances the user

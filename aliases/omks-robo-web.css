@@ -36,6 +36,7 @@
   --ds-text-disabled: var(--color-text-subtle, var(--color-text-muted));
   --ds-text-on-accent: var(--color-on-primary, #ffffff);
   /* Low-emphasis controls use the brand's quieter slate ink and tinted grounds. */
+  --ds-tap-target-min: var(--tap-target-min);
   --ds-control-ink: var(--color-control-text);
   --ds-control-ink-hover: var(--color-control-text-hover);
   --ds-control-bg: var(--color-control-bg);

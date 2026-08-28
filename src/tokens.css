@@ -91,6 +91,10 @@
 
   /* Control sizing — every form control (Input, Select, Textarea single-line,
    * Button, Switch) picks one of these for height; padding follows. */
+  /* Minimum comfortable primary tap target (WCAG 2.5.5). Distinct from the
+     control-height scale: a control that IS a surface's primary target reads
+     this instead of picking a height rung. */
+  --ds-tap-target-min: 44px;
   --ds-control-height-sm: 24px;
   --ds-control-height-md: 32px;
   --ds-control-height-lg: 40px;

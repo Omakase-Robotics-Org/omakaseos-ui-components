@@ -34,12 +34,14 @@ import {
   Input,
   LiveCaption,
   MessageBubble,
+  Pager,
   Panel,
   ParticipantTile,
   RankChip,
   RealtimeEventLog,
   RemovableChip,
   ReservedText,
+  SearchInput,
   Section,
   SectionHeader,
   SegmentedMeter,
@@ -63,6 +65,7 @@ import type {
   BadgeTone,
   GlyphTone,
   MeterSegment,
+  PagerLabels,
   RankLevel,
   RealtimeEventEntry,
 } from "../src/index";
@@ -106,8 +109,20 @@ const LONG_OPTION =
 const LONG_CHIP_LABEL =
   "Organization: THIS_IS_A_VERY_LONG_FILTER_LABEL_THAT_MUST_TRUNCATE_BEFORE_THE_REMOVE_GLYPH";
 
+const PAGER_LABELS: PagerLabels = {
+  region: "Pagination",
+  first: "First page",
+  previous: "Previous page",
+  next: "Next page",
+  last: "Last page",
+  goToPage: (n) => `Go to page ${n}`,
+  summary: (page, total) => `Page ${page} of ${total}`,
+};
+
 function BasicsPanel() {
   const [searchValue, setSearchValue] = useState(LONG_VALUE);
+  const [prominentSearchValue, setProminentSearchValue] = useState("");
+  const [pagerPage, setPagerPage] = useState(1);
   const [textareaValue, setTextareaValue] = useState(
     "Multi-line note. Long line below to verify wrap, not horizontal overflow:\nLOREMIPSUMDOLORSITAMETCONSECTETURADIPISCINGELITSEDDOEIUSMODTEMPOR",
   );
@@ -143,6 +158,30 @@ function BasicsPanel() {
           onChange={(e) => setAutosave(e.target.checked)}
         />
       </Toolbar>
+
+      <div data-testid="prominent-search" style={{ maxWidth: 320, marginTop: 16 }}>
+        <SearchInput
+          value={prominentSearchValue}
+          onChange={setProminentSearchValue}
+          ariaLabel="Search FAQs"
+          placeholder="Search FAQs…"
+        />
+      </div>
+
+      {/* Narrow container so the pager's flex-wrap kicks in, AND page=1 so
+          First/Previous render disabled — one instance covers both e2e
+          checks the harness needs (wrapping + disabled boundary colors). */}
+      <div
+        data-testid="pager-narrow"
+        style={{ maxWidth: 220, marginTop: 16, border: "1px dashed var(--ds-border)", padding: 8 }}
+      >
+        <Pager
+          page={pagerPage}
+          totalPages={12}
+          onChange={setPagerPage}
+          labels={PAGER_LABELS}
+        />
+      </div>
 
       <div data-testid="button-contracts" style={{ display: "grid", gap: 8 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

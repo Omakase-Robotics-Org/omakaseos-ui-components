@@ -74,6 +74,7 @@ const preview: Preview = {
         order: [
           "Status",
           "Form",
+          "Navigation",
           "Chat-log",
           "Live-stage",
           "DirectManipulation",

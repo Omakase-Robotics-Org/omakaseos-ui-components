@@ -1,0 +1,32 @@
+/* LinkAppearance — the two inline-link visual registers.
+ *
+ * `accent` — drill-down link (InlineLink's shape): accent ink, no
+ * underline at rest, underline on hover. `tabular-nums` so a column of
+ * numeric drill-down values (robot ids, distribution counts) stays
+ * aligned when it's the changing digit that draws attention.
+ */
+.accent {
+  color: var(--ds-accent);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.accent:hover {
+  text-decoration: underline;
+}
+
+/* `muted` — back-link register (BackLink's shape): muted ink at control
+ * text size, `display: inline-block` (so a caller's own margin utility
+ * applies cleanly), full-text ink on hover. Deliberately no
+ * `margin-bottom` here — see LinkAppearance.tsx's file header for why
+ * that stays the consumer's rule. */
+.muted {
+  display: inline-block;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-font-size-control);
+  text-decoration: none;
+}
+
+.muted:hover {
+  color: var(--ds-text);
+}

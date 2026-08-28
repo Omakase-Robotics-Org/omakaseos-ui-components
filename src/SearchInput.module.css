@@ -1,0 +1,63 @@
+/* SearchInput — box-owns-the-chrome search field.
+ *
+ * Ported from the dashboard FilterBar's `.prominentSearch` block. The BOX
+ * (not the input) draws the border, radius, background and focus ring, so
+ * the ring frames the whole affordance including the magnifier — the same
+ * shape the ref's comment described ("the input draws nothing of its
+ * own — the row around it carries the border").
+ */
+.box {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-sm);
+  min-width: 0;
+  padding: 0 var(--ds-control-padding-x-lg);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-card);
+  background: var(--ds-surface);
+  color: var(--ds-text-muted);
+  transition: border-color var(--ds-transition-fast),
+              box-shadow var(--ds-transition-fast);
+}
+
+.box[data-size="md"] {
+  height: var(--ds-control-height-md);
+}
+
+/* `lg` is the whole-surface primary target: it reads the tap-target
+ * minimum (WCAG 2.5.5), not the control-height scale, and grows rather
+ * than clips (min-height, as the proven dashboard search box did). */
+.box[data-size="lg"] {
+  min-height: var(--ds-tap-target-min);
+}
+
+/* Focus ring on the BOX, not the inner input — :focus-within fires while
+ * the (borderless) input inside has focus. Matches this library's other
+ * focusable controls (Input, AsyncCombobox): border flips to accent and a
+ * soft ring is drawn via box-shadow, not just the ref's border-color-only
+ * treatment — kept consistent with the rest of the library's focus
+ * language rather than the ref's narrower rule. */
+.box:focus-within {
+  border-color: var(--ds-accent);
+  box-shadow: 0 0 0 var(--ds-focus-ring-width) var(--ds-focus-ring-color);
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+/* The input draws nothing of its own. */
+.input {
+  border: none;
+  background: none;
+  outline: none;
+  font: inherit;
+  color: var(--ds-text);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+
+.input::placeholder {
+  color: var(--ds-text-muted);
+}

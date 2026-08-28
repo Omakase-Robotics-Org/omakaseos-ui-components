@@ -353,3 +353,111 @@ test("Button focus ring width resolves per host — 1px on robot-inspection-web 
   expect(await focusRingWidth(HOSTS.web)).toBe("2px");
   expect(await focusRingWidth(HOSTS.robot)).toBe("2px");
 });
+
+test("SearchInput's focus ring frames the whole box, not just the inner input", async ({ page }) => {
+  // jsdom cannot resolve :focus-within at all, so this is e2e-only. The
+  // component's contract (see SearchInput.module.css) is: the BOX draws
+  // border + focus ring via :focus-within; the inner <input> is borderless
+  // (border: none, outline: none) so it contributes nothing of its own.
+  const host = page.locator(".host--omks-web");
+  const input = host.locator('input[aria-label="Search FAQs"]').first();
+  await input.scrollIntoViewIfNeeded();
+
+  const restingBoxStyle = await input.evaluate((el) => {
+    const box = (el as HTMLElement).parentElement!;
+    const cs = globalThis.getComputedStyle(box);
+    return { borderColor: cs.borderColor, boxShadow: cs.boxShadow };
+  });
+  const restingInputStyle = await input.evaluate((el) => {
+    const cs = globalThis.getComputedStyle(el as HTMLInputElement);
+    return { borderStyle: cs.borderStyle, outlineStyle: cs.outlineStyle };
+  });
+
+  // The inner input never draws a border or an outline of its own, resting
+  // or focused — the ring has to come from the box around it.
+  expect(restingInputStyle.borderStyle).toBe("none");
+  expect(restingInputStyle.outlineStyle).toBe("none");
+
+  await input.focus();
+  await expect(input).toBeFocused();
+
+  const focusedBoxStyle = await input.evaluate((el) => {
+    const box = (el as HTMLElement).parentElement!;
+    const cs = globalThis.getComputedStyle(box);
+    return { borderColor: cs.borderColor, boxShadow: cs.boxShadow };
+  });
+  const focusedInputStyle = await input.evaluate((el) => {
+    const cs = globalThis.getComputedStyle(el as HTMLInputElement);
+    return { outlineStyle: cs.outlineStyle };
+  });
+
+  // The BOX's border color and box-shadow change on focus (the ring)...
+  expect(focusedBoxStyle.borderColor).not.toBe(restingBoxStyle.borderColor);
+  expect(focusedBoxStyle.boxShadow).not.toBe(restingBoxStyle.boxShadow);
+  expect(focusedBoxStyle.boxShadow).not.toBe("none");
+  // ...while the input itself still draws no outline of its own.
+  expect(focusedInputStyle.outlineStyle).toBe("none");
+});
+
+test("Pager wraps its buttons inside a narrow container without horizontal overflow", async ({ page }) => {
+  const host = page.locator(".host--omks-web");
+  const container = host.locator('[data-testid="pager-narrow"]').first();
+  const nav = container.locator('nav[role="navigation"]').first();
+  await nav.scrollIntoViewIfNeeded();
+
+  const metrics = await nav.evaluate((el) => ({
+    scrollWidth: (el as HTMLElement).scrollWidth,
+    clientWidth: (el as HTMLElement).clientWidth,
+    parentClientWidth: (el as HTMLElement).parentElement!.clientWidth,
+  }));
+
+  // flex-wrap: wrap means the nav's own box never exceeds its parent's
+  // content box, even though First/Prev/window/Next/Last/summary would
+  // overflow a single unwrapped row at this width.
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
+  expect(metrics.clientWidth).toBeLessThanOrEqual(metrics.parentClientWidth + 1);
+
+  // And it actually DID wrap — First/Prev and the summary end up on
+  // different rows at 220px, proving flex-wrap fired rather than the
+  // content merely happening to fit.
+  const firstBox = await nav.getByRole("button", { name: "First page" }).boundingBox();
+  const summaryBox = await nav.getByText("Page 1 of 12").boundingBox();
+  if (!firstBox || !summaryBox) {
+    throw new Error("Pager First button / summary not measurable");
+  }
+  expect(summaryBox.y).toBeGreaterThan(firstBox.y);
+});
+
+test("Pager's disabled boundary buttons resolve a visually distinct (lower-opacity) color from the enabled ones", async ({ page }) => {
+  const host = page.locator(".host--omks-web");
+  const nav = host.locator('[data-testid="pager-narrow"] nav[role="navigation"]').first();
+
+  const disabledFirst = nav.getByRole("button", { name: "First page" });
+  const disabledPrevious = nav.getByRole("button", { name: "Previous page" });
+  const enabledNext = nav.getByRole("button", { name: "Next page" });
+  const enabledLast = nav.getByRole("button", { name: "Last page" });
+
+  await expect(disabledFirst).toBeDisabled();
+  await expect(disabledPrevious).toBeDisabled();
+  await expect(enabledNext).toBeEnabled();
+  await expect(enabledLast).toBeEnabled();
+
+  async function opacityOf(locator: Locator) {
+    return locator.evaluate((el) => globalThis.getComputedStyle(el as HTMLElement).opacity);
+  }
+
+  const [firstOpacity, previousOpacity, nextOpacity, lastOpacity] = await Promise.all([
+    opacityOf(disabledFirst),
+    opacityOf(disabledPrevious),
+    opacityOf(enabledNext),
+    opacityOf(enabledLast),
+  ]);
+
+  // The library's disabled recipe is `opacity: var(--ds-disabled-opacity)`
+  // (0.55) — both boundary buttons at page 1 resolve it, and it reads
+  // strictly lower than the enabled boundary buttons' full opacity.
+  expect(Number(firstOpacity)).toBeCloseTo(0.55, 2);
+  expect(Number(previousOpacity)).toBeCloseTo(0.55, 2);
+  expect(Number(nextOpacity)).toBe(1);
+  expect(Number(lastOpacity)).toBe(1);
+});
