@@ -595,7 +595,7 @@ export function DirectManipulationDemo() {
   return (
     <Card>
       <CardHeader
-        title="Direct manipulation editor (v0.17)"
+        title="Direct manipulation editor (v0.18)"
         hint="SVG proof: drag to edit, click to select, Shift constrains, Alt adds or removes"
       />
       <div style={{ display: "grid", gap: "var(--ds-space-lg)", minWidth: 0 }}>
