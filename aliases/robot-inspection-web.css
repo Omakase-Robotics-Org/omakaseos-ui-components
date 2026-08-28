@@ -154,6 +154,15 @@
    * here instead of inheriting the library's light-host lift. */
   --ds-shadow-card: var(--ri-shadow-card);
   --ds-shadow-overlay: var(--ri-shadow-overlay);
+  /* v0.18: Tooltip is inverted against this host's own dark surface — its
+     near-white ink (--ri-text) as the chip's ground, its darkest surface
+     step (--ri-surface-0, the page ground) as the ink on top of it. Value
+     matches what this palette already uses for "ink on a light surface"
+     (--ri-on-accent is #0a0b0c, i.e. --ri-surface-0, the ink the accent —
+     also near-white — already sits on), traced here to the surface step
+     directly rather than the accent-specific token. */
+  --ds-tooltip-bg: var(--ri-text);
+  --ds-tooltip-fg: var(--ri-surface-0);
   /* v0.18: Dialog's ::backdrop reads --ds-scrim. The host palette already
      names this exact register --ri-scrim (used below for the stage tile's
      name strip and the caption background) — a direct trace, not a

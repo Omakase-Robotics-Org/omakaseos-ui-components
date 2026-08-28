@@ -68,6 +68,8 @@ import {
   ToggleSwitch,
   ToolCallTrace,
   Toolbar,
+  Tooltip,
+  TooltipProvider,
   Transcript,
   TypingIndicator,
 } from "../src/index";
@@ -1580,6 +1582,124 @@ function DialogConfirmDemoPanel({ host }: { host: string }) {
   );
 }
 
+/* ---------------- v0.18: Tooltip / TooltipProvider ----------------
+ *
+ * Hover-intent timing, the shared open-delay clock, and the arrow's
+ * resolved-side placement all need a real pointer timeline and a real
+ * layout engine — jsdom cannot show either (the same split
+ * `Popover`/`Menu`/`Dialog` already draw against their own e2e files) —
+ * pinned instead in `spec/overlay-tooltip.e2e.spec.ts`.
+ *
+ * The near-edge flip fixture is pinned at a FIXED viewport position (like
+ * `FlipAboveDemo`/`RightClampDemo` above) but at the TOP-LEFT corner —
+ * deliberately clear of those two anchors' own fixed corners (bottom-left,
+ * top-right respectively) so this (longer) demo page's scrolling never
+ * puts a hover target under an unrelated fixed element. The other three
+ * fixtures are normal in-flow content — nothing pins them near a viewport
+ * edge, so there is nothing to collide with those fixed corners in the
+ * first place.
+ */
+
+const TOOLTIP_DELAY_MS = 300;
+
+/** side="right", vertically centered — a plain in-flow trigger with
+ * nothing else nearby. */
+function TooltipRightDemo({ host }: { host: string }) {
+  return (
+    <div style={{ padding: 24 }}>
+      <Tooltip label="Battery 82%" side="right">
+        <button type="button" data-testid={`tooltip-right-trigger-${host}`}>
+          Battery icon
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+/** Pinned near the viewport's TOP edge — the default side="top" cannot
+ * fit above it, so `anchoredPanelPosition` flips the resolved side to
+ * "bottom" (the same claim `FlipAboveDemo` makes for Popover, at a
+ * different edge so the two fixed anchors never collide on screen). Offset
+ * per host (`index`), same reason `FlipAboveDemo`/`RightClampDemo` do it:
+ * only one host's tooltip is ever open at a time, but the three always-
+ * rendered anchor BUTTONS must not sit at the exact same screen
+ * coordinates. */
+function TooltipEdgeFlipDemo({ host, index }: { host: string; index: number }) {
+  return (
+    <div style={{ position: "fixed", top: 8, left: 8 + index * 220, zIndex: 1 }}>
+      <Tooltip label="Near the top edge">
+        <button type="button" data-testid={`tooltip-edge-flip-trigger-${host}`}>
+          Top-edge trigger
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+/** pointerleave / focus+blur / Escape — all three dismissal e2e checks
+ * share this one trigger (each spec's own test re-navigates, so there is
+ * no cross-test state to isolate). */
+function TooltipDismissDemo({ host }: { host: string }) {
+  return (
+    <div style={{ padding: 24 }}>
+      <Tooltip label="Dismiss me">
+        <button type="button" data-testid={`tooltip-dismiss-trigger-${host}`}>
+          Dismiss trigger
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+/** Two adjacent triggers sharing ONE provider's clock: the first waits
+ * `TOOLTIP_DELAY_MS`; leaving it and landing on the second (well inside
+ * the default 300ms skipDelayDuration) opens the second INSTANTLY,
+ * tagged `data-state="instant-open"`. */
+function TooltipSharedClockDemo({ host }: { host: string }) {
+  return (
+    <div style={{ padding: 24, display: "flex", gap: 4 }}>
+      <Tooltip label="First">
+        <button type="button" data-testid={`tooltip-shared-first-${host}`}>
+          First
+        </button>
+      </Tooltip>
+      <Tooltip label="Second">
+        <button type="button" data-testid={`tooltip-shared-second-${host}`}>
+          Second
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+function TooltipDemoPanel({ host, index }: { host: string; index: number }) {
+  return (
+    <Card>
+      <CardHeader title="Overlay: Tooltip (v0.18)" hint="hand-rolled hover/focus label, no radix" />
+      <TooltipProvider delayDuration={TOOLTIP_DELAY_MS}>
+        <div style={{ display: "grid", gap: 16 }}>
+          <div>
+            <Heading level={3}>side=&quot;right&quot;</Heading>
+            <TooltipRightDemo host={host} />
+          </div>
+          <div>
+            <Heading level={3}>Dismiss: pointerleave / focus+blur / Escape</Heading>
+            <TooltipDismissDemo host={host} />
+          </div>
+          <div>
+            <Heading level={3}>Shared delay clock — adjacent triggers</Heading>
+            <TooltipSharedClockDemo host={host} />
+          </div>
+        </div>
+        {/* Fixed-viewport anchor: rendered as part of this panel but
+            positioned relative to the viewport, not this card — see the
+            file header above. */}
+        <TooltipEdgeFlipDemo host={host} index={index} />
+      </TooltipProvider>
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -1598,6 +1718,7 @@ function App() {
         <TableDemoPanel host="status-webui" />
         <OverlayDemoPanel host="status-webui" index={0} />
         <DialogConfirmDemoPanel host="status-webui" />
+        <TooltipDemoPanel host="status-webui" index={0} />
         <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
@@ -1615,6 +1736,7 @@ function App() {
         <TableDemoPanel host="omks-web" />
         <OverlayDemoPanel host="omks-web" index={1} />
         <DialogConfirmDemoPanel host="omks-web" />
+        <TooltipDemoPanel host="omks-web" index={1} />
         <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
@@ -1638,6 +1760,7 @@ function App() {
         <TableDemoPanel host="robot-inspection-web" />
         <OverlayDemoPanel host="robot-inspection-web" index={2} />
         <DialogConfirmDemoPanel host="robot-inspection-web" />
+        <TooltipDemoPanel host="robot-inspection-web" index={2} />
         <DirectManipulationDemo />
       </section>
     </div>

@@ -116,8 +116,10 @@ const RATCHETED_EXPORTS_WITHOUT_OWN_STORY: Record<string, string> = {
   TableRow: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
   TableCell: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
   TableNotice: "one skin ported as one unit with Table — demoed inside Table.stories.tsx",
+  TooltipProvider:
+    "the shared delay-clock provider Tooltip requires as an ancestor — demoed inside Tooltip.stories.tsx (every story wraps it)",
 };
-const RATCHET_SIZE = 9;
+const RATCHET_SIZE = 10;
 
 function barrelComponentExports(): readonly string[] {
   const blocks = parseExportBlocks(barrelPath, "src/index.ts");

@@ -48,12 +48,12 @@
  *            dashboard hand-rolled per call site (`.codex/ref/Popover.tsx` /
  *            `.codex/ref/Menu.tsx`, verbatim-identical `panelPosition`
  *            functions). Both now consume `src/floating/anchoredPanelPosition`
- *            — an INTERNAL, four-sided placement core (not exported here;
- *            Tooltip will be the next consumer) that reproduces the refs'
- *            math byte-for-byte for their fixed call shape. Portal to
- *            document.body and reset `PanelScope` around their content
- *            (`src/PanelScope.tsx`) — an overlay opened from inside a Panel
- *            is its own top-level surface, not the panel's content.
+ *            — an INTERNAL, four-sided placement core (not exported here)
+ *            that reproduces the refs' math byte-for-byte for their fixed
+ *            call shape. Portal to document.body and reset `PanelScope`
+ *            around their content (`src/PanelScope.tsx`) — an overlay opened
+ *            from inside a Panel is its own top-level surface, not the
+ *            panel's content.
  *            Dialog — the native `<dialog>` modal (`.codex/ref/Dialog.tsx`),
  *            same portal + PanelScope-reset shape, plus `footerStart`: a
  *            real start-aligned footer slot the dashboard's `FormDialog`
@@ -63,6 +63,15 @@
  *            lifecycle, no toast, no i18n; the dashboard's own async
  *            confirm flow (renamed `ConfirmAction`) composes it instead of
  *            owning the dialog shape.
+ *            Tooltip, TooltipProvider — a hand-rolled hover/focus label
+ *            (`.codex/ref/Tooltip.tsx`, `@radix-ui/react-tooltip` — NOT
+ *            taken on as a dependency here) that becomes the anchored-
+ *            position core's third consumer. Cloned trigger (never
+ *            wrapped), a shared open-delay clock across sibling tooltips
+ *            (`TooltipProvider`), and the grace area radix's own default
+ *            provides deliberately DROPPED (the 2026-07-08 sidebar
+ *            incident) — see Tooltip.tsx's file header for the full
+ *            reasoning.
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
@@ -346,5 +355,11 @@ export type { DialogProps, DialogSize } from "./Dialog";
 
 export { ConfirmDialog } from "./ConfirmDialog";
 export type { ConfirmDialogProps } from "./ConfirmDialog";
+
+// v0.18: Tooltip (hand-rolled, no radix) + TooltipProvider (the shared
+// open-delay clock sibling tooltips read). See Tooltip.tsx's file header
+// for why this is not built on `@radix-ui/react-tooltip`.
+export { Tooltip, TooltipProvider } from "./Tooltip";
+export type { TooltipProps, TooltipSide } from "./Tooltip";
 
 import "./tokens.css";

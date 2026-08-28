@@ -99,6 +99,11 @@
      var(--z-overlay) directly, so this is a straight name-preserving
      mapping, not a value match. */
   --ds-z-overlay: var(--z-overlay);
+  /* v0.18: Tooltip.module.css (the ref this library absorbs, minus radix)
+     reads var(--color-ink) / var(--color-on-ink) directly for exactly this
+     purpose — a straight, zero-shift, name-preserving mapping. */
+  --ds-tooltip-bg: var(--color-ink);
+  --ds-tooltip-fg: var(--color-on-ink);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --ds-fact-label-size: var(--text-fact-label);
   --ds-fact-value-size: var(--text-fact-value);

@@ -77,6 +77,11 @@
   /* v0.18 Dialog bindings — match aliases/status-server-webui.css. */
   --ds-radius-dialog: 12px; /* alias: var(--radius-lg) */
   --ds-scrim: rgba(0, 0, 0, 0.55);
+  /* v0.18 Tooltip bindings — match aliases/status-server-webui.css: this
+     host's own --text-primary/--bg-primary pair, roles swapped, inverts in
+     BOTH themes (see that alias file's own comment on this declaration). */
+  --ds-tooltip-bg: var(--text-primary);
+  --ds-tooltip-fg: var(--bg-primary);
 
   /* v0.4 chat bubble bindings — match aliases/status-server-webui.css. */
   --ds-bubble-bg-user: rgba(34, 197, 94, 0.12);
@@ -142,6 +147,9 @@
      the v0.18 Dialog scrim resolves to the actual brand value instead of
      that fallback. */
   --color-ink: #0f172a;
+  /* web brand SoT `modules/brand/tokens.ts` (palette.white) — needed for
+     --ds-tooltip-fg below (match aliases/omks-robo-web.css). */
+  --color-on-ink: #ffffff;
   /* web brand SoT `modules/styles/global.css` — needed for the Table
      mappings below (match aliases/omks-robo-web.css). */
   --color-text-subtle: #94a3b8;
@@ -200,6 +208,9 @@
   /* v0.18 Dialog bindings — match aliases/omks-robo-web.css. */
   --ds-radius-dialog: 16px;
   --ds-scrim: color-mix(in srgb, var(--color-ink) 45%, transparent);
+  /* v0.18 Tooltip bindings — match aliases/omks-robo-web.css. */
+  --ds-tooltip-bg: var(--color-ink);
+  --ds-tooltip-fg: var(--color-on-ink);
 
   /* v0.4 chat bubble bindings — match aliases/omks-robo-web.css. */
   --ds-bubble-bg-user: var(--color-primary-soft);
@@ -325,6 +336,9 @@
   --ds-shadow-card: var(--ri-shadow-card);
   --ds-shadow-overlay: var(--ri-shadow-overlay);
   --ds-scrim: var(--ri-scrim);
+  /* v0.18 Tooltip bindings — match aliases/robot-inspection-web.css. */
+  --ds-tooltip-bg: var(--ri-text);
+  --ds-tooltip-fg: var(--ri-surface-0);
   --ds-font-sans: var(--ri-font-sans);
   --ds-font-mono: var(--ri-font-mono);
 

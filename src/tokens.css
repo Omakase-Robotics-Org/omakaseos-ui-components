@@ -136,8 +136,8 @@
      host-specific one. */
   --ds-scrim: color-mix(in srgb, var(--ds-text) 45%, transparent);
 
-  /* Stacking — v0.18's anchored floating panels (Popover, Menu; Tooltip to
-     follow) portal to document.body and need to sit above ordinary page
+  /* Stacking — v0.18's anchored floating panels (Popover, Menu, Tooltip)
+     portal to document.body and need to sit above ordinary page
      content and other library surfaces (Table's sticky header at 5,
      AsyncCombobox's own dropdown at 50 — a literal in that component's own
      module, not this token). 40 is a library default only: a host that
@@ -145,6 +145,17 @@
      this token to it in its alias file instead of relying on the
      fallback. */
   --ds-z-overlay: 40;
+
+  /* Tooltip (v0.18). A tooltip is INVERTED against the surface on all
+     three hosts — a dark chip on a light UI, or the reverse on a dark
+     one — so it needs its OWN two-token pair rather than reusing
+     --ds-surface/--ds-text (which, being the surface it is inverted
+     AGAINST, would render it invisible). Fallbacks reuse this library's
+     own existing near-black ink (--ds-control-ink-hover / --ds-text,
+     #111111) and its existing white (--ds-surface / --ds-text-on-accent,
+     #ffffff) rather than inventing a third neutral pair. */
+  --ds-tooltip-bg: #111111;
+  --ds-tooltip-fg: #ffffff;
 
   /* Typography — purpose-bound, not t-shirt. */
   --ds-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;

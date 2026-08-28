@@ -1,0 +1,79 @@
+/* Tooltip — a small floating label on an INVERTED surface (the only
+   "dark chip on light UI" element in this library — or the reverse on a
+   dark host; see src/tokens.css's --ds-tooltip-bg/-fg comment). Portaled
+   to document.body, position: fixed, same overlay elevation/stack tokens
+   Popover/Menu use so it layers consistently with them.
+
+   Ref: .codex/ref/Tooltip.module.css. Direct --ds-* counterparts at the
+   same purpose for every token here (--z-overlay, --space-2xs/-sm,
+   --radius-control, --text-control, --shadow-overlay) — the only
+   substitution is background/color, which trace to the library's own
+   --ds-tooltip-bg/-fg pair rather than the ref's --color-ink/--color-on-ink
+   (this library has no shared "ink" level with a host's brand palette; see
+   tokens.css). The arrow's positioning (absolute, one rule per
+   data-side) is new here — the ref used radix's own Arrow primitive,
+   which this hand-rolled port does not have. */
+
+.content {
+  position: fixed;
+  z-index: var(--ds-z-overlay);
+  max-width: 240px;
+  padding: var(--ds-space-2xs) var(--ds-space-sm);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-tooltip-bg);
+  color: var(--ds-tooltip-fg);
+  font-size: var(--ds-font-size-control);
+  line-height: 1.3;
+  box-shadow: var(--ds-shadow-overlay);
+  user-select: none;
+  /* A slight fade lets the label read as "attached to" the trigger rather
+     than popping in cold. Keyed on the open-reason data-state this
+     component stamps, so an instant re-open (skip-delay, moving between
+     adjacent triggers) does not re-animate — ported unchanged from the
+     ref's own comment/rule. */
+  animation: tooltip-in 120ms ease;
+}
+
+.content[data-state="instant-open"] {
+  animation: none;
+}
+
+.arrow {
+  position: absolute;
+  fill: var(--ds-tooltip-bg);
+  pointer-events: none;
+}
+
+/* One rule per RESOLVED side (post-flip) — flush against the edge of
+   .content nearest the anchor, since that is the edge closest to what
+   the arrow is pointing back at. */
+.arrow[data-side="top"] {
+  bottom: -5px;
+}
+
+.arrow[data-side="bottom"] {
+  top: -5px;
+}
+
+.arrow[data-side="left"] {
+  right: -5px;
+}
+
+.arrow[data-side="right"] {
+  left: -5px;
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    animation: none;
+  }
+}
