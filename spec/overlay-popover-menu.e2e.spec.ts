@@ -53,6 +53,8 @@ for (const host of HOSTS) {
   test(`${host}: flip-above — a panel that cannot fit below a bottom-edge anchor flips to the top`, async ({
     page,
   }) => {
+    // The fixed edge fixture mounts on demand (it floats over other panels).
+    await clickSettled(page.getByTestId(`overlay-edge-arm-${host}`));
     const anchor = page.locator(`[data-testid="overlay-flip-${host}"] button`);
     const anchorBox = await anchor.boundingBox();
     expect(anchorBox).not.toBeNull();
@@ -74,6 +76,8 @@ for (const host of HOSTS) {
   }) => {
     const viewport = page.viewportSize();
     expect(viewport).not.toBeNull();
+    // The fixed edge fixture mounts on demand (it floats over other panels).
+    await clickSettled(page.getByTestId(`overlay-edge-arm-${host}`));
     const anchor = page.locator(`[data-testid="overlay-clamp-${host}"] button`);
     await clickSettled(anchor);
 

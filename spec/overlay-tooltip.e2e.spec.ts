@@ -72,6 +72,10 @@ for (const host of HOSTS) {
   test(`${host}: a trigger pinned near the top edge flips to the bottom, and the arrow follows`, async ({
     page,
   }) => {
+    // The fixed edge fixture mounts on demand (it floats over other panels).
+    await page.getByTestId(`tooltip-edge-arm-${host}`).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(80);
+    await page.getByTestId(`tooltip-edge-arm-${host}`).click();
     const trigger = page.getByTestId(`tooltip-edge-flip-trigger-${host}`);
     const triggerBox = await trigger.boundingBox();
     expect(triggerBox).not.toBeNull();

@@ -1400,6 +1400,10 @@ function DialogAbovePopoverDemo({ host }: { host: string }) {
 }
 
 function OverlayDemoPanel({ host, index }: { host: string; index: number }) {
+  // The viewport-edge fixtures are position:fixed and float OVER unrelated
+  // demo panels (they intercepted the direct-manipulation spec's clicks).
+  // They mount only when armed; the overlay e2e arms them first.
+  const [edgeFixturesArmed, setEdgeFixturesArmed] = useState(false);
   return (
     <Card>
       <CardHeader title="Overlay: Popover / Menu (v0.19)" hint="anchored floating panels" />
@@ -1417,10 +1421,22 @@ function OverlayDemoPanel({ host, index }: { host: string; index: number }) {
           <DialogAbovePopoverDemo host={host} />
         </div>
       </div>
-      {/* Fixed-viewport anchors: rendered as part of this panel but
-          positioned relative to the viewport, not this card. */}
-      <FlipAboveDemo host={host} index={index} />
-      <RightClampDemo host={host} index={index} />
+      {/* Fixed-viewport anchors: positioned over the viewport, not this
+          card, so they stay unmounted until the e2e (or a reader) arms
+          them — mounted, they sit over other panels' pointer targets. */}
+      <button
+        type="button"
+        data-testid={`overlay-edge-arm-${host}`}
+        onClick={() => setEdgeFixturesArmed((value) => !value)}
+      >
+        {edgeFixturesArmed ? "Disarm edge fixtures" : "Arm edge fixtures"}
+      </button>
+      {edgeFixturesArmed ? (
+        <>
+          <FlipAboveDemo host={host} index={index} />
+          <RightClampDemo host={host} index={index} />
+        </>
+      ) : null}
     </Card>
   );
 }
@@ -1676,6 +1692,9 @@ function TooltipSharedClockDemo({ host }: { host: string }) {
 }
 
 function TooltipDemoPanel({ host, index }: { host: string; index: number }) {
+  // Same arming rule as OverlayDemoPanel: a fixed fixture floats over
+  // unrelated panels, so it mounts on demand only.
+  const [edgeFixtureArmed, setEdgeFixtureArmed] = useState(false);
   return (
     <Card>
       <CardHeader title="Overlay: Tooltip (v0.19)" hint="hand-rolled hover/focus label, no radix" />
@@ -1694,10 +1713,16 @@ function TooltipDemoPanel({ host, index }: { host: string; index: number }) {
             <TooltipSharedClockDemo host={host} />
           </div>
         </div>
-        {/* Fixed-viewport anchor: rendered as part of this panel but
-            positioned relative to the viewport, not this card — see the
-            file header above. */}
-        <TooltipEdgeFlipDemo host={host} index={index} />
+        {/* Fixed-viewport anchor: unmounted until armed — fixed fixtures
+            float over other panels' pointer targets (see OverlayDemoPanel). */}
+        <button
+          type="button"
+          data-testid={`tooltip-edge-arm-${host}`}
+          onClick={() => setEdgeFixtureArmed((value) => !value)}
+        >
+          {edgeFixtureArmed ? "Disarm edge fixture" : "Arm edge fixture"}
+        </button>
+        {edgeFixtureArmed ? <TooltipEdgeFlipDemo host={host} index={index} /> : null}
       </TooltipProvider>
     </Card>
   );
