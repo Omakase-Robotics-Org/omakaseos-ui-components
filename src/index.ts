@@ -139,6 +139,13 @@ export type { HeadingProps, HeadingLevel } from "./Heading";
 export { Field } from "./Field";
 export type { FieldProps } from "./Field";
 
+export { TextField } from "./TextField";
+
+export { SelectField } from "./SelectField";
+export type { SelectOption } from "./SelectField";
+
+export { TextAreaField } from "./TextAreaField";
+
 export { Toolbar } from "./Toolbar";
 export type { ToolbarProps, ToolbarAlign } from "./Toolbar";
 
