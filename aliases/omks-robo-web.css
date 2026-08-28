@@ -79,12 +79,21 @@
      controls are rounder than their chips. */
   --ds-radius-chip: var(--radius-control, 6px);
   --ds-radius-pill: 999px;
+  /* v0.18: the dashboard's own Dialog.module.css writes this corner as a
+     bare 16px literal (no --radius-dialog var exists on this host either),
+     so this is a value match rather than a name-preserving one — the same
+     zero-shift the ref migration is for. */
+  --ds-radius-dialog: 16px;
 
   --ds-shadow-card: var(--shadow-card);
   /* The dashboard's elevation scale for anchored floating layers. A library
      component that reads --ds-shadow-overlay (a toast, a popup) then floats the
      way the dashboard's own overlays do. */
   --ds-shadow-overlay: var(--shadow-overlay);
+  /* v0.18: the exact recipe the dashboard's own Dialog.module.css uses for
+     its ::backdrop (color-mix(in srgb, var(--color-ink) 45%, transparent))
+     — a straight port, zero-shift. */
+  --ds-scrim: color-mix(in srgb, var(--color-ink) 45%, transparent);
   /* v0.18: the dashboard's own overlay stacking layer — Popover.module.css /
      Menu.module.css (the refs this library absorbs) already read
      var(--z-overlay) directly, so this is a straight name-preserving

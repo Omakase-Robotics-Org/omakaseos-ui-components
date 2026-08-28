@@ -54,6 +54,15 @@
  *            document.body and reset `PanelScope` around their content
  *            (`src/PanelScope.tsx`) — an overlay opened from inside a Panel
  *            is its own top-level surface, not the panel's content.
+ *            Dialog — the native `<dialog>` modal (`.codex/ref/Dialog.tsx`),
+ *            same portal + PanelScope-reset shape, plus `footerStart`: a
+ *            real start-aligned footer slot the dashboard's `FormDialog`
+ *            only ever promised (its `extraActions` doc says "left of the
+ *            footer" but the CSS never pulled it there). ConfirmDialog — a
+ *            presentational confirm shell (Dialog + Button) with no async
+ *            lifecycle, no toast, no i18n; the dashboard's own async
+ *            confirm flow (renamed `ConfirmAction`) composes it instead of
+ *            owning the dialog shape.
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
@@ -328,5 +337,14 @@ export { Popover } from "./Popover";
 
 export { Menu } from "./Menu";
 export type { MenuItem, MenuTriggerProps } from "./Menu";
+
+// v0.18: Dialog (native <dialog>, portal, footer/footerStart) and
+// ConfirmDialog (a presentational confirm shell composed from Dialog +
+// Button — no async lifecycle, toast, or i18n; that stays app-side).
+export { Dialog } from "./Dialog";
+export type { DialogProps, DialogSize } from "./Dialog";
+
+export { ConfirmDialog } from "./ConfirmDialog";
+export type { ConfirmDialogProps } from "./ConfirmDialog";
 
 import "./tokens.css";

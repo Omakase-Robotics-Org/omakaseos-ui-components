@@ -74,6 +74,10 @@
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: var(--font-mono);
 
+  /* v0.18 Dialog bindings — match aliases/status-server-webui.css. */
+  --ds-radius-dialog: 12px; /* alias: var(--radius-lg) */
+  --ds-scrim: rgba(0, 0, 0, 0.55);
+
   /* v0.4 chat bubble bindings — match aliases/status-server-webui.css. */
   --ds-bubble-bg-user: rgba(34, 197, 94, 0.12);
   --ds-bubble-fg-user: var(--text-primary);
@@ -132,6 +136,12 @@
   --color-danger-soft: #fef2f2;
   --radius-card: 10px;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 5%);
+  /* web brand SoT `modules/brand/tokens.ts` (slate900) — needed for
+     --ds-scrim below (match aliases/omks-robo-web.css). Already referenced
+     with a fallback by --ds-accent-hover above; declared here for real so
+     the v0.18 Dialog scrim resolves to the actual brand value instead of
+     that fallback. */
+  --color-ink: #0f172a;
   /* web brand SoT `modules/styles/global.css` — needed for the Table
      mappings below (match aliases/omks-robo-web.css). */
   --color-text-subtle: #94a3b8;
@@ -186,6 +196,10 @@
   --ds-radius-pill: 999px;
   --ds-shadow-card: var(--shadow-card);
   --ds-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* v0.18 Dialog bindings — match aliases/omks-robo-web.css. */
+  --ds-radius-dialog: 16px;
+  --ds-scrim: color-mix(in srgb, var(--color-ink) 45%, transparent);
 
   /* v0.4 chat bubble bindings — match aliases/omks-robo-web.css. */
   --ds-bubble-bg-user: var(--color-primary-soft);
@@ -310,6 +324,7 @@
   --ds-radius-pill: var(--ri-radius-pill);
   --ds-shadow-card: var(--ri-shadow-card);
   --ds-shadow-overlay: var(--ri-shadow-overlay);
+  --ds-scrim: var(--ri-scrim);
   --ds-font-sans: var(--ri-font-sans);
   --ds-font-mono: var(--ri-font-mono);
 

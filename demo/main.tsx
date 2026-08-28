@@ -25,7 +25,9 @@ import {
   Card,
   CardHeader,
   Checkbox,
+  ConfirmDialog,
   ConversationStage,
+  Dialog,
   Fact,
   FactColumns,
   FactGrid,
@@ -1418,6 +1420,166 @@ function OverlayDemoPanel({ host, index }: { host: string; index: number }) {
   );
 }
 
+/* ---------------- v0.18: Dialog / ConfirmDialog ----------------
+ *
+ * Dialog centering, ::backdrop paint, and the footerStart/Cancel relative
+ * position are all layout claims jsdom cannot show (same split
+ * `Popover`/`Menu` already draw against `overlay-popover-menu.e2e.spec.ts`)
+ * — pinned instead in `spec/overlay-dialog.e2e.spec.ts`. The margin-reset
+ * toggle below renders a page-wide `* { margin: 0 }` `<style>` tag ONLY
+ * while this demo's own reset button is on, so it never contaminates the
+ * screenshot sweep or any other scene (those load a fresh page and never
+ * click this button).
+ */
+
+function DialogDemo({ host }: { host: string }) {
+  const [open, setOpen] = useState(false);
+  const [size, setSize] = useState<"md" | "lg">("md");
+  const [marginReset, setMarginReset] = useState(false);
+
+  return (
+    <div data-testid={`dialog-demo-${host}`}>
+      {/* Reproduces a host-side CSS reset (Tailwind preflight etc.) that
+          would otherwise pin the dialog to the top-left corner — the
+          claim Dialog.module.css's own header comment argues for. */}
+      {marginReset ? <style>{"* { margin: 0; }"}</style> : null}
+      <button
+        type="button"
+        data-testid={`dialog-open-md-${host}`}
+        onClick={() => {
+          setSize("md");
+          setOpen(true);
+        }}
+      >
+        Open dialog (md)
+      </button>
+      <button
+        type="button"
+        data-testid={`dialog-open-lg-${host}`}
+        onClick={() => {
+          setSize("lg");
+          setOpen(true);
+        }}
+      >
+        Open dialog (lg)
+      </button>
+      <button
+        type="button"
+        data-testid={`dialog-margin-reset-toggle-${host}`}
+        onClick={() => setMarginReset((value) => !value)}
+      >
+        Toggle page-wide margin reset
+      </button>
+      <Dialog
+        open={open}
+        title="Delete robot"
+        description="This cannot be undone."
+        size={size}
+        closeLabel="Close"
+        onClose={() => setOpen(false)}
+        footerStart={
+          <button
+            type="button"
+            data-testid={`dialog-footerstart-delete-${host}`}
+            onClick={() => setOpen(false)}
+          >
+            Delete anyway
+          </button>
+        }
+        footer={
+          <>
+            <button
+              type="button"
+              data-testid={`dialog-footer-cancel-${host}`}
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              data-testid={`dialog-footer-save-${host}`}
+              onClick={() => setOpen(false)}
+            >
+              Save
+            </button>
+          </>
+        }
+      >
+        <p data-testid={`dialog-body-${host}`}>
+          Preset "warehouse-loop" will be affected by this change.
+        </p>
+      </Dialog>
+    </div>
+  );
+}
+
+/** ConfirmDialog demo — folds the busy/aria-disabled assertion into this
+ * same scene per the task's "cheap" instruction rather than a separate
+ * e2e file. */
+function ConfirmDialogDemo({ host }: { host: string }) {
+  const [open, setOpen] = useState(false);
+  // A showModal() dialog makes everything OUTSIDE it inert (that is what
+  // modal means), so a busy toggle cannot live beside the open button and
+  // be clicked while the dialog shows. The busy register is instead opened
+  // AS busy from a second entry point; the spec opens whichever state it
+  // needs to assert.
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <div data-testid={`confirmdialog-demo-${host}`}>
+      <button
+        type="button"
+        data-testid={`confirmdialog-open-${host}`}
+        onClick={() => {
+          setBusy(false);
+          setOpen(true);
+        }}
+      >
+        Open confirm
+      </button>
+      <button
+        type="button"
+        data-testid={`confirmdialog-open-busy-${host}`}
+        onClick={() => {
+          setBusy(true);
+          setOpen(true);
+        }}
+      >
+        Open confirm (busy)
+      </button>
+      <ConfirmDialog
+        open={open}
+        title="Delete robot"
+        body="This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        closeLabel="Close"
+        busy={busy}
+        onConfirm={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
+      />
+    </div>
+  );
+}
+
+function DialogConfirmDemoPanel({ host }: { host: string }) {
+  return (
+    <Card>
+      <CardHeader title="Overlay: Dialog / ConfirmDialog (v0.18)" hint="native <dialog> modal" />
+      <div style={{ display: "grid", gap: 16 }}>
+        <div>
+          <Heading level={3}>Dialog — md/lg, footer, footerStart</Heading>
+          <DialogDemo host={host} />
+        </div>
+        <div>
+          <Heading level={3}>ConfirmDialog — presentational confirm shell</Heading>
+          <ConfirmDialogDemo host={host} />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function App() {
   return (
     <div className="harness">
@@ -1435,6 +1597,7 @@ function App() {
         <TabStripDemoPanel host="status-webui" />
         <TableDemoPanel host="status-webui" />
         <OverlayDemoPanel host="status-webui" index={0} />
+        <DialogConfirmDemoPanel host="status-webui" />
         <DirectManipulationDemo />
       </section>
       <section className="host host--omks-web">
@@ -1451,6 +1614,7 @@ function App() {
         <TabStripDemoPanel host="omks-web" />
         <TableDemoPanel host="omks-web" />
         <OverlayDemoPanel host="omks-web" index={1} />
+        <DialogConfirmDemoPanel host="omks-web" />
         <DirectManipulationDemo />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
@@ -1473,6 +1637,7 @@ function App() {
         <TabStripDemoPanel host="robot-inspection-web" />
         <TableDemoPanel host="robot-inspection-web" />
         <OverlayDemoPanel host="robot-inspection-web" index={2} />
+        <DialogConfirmDemoPanel host="robot-inspection-web" />
         <DirectManipulationDemo />
       </section>
     </div>

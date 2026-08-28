@@ -51,6 +51,17 @@
  * stacking-layer scale at all, so there is no `--ri-*` var to trace this
  * to; the library default in `src/tokens.css` (40) applies here exactly as
  * the other non-mapped categories above do.
+ *
+ * `--ds-radius-dialog` (v0.18, Dialog's own corner — distinct from
+ * `--ds-radius-card`/`--ds-radius-lg`) joins the same list for the same
+ * reason: the README's `--ri-*` snippet's radius ladder tops out at
+ * `--ri-radius-lg` (22px, already claimed by `--ds-radius-lg` above), with
+ * no further step to trace a Dialog-specific corner to. Inventing one here
+ * would be a geometry decision made in the alias rather than the host
+ * palette — the guard's empty frozen-list is exactly what exists to catch
+ * that. The library default in `src/tokens.css` (16px) applies until this
+ * host's palette grows a `--ri-radius-dialog` (or equivalent) to trace it
+ * to.
  */
 :root {
   /* Surfaces & foreground.
@@ -143,6 +154,11 @@
    * here instead of inheriting the library's light-host lift. */
   --ds-shadow-card: var(--ri-shadow-card);
   --ds-shadow-overlay: var(--ri-shadow-overlay);
+  /* v0.18: Dialog's ::backdrop reads --ds-scrim. The host palette already
+     names this exact register --ri-scrim (used below for the stage tile's
+     name strip and the caption background) — a direct trace, not a
+     derivation. */
+  --ds-scrim: var(--ri-scrim);
 
   /* Typography — the host owns both stacks (the other two hosts only own a
    * mono). Figures render tabular in the primitives that state counts. */

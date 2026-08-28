@@ -43,6 +43,11 @@ const FROZEN_LITERALS: Record<string, string[]> = {
     // in the file header note).
     "--ds-font-mono",
     "--ds-radius-pill",
+    // v0.18: the dashboard's own Dialog.module.css writes this corner as a
+    // bare 16px literal too (no --radius-dialog var exists on this host),
+    // so this is a value match rather than a mapping — see the alias
+    // file's own comment on this declaration.
+    "--ds-radius-dialog",
   ],
   "status-server-webui.css": [
     // Translucent tone washes derived from palette colours; the robot
@@ -66,6 +71,12 @@ const FROZEN_LITERALS: Record<string, string[]> = {
     // library default (src/tokens.css) by value. See
     // aliases/status-server-webui.css's own comment on this declaration.
     "--ds-z-overlay",
+    // v0.18: rssa owns no dedicated "ink"/"scrim" var — no var to trace
+    // Dialog's ::backdrop to. The value matches this host's own existing
+    // native-dialog modals' backdrop (GoalConfirmDialog / SceneRemovalDialog
+    // / MapSwitchWizard, rgba(0, 0, 0, 0.55)) rather than a guess. See
+    // aliases/status-server-webui.css's own comment on this declaration.
+    "--ds-scrim",
   ],
   // robot-inspection-web (v0.15) was authored under this guard, so it has no
   // literals to freeze: the host palette (`--ri-*`) owns every value,

@@ -1,0 +1,11 @@
+/* ConfirmDialog — confirmation body text.
+ *
+ * Ref: .codex/ref/ConfirmDialog.module.css — ported verbatim (no
+ * token/value translation needed; neither declaration reads a --space-*
+ * or --color-* variable).
+ */
+
+.body {
+  margin: 0;
+  line-height: 1.7;
+}

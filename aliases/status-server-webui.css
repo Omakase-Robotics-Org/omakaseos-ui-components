@@ -64,12 +64,28 @@
   --ds-radius-card: var(--radius-md);
   --ds-radius-lg: var(--radius-lg);
   --ds-radius-pill: 100px;
+  /* v0.18: this host already has native-dialog-shaped modals of its own
+     (GoalConfirmDialog / SceneRemovalDialog / MapSwitchWizard) and every
+     one of them already reads `border-radius: var(--ds-radius-lg)` for
+     this exact corner — matching that existing visual language keeps the
+     library's Dialog consistent with the modals this host already ships,
+     rather than introducing a second, foreign corner value (the library
+     default, 16px) alongside it. */
+  --ds-radius-dialog: var(--radius-lg);
 
   --ds-shadow-card: var(--shadow-card);
   /* This host's overlay shadow is its toast shadow — the only floating surface it
      has. Mapping it keeps a component that reads --ds-shadow-overlay looking the
      way this host's own toast does. */
   --ds-shadow-overlay: var(--shadow-toast);
+  /* v0.18: rssa owns no dedicated "ink"/"scrim" var to trace this to (the
+     same gap --ds-z-overlay below already notes for stacking), so this is
+     a frozen literal (spec/alias-purity.spec.ts) rather than a mapping.
+     The value is NOT a guess: every native-dialog-shaped modal this host
+     already ships (GoalConfirmDialog / SceneRemovalDialog / MapSwitchWizard,
+     `.backdrop { background: rgba(0, 0, 0, 0.55); }`) already uses exactly
+     this ratio for the same purpose. */
+  --ds-scrim: rgba(0, 0, 0, 0.55);
   /* v0.18: rssa `src/styles/variables.css` owns no stacking-layer scale (no
      --z-* var to trace this to, the same gap this file already has for the
      spacing scale — see the Table note below). A bare literal here is a
