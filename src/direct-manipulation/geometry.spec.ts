@@ -10,12 +10,18 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  AXIS_STEP_RAD,
+  YAW_STEP_RAD,
   appendVertex,
   closestPointOnSegment,
+  constrainToAxes,
   insertVertexOnEdge,
+  insideRect,
+  isUsableGrid,
   moveVertex,
   normaliseRing,
   pathSegments,
+  rectBetween,
   removeVertex,
   ringEdges,
   ringProblem,
@@ -24,6 +30,8 @@ import {
   segmentsIntersect,
   selfIntersection,
   signedArea,
+  snapAngle,
+  snapToGrid,
   type Vertex,
 } from "./geometry";
 
@@ -249,5 +257,97 @@ describe("signed area", () => {
   it("is the enclosed area, positive for a counter-clockwise ring", () => {
     expect(signedArea(SQUARE)).toBe(4);
     expect(signedArea([...SQUARE].reverse())).toBe(-4);
+  });
+});
+
+describe("angular quanta and the Shift constraint", () => {
+  it("states 45 degrees for movement and 15 for rotation", () => {
+    expect(AXIS_STEP_RAD).toBeCloseTo(Math.PI / 4);
+    expect(YAW_STEP_RAD).toBeCloseTo(Math.PI / 12);
+  });
+
+  it("rounds an angle to the nearest multiple of its step", () => {
+    expect(snapAngle(0.1, AXIS_STEP_RAD)).toBe(0);
+    expect(snapAngle(Math.PI / 4 + 0.05, AXIS_STEP_RAD)).toBeCloseTo(Math.PI / 4);
+    expect(snapAngle(-Math.PI / 4 - 0.05, AXIS_STEP_RAD)).toBeCloseTo(-Math.PI / 4);
+    // Halfway rounds up, deterministically.
+    expect(snapAngle(Math.PI / 8, AXIS_STEP_RAD)).toBeCloseTo(Math.PI / 4);
+  });
+
+  it("returns the angle untouched for a degenerate step, rather than dividing by it", () => {
+    expect(snapAngle(1.23, 0)).toBe(1.23);
+    expect(snapAngle(1.23, -1)).toBe(1.23);
+    expect(snapAngle(1.23, Number.NaN)).toBe(1.23);
+    expect(snapAngle(Number.NaN, AXIS_STEP_RAD)).toBeNaN();
+  });
+
+  it("projects onto the nearest ray, keeping the distance travelled along it", () => {
+    const origin = { x: 0, y: 0 };
+    // 10 degrees: the nearest ray is the x axis, and what is kept is the
+    // pointer's COMPONENT along that ray (10), not the raw distance it
+    // travelled (10.15) - so a constrained drag tracks the pointer's extent
+    // without lengthening the leg.
+    const shallow = constrainToAxes(origin, { x: 10, y: 1.76 }, AXIS_STEP_RAD);
+    expect(shallow.y).toBeCloseTo(0);
+    expect(shallow.x).toBeCloseTo(10);
+
+    // 40 degrees rounds to 45, where both components are equal.
+    const diagonal = constrainToAxes(origin, { x: 10, y: 8.39 }, AXIS_STEP_RAD);
+    expect(diagonal.x).toBeCloseTo(diagonal.y);
+
+    // The origin need not be the world origin.
+    const offset = constrainToAxes({ x: 5, y: 5 }, { x: 15, y: 5.5 }, AXIS_STEP_RAD);
+    expect(offset.y).toBeCloseTo(5);
+  });
+
+  it("leaves a zero-length or degenerate constraint alone", () => {
+    expect(constrainToAxes({ x: 3, y: 3 }, { x: 3, y: 3 }, AXIS_STEP_RAD)).toEqual({ x: 3, y: 3 });
+    expect(constrainToAxes({ x: 0, y: 0 }, { x: 4, y: 9 }, 0)).toEqual({ x: 4, y: 9 });
+  });
+});
+
+describe("the declared grid", () => {
+  it("accepts a positive finite pitch and a finite origin, and nothing else", () => {
+    expect(isUsableGrid({ pitchM: 0.5, origin: { x: 0, y: 0 } })).toBe(true);
+    expect(isUsableGrid(null)).toBe(false);
+    expect(isUsableGrid({ pitchM: 0, origin: { x: 0, y: 0 } })).toBe(false);
+    expect(isUsableGrid({ pitchM: -1, origin: { x: 0, y: 0 } })).toBe(false);
+    expect(isUsableGrid({ pitchM: Number.NaN, origin: { x: 0, y: 0 } })).toBe(false);
+    expect(isUsableGrid({ pitchM: Number.POSITIVE_INFINITY, origin: { x: 0, y: 0 } })).toBe(false);
+    expect(isUsableGrid({ pitchM: 1, origin: { x: Number.NaN, y: 0 } })).toBe(false);
+  });
+
+  it("moves a position to the nearest intersection, measured from the declared origin", () => {
+    const grid = { pitchM: 2, origin: { x: 0, y: 0 } };
+    expect(snapToGrid({ x: 4.9, y: -1.1 }, grid)).toEqual({ x: 4, y: -2 });
+    expect(snapToGrid({ x: 5.1, y: 1.1 }, grid)).toEqual({ x: 6, y: 2 });
+    // An offset origin shifts every line with it.
+    expect(snapToGrid({ x: 4.9, y: 0 }, { pitchM: 2, origin: { x: 1, y: 0 } })).toEqual({
+      x: 5,
+      y: 0,
+    });
+  });
+
+  it("returns the position untouched for an unusable grid, rather than dividing by its pitch", () => {
+    expect(snapToGrid({ x: 4.9, y: 1.1 }, { pitchM: 0, origin: { x: 0, y: 0 } })).toEqual({
+      x: 4.9,
+      y: 1.1,
+    });
+  });
+});
+
+describe("rectangles", () => {
+  it("normalises two corners in either order", () => {
+    const forward = rectBetween({ x: 1, y: 2 }, { x: 5, y: 8 });
+    expect(forward).toEqual({ minX: 1, minY: 2, maxX: 5, maxY: 8 });
+    expect(rectBetween({ x: 5, y: 8 }, { x: 1, y: 2 })).toEqual(forward);
+  });
+
+  it("includes its own edges, so a point exactly on the boundary is inside", () => {
+    const rect = rectBetween({ x: 0, y: 0 }, { x: 4, y: 4 });
+    expect(insideRect(rect, { x: 2, y: 2 })).toBe(true);
+    expect(insideRect(rect, { x: 0, y: 4 })).toBe(true);
+    expect(insideRect(rect, { x: 4.001, y: 2 })).toBe(false);
+    expect(insideRect(rect, { x: 2, y: -0.001 })).toBe(false);
   });
 });

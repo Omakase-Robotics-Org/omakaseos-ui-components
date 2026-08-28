@@ -504,3 +504,119 @@ describe("story coverage — title prefixes and storySort.order agree (both dire
     } as never).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Edit* glyph state coverage — accounted from the PROP TYPES, both directions.
+// ---------------------------------------------------------------------------
+
+/**
+ * A glyph's states are its whole visual contract, and a catalog that shows some
+ * of them is a catalog that hides the rest. So the obligation is derived from
+ * the component's own props type: every string-literal union a prop declares
+ * must appear as a value in that component's stories file, and every value the
+ * stories file passes for that prop must be in the union.
+ *
+ * Both directions matter. A missing value is an unphotographed state; a value
+ * the union no longer contains is a story asserting something that cannot
+ * happen, which is how a catalog quietly stops describing the component.
+ *
+ * The accounting comes from the TYPE, never from a list in this spec: a new
+ * state fails this guard on the day it is added.
+ */
+type UnionProp = {
+  readonly component: string;
+  readonly prop: string;
+  readonly values: readonly string[];
+};
+
+/** Every `name: "a" | "b"` prop of every `src/Edit*.tsx` props type. */
+function editGlyphUnionProps(): readonly UnionProp[] {
+  const files = readdirSync(srcDir).filter((file) => /^Edit[^.]+\.tsx$/.test(file)).sort();
+  if (files.length === 0) {
+    throw new Error(
+      "storybook-coverage.spec.ts: found no src/Edit*.tsx glyph components. Either they moved " +
+        "or this parser is broken — do not let it report green over nothing.",
+    );
+  }
+  return files.flatMap((file) => {
+    const component = file.replace(/\.tsx$/, "");
+    const source = readFileSync(resolve(srcDir, file), "utf8");
+    const propsBlock = source.match(
+      new RegExp(`export type ${component}Props = \\{([\\s\\S]*?)\\n\\};`),
+    )?.[1];
+    if (propsBlock === undefined) {
+      throw new Error(
+        `storybook-coverage.spec.ts: could not find \`export type ${component}Props = { ... };\` ` +
+          `in src/${file}. This parser needs updating for the new shape — do not let this ` +
+          "silently pass.",
+      );
+    }
+    // `prop: "a" | "b" | "c";` on one line, optional or not.
+    return [...propsBlock.matchAll(/^\s*(\w+)\??:\s*((?:"[^"]+"\s*\|\s*)+"[^"]+")\s*;/gm)].map(
+      (match) => ({
+        component,
+        prop: match[1]!,
+        values: [...match[2]!.matchAll(/"([^"]+)"/g)].map((value) => value[1]!),
+      }),
+    );
+  });
+}
+
+/** Every value a stories file passes for one prop, as a literal. */
+function storyValuesFor(component: string, prop: string): readonly string[] {
+  const source = readFileSync(resolve(srcDir, `${component}.stories.tsx`), "utf8");
+  // Two call shapes: `state: "x"` in a story's args (which always belong to the
+  // file's own component), and `state="x"` on a JSX tag - and THAT one must be
+  // scoped to this component's own tags, because a story often mounts a
+  // neighbouring glyph as scenery and its props are not this contract.
+  const inArgs = [...source.matchAll(new RegExp(`\\b${prop}:\\s*"([^"]+)"`, "g"))].map(
+    (match) => match[1]!,
+  );
+  const ownTags = [...source.matchAll(new RegExp(`<${component}\\b[^>]*>`, "g"))].map(
+    (match) => match[0],
+  );
+  const inJsx = ownTags.flatMap((tag) =>
+    [...tag.matchAll(new RegExp(`\\b${prop}="([^"]+)"`, "g"))].map((match) => match[1]!),
+  );
+  return [...new Set([...inArgs, ...inJsx])];
+}
+
+describe("story coverage — every Edit glyph state is catalogued (accounted from the type)", () => {
+  const unionProps = editGlyphUnionProps();
+
+  it("found the glyph state unions (parser sanity)", () => {
+    expect(unionProps.length).toBeGreaterThan(3);
+    expect(unionProps.map((entry) => `${entry.component}.${entry.prop}`)).toContain(
+      "EditHandle.state",
+    );
+  });
+
+  it("every declared state value appears in that component's stories", () => {
+    const missing = unionProps.flatMap((entry) => {
+      const used = storyValuesFor(entry.component, entry.prop);
+      return entry.values
+        .filter((value) => !used.includes(value))
+        .map((value) => `${entry.component}.${entry.prop} = "${value}"`);
+    });
+    expect(missing, {
+      message:
+        `These glyph states are declared in the component's props type but no story shows ` +
+        `them: ${missing.join(", ")}. A catalog that shows some states hides the rest — add a ` +
+        "story per state.",
+    } as never).toEqual([]);
+  });
+
+  it("every state value a story passes is still declared in the type (stale-story guard)", () => {
+    const stale = unionProps.flatMap((entry) => {
+      const used = storyValuesFor(entry.component, entry.prop);
+      return used
+        .filter((value) => !entry.values.includes(value))
+        .map((value) => `${entry.component}.${entry.prop} = "${value}"`);
+    });
+    expect(stale, {
+      message:
+        `These stories pass a value the component's props type no longer declares: ` +
+        `${stale.join(", ")}. Remove the story, or restore the state.`,
+    } as never).toEqual([]);
+  });
+});
