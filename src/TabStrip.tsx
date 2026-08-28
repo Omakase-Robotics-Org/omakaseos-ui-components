@@ -201,9 +201,18 @@ export function TabStrip<T extends string>(props: {
       const nextItem = items[nextIndex];
       if (nextItem) {
         onChange(nextItem.id);
+        // Roving tabindex is only half the pattern: the tabindex moves with
+        // the controlled re-render, but the browser never blurs an element
+        // whose tabindex drops to -1, so without this the OLD tab keeps DOM
+        // focus and the next Tab keypress leaves the strip from the wrong
+        // place. The dashboard original had this hole; fixed in transit
+        // (same class as the aria-disabled click guard on Button). The
+        // deterministic id is looked up by getElementById because idPrefix
+        // is caller text and must not need CSS escaping.
+        document.getElementById(`${idPrefix}-tab-${String(nextItem.id)}`)?.focus();
       }
     },
-    [items, value, onChange],
+    [items, value, onChange, idPrefix],
   );
 
   return (

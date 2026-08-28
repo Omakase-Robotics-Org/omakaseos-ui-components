@@ -381,6 +381,13 @@ test("SearchInput's focus ring frames the whole box, not just the inner input", 
   await input.focus();
   await expect(input).toBeFocused();
 
+  // The ring paints through a --ds-transition-fast (120ms) transition; poll
+  // past it instead of reading the computed style at focus time zero.
+  await expect
+    .poll(async () =>
+      input.evaluate((el) => getComputedStyle((el as HTMLElement).parentElement!).borderColor),
+    )
+    .not.toBe(restingBoxStyle.borderColor);
   const focusedBoxStyle = await input.evaluate((el) => {
     const box = (el as HTMLElement).parentElement!;
     const cs = globalThis.getComputedStyle(box);
