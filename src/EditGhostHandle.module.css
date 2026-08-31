@@ -1,31 +1,43 @@
 /* ---------- EditGhostHandle ----------
- * The dashed line is the distinction from an existing handle. Its wash is
+ * The same square as EditHandle's anchor, from the same token, because it is
+ * the same thing one step earlier. The dash is the distinction, and it is the
+ * shared "not yet real" rhythm rather than a ghost-specific number. Its wash is
  * the existing soft accent register, not a new ghost-specific token.
+ *
+ * State rules set PAINT ONLY (fill, stroke, dash) -- never geometry.
  */
 
 .group {
   overflow: visible;
 }
 
-.ring {
+.body {
+  overflow: visible;
+}
+
+.ghost {
+  x: calc(-1 * var(--ds-edit-anchor-half));
+  y: calc(-1 * var(--ds-edit-anchor-half));
+  width: var(--ds-edit-anchor-edge);
+  height: var(--ds-edit-anchor-edge);
   fill: var(--ds-accent-soft);
   stroke: var(--ds-accent);
-  stroke-width: 2;
-  stroke-dasharray: 4 3;
+  stroke-width: var(--ds-edit-stroke);
+  stroke-dasharray: var(--ds-edit-dash-prospective);
   transition:
-    r var(--ds-transition-fast),
     fill var(--ds-transition-fast),
     stroke var(--ds-transition-fast);
 }
 
-.hover .ring {
+.hover .ghost {
   stroke: var(--ds-accent-hover);
 }
 
-/* The drop destination of a live insertion: a solid outline, because at this
- * moment the point is no longer hypothetical. */
-.target .ring {
+/* The drop destination of a live insertion: solid outline and a filled body,
+ * because at this moment the point is no longer hypothetical. The weight is
+ * unchanged -- what changed is that the dash is gone. */
+.target .ghost {
+  fill: var(--ds-accent);
   stroke: var(--ds-accent);
   stroke-dasharray: none;
-  stroke-width: 2.5;
 }

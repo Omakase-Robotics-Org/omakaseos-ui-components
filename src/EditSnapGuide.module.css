@@ -1,35 +1,40 @@
 /* ---------- EditSnapGuide ----------
- * The guide is a hairline and the marks are small: this is evidence, not
+ * The guide is a hairline and the marks are bars: this is evidence, not
  * decoration, and it appears at the exact moment the operator is looking at
  * the position it explains. Weight ordering follows the snap priority - a
  * caught vertex is the sharpest mark, the grid the quietest.
+ *
+ * Every length is a --ds-edit-* token; the two bars are ONE rect rule the
+ * component rotates, so a plus and a cross are the same mark at two angles.
  */
 
 .group {
   overflow: visible;
 }
 
+.body {
+  overflow: visible;
+}
+
 .guide {
   fill: none;
   stroke: var(--ds-accent);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
+  stroke-width: var(--ds-edit-hairline);
+  stroke-dasharray: var(--ds-edit-dash-evidence);
 }
 
 .mark {
-  fill: none;
-  stroke: var(--ds-accent);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.tile {
-  fill: var(--ds-surface);
-  stroke: var(--ds-accent);
-  stroke-width: 1.5;
+  x: calc(-1 * var(--ds-edit-snap-mark-half));
+  y: calc(-0.5 * var(--ds-edit-stroke));
+  width: calc(2 * var(--ds-edit-snap-mark-half));
+  height: var(--ds-edit-stroke);
+  rx: calc(0.5 * var(--ds-edit-stroke));
+  fill: var(--ds-accent);
+  stroke: none;
 }
 
 .dot {
+  r: var(--ds-edit-grid-dot-radius);
   fill: var(--ds-accent);
   stroke: none;
 }
@@ -44,8 +49,7 @@
 }
 
 /* An alignment's whole statement is the shared axis, so its line carries the
- * full accent weight instead of the hairline's. */
+ * body weight instead of the hairline's. */
 .align .guide {
-  stroke-width: 1.5;
-  stroke-dasharray: 6 3;
+  stroke-width: var(--ds-edit-stroke);
 }

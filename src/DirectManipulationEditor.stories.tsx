@@ -17,7 +17,8 @@
  *    Alt-click to remove one
  *  - dragging any member of a multi-selection moves the whole set, as one
  *    intent and therefore one undo step
- *  - the primary (the second ring) carries the heading knob; drag it to rotate,
+ *  - the primary (the one wearing the outer ring) carries the heading knob; drag
+ *    it to rotate,
  *    with Shift quantising to 15°
  *  - double-click an armed edge to insert a point exactly there, or hold Alt
  *    over it to see the insertion marker and click
@@ -31,11 +32,11 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Button, EditGhostHandle, EditHandle, EditHeadingKnob } from "./index";
 import {
-  BADGE_RADIUS_PX,
+  BADGE_PICK_RADIUS_PX,
   EMPTY_SELECTION,
   GHOST_PICK_RADIUS_PX,
-  HANDLE_RADIUS_PX,
-  KNOB_RADIUS_PX,
+  HANDLE_PICK_RADIUS_PX,
+  KNOB_PICK_RADIUS_PX,
   REVEAL_RADIUS_PX,
   SNAP_RADIUS_PX,
   beginSession,
@@ -73,10 +74,10 @@ const SEED_DOCUMENT: EditorDocument = {
 };
 
 const TOLERANCE: EditTolerances = {
-  handleM: HANDLE_RADIUS_PX,
+  handleM: HANDLE_PICK_RADIUS_PX,
   ghostM: GHOST_PICK_RADIUS_PX,
-  knobM: KNOB_RADIUS_PX,
-  badgeM: BADGE_RADIUS_PX,
+  knobM: KNOB_PICK_RADIUS_PX,
+  badgeM: BADGE_PICK_RADIUS_PX,
   headingArmM: HEADING_ARM_PX,
   revealM: REVEAL_RADIUS_PX,
   snapM: SNAP_RADIUS_PX,
@@ -320,7 +321,14 @@ function DirectManipulationEditorPreview() {
             <EditGhostHandle x={dynamicGhost.at.x} y={dynamicGhost.at.y} state="hover" />
           )}
           {renderedPoints.map((point) => (
-            <EditHandle key={point.id} x={point.x} y={point.y} state={stateFor(point)} heading={point.yaw} />
+            <EditHandle
+              key={point.id}
+              x={point.x}
+              y={point.y}
+              kind="place"
+              state={stateFor(point)}
+              heading={point.yaw}
+            />
           ))}
           {primaryHandle === null || headingAnchor === null ? null : (
             <EditHeadingKnob

@@ -2,6 +2,12 @@
  * A dashed accent outline over the softest accent wash the design system has.
  * The wash is deliberately faint: the rectangle exists to show what is being
  * gathered, and it must not obscure the handles it is gathering.
+ *
+ * The rectangle's extent is host geometry (the two corners of the gesture); the
+ * only DRAWN quantities are its weight and its dash, and both are --ds-edit-*
+ * tokens. The dash is the shared "not yet real" rhythm -- the same one the
+ * insertion ghost and the pending leg use -- and non-scaling-stroke makes both
+ * weight and dash screen quantities, so a marquee looks the same at every zoom.
  */
 
 .group {
@@ -12,6 +18,6 @@
   fill: var(--ds-accent-soft);
   fill-opacity: 0.35;
   stroke: var(--ds-accent);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 4;
+  stroke-width: var(--ds-edit-stroke);
+  stroke-dasharray: var(--ds-edit-dash-prospective);
 }

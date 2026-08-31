@@ -291,4 +291,78 @@
      tier, used here for a decorative glyph (the unsorted sort icon)
      rather than a disabled control. */
   --ds-text-subtle: var(--ds-text-disabled);
+
+  /* ----------------------------------------------------------------
+   * Direct-manipulation affordance geometry (v0.20)
+   *
+   * The DRAWN size of every editing glyph, and only that.
+   *
+   * It is stated here, once, because it is a decision of the design system
+   * and not of a host, a modality or an interaction state. An affordance
+   * that grows when it is hovered, selected, primary or dragged reads as a
+   * swelling blob rather than as a vector anchor: Illustrator's own path
+   * anchor is about 7px and is still 7px when you select it -- what changes
+   * is its FILL. This vocabulary follows that, so no token below has a
+   * per-state variant and no component multiplies one.
+   *
+   * The rule is ONE size -- the anchor's edge. Every other value here is a
+   * stated relation to it, so there is exactly one number to move and the
+   * whole vocabulary stays in proportion when it moves.
+   *
+   * DRAWN GEOMETRY IS NOT PICK TOLERANCE. Nothing in this block is a hit
+   * target. Tolerances are a different quantity with a different owner:
+   * they live in `src/direct-manipulation/constants.ts` as
+   * `*_PICK_RADIUS_PX`, they are deliberately far larger than the glyph
+   * they catch, and they are the ONE place where pointer modality is
+   * allowed to matter (`COARSE_PICK_SCALE`). Conflating the two is what
+   * used to force the glyphs to be finger-sized in order to be clickable.
+   *
+   * Consumption: each `Edit*.module.css` reads these through CSS geometry
+   * properties (`r` / `x` / `y` / `width` / `height` / `rx`), never through
+   * an SVG attribute computed in TSX. A glyph body is drawn at the origin
+   * of a `translate(x y) scale(unitsPerPixel)` group (see
+   * `src/EditAffordancePlacement.ts`), which is what lets these be plain
+   * screen pixels on a surface whose user units are metres or raster cells.
+   */
+  /* The one size. Illustrator/Figma's path-anchor edge. */
+  --ds-edit-anchor-edge: 7px;
+  /* Half an edge: the offset that centres a body on its own position. */
+  --ds-edit-anchor-half: calc(0.5 * var(--ds-edit-anchor-edge));
+  /* The anchor's circumradius (half its diagonal, edge * sqrt(2)/2): the
+     radius that clears the square at EVERY angle, and exactly the vertex of
+     the 45-degree-rotated square a place is drawn as. Anything that must sit
+     outside an anchor without touching it starts here. */
+  --ds-edit-anchor-clear: calc(0.7071 * var(--ds-edit-anchor-edge));
+  /* The direction handle: the disc inscribed in the anchor square, so a knob
+     and an anchor are the same size and differ only in shape. */
+  --ds-edit-knob-radius: var(--ds-edit-anchor-half);
+  /* The primary's annotation ring: clears the anchor by half an edge. It
+     annotates the anchor; it never enlarges it. */
+  --ds-edit-primary-ring-radius: calc(var(--ds-edit-anchor-clear) + var(--ds-edit-anchor-half));
+  /* The heading tick: starts where the anchor stops, one edge long. */
+  --ds-edit-tick-start: var(--ds-edit-anchor-clear);
+  --ds-edit-tick-length: var(--ds-edit-anchor-edge);
+  /* The remove badge is a CONTROL glyph, not an anchor: it is pressed, not
+     positioned, so it is a full edge in radius (two anchors across) and its
+     mark spans exactly one anchor edge. */
+  --ds-edit-badge-radius: var(--ds-edit-anchor-edge);
+  --ds-edit-badge-mark-half: var(--ds-edit-anchor-half);
+  /* Snap evidence is drawn OVER the anchor it caught, so its mark has to
+     reach past one: three edges across. It is transient, which is what
+     licenses it to be the largest mark in the vocabulary. */
+  --ds-edit-snap-mark-half: calc(1.5 * var(--ds-edit-anchor-edge));
+  /* The grid's dot: the quietest mark, a quarter of an edge across. */
+  --ds-edit-grid-dot-radius: calc(0.5 * var(--ds-edit-anchor-half));
+  /* Weights. An affordance BODY has one outline weight; a line that is
+     evidence or a preview rather than an object is a hairline. Both are
+     screen quantities: bodies get them through the counter-scaled group,
+     lines drawn in host coordinates declare `vector-effect:
+     non-scaling-stroke`. */
+  --ds-edit-stroke: 1.5px;
+  --ds-edit-hairline: 1px;
+  /* Dash rhythms, bound to MEANING rather than to each glyph, so "not yet
+     real" looks the same wherever it appears (ghost, marquee, pending leg)
+     and never looks like "this is why your coordinate moved" (snap). */
+  --ds-edit-dash-prospective: 4px 3px;
+  --ds-edit-dash-evidence: 3px 3px;
 }

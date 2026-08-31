@@ -1,67 +1,93 @@
 /* ---------- EditHandle ----------
- * The ring's size is SVG geometry supplied by the instance. Colors and
- * motion stay on the design-system registers; the state classes only select
- * the appropriate register pair. Radius scaling is done in TSX so cx/cy stay
- * fixed and no SVG transform-origin interpretation can move the grip.
+ * The anchor's geometry is the design system's, not this component's: every
+ * length below resolves to a --ds-edit-* token (src/tokens.css) through a CSS
+ * geometry property, and the body sits at the origin of the counter-scaled
+ * placement group, so these are screen pixels on any host surface.
+ *
+ * The state rules underneath set PAINT ONLY -- fill, stroke, and the transition
+ * between them. None of them may set r / x / y / width / height / transform: a
+ * selected anchor is a filled anchor of the same size (Illustrator's rule), and
+ * EditAffordanceGeometry.spec.tsx fails if a geometry property ever appears
+ * inside a state selector again.
  */
 
 .group {
   overflow: visible;
 }
 
-.ring {
+.body {
+  /* The placement group. Nothing to style: it exists to carry the transform. */
+  overflow: visible;
+}
+
+/* One rect for both kinds. `anchor` draws it square; `place` rotates the SAME
+ * rect 45 degrees, which is why a place can never drift into being a larger
+ * anchor. */
+.anchor {
+  x: calc(-1 * var(--ds-edit-anchor-half));
+  y: calc(-1 * var(--ds-edit-anchor-half));
+  width: var(--ds-edit-anchor-edge);
+  height: var(--ds-edit-anchor-edge);
   fill: var(--ds-surface);
   stroke: var(--ds-accent);
-  stroke-width: 2;
+  stroke-width: var(--ds-edit-stroke);
   transition:
-    r var(--ds-transition-fast),
     fill var(--ds-transition-fast),
     stroke var(--ds-transition-fast);
 }
 
+/* The facing of a place: a bar starting where the anchor stops (its
+ * circumradius, so it clears the diamond's vertex at every angle) and running
+ * one edge outwards. Rotated by the parent group, not sized by it. */
 .tick {
-  fill: none;
-  stroke: var(--ds-accent);
-  stroke-width: 2;
-  stroke-linecap: round;
-  transition:
-    x1 var(--ds-transition-fast),
-    y1 var(--ds-transition-fast),
-    x2 var(--ds-transition-fast),
-    y2 var(--ds-transition-fast),
-    stroke var(--ds-transition-fast);
+  x: var(--ds-edit-tick-start);
+  y: calc(-0.5 * var(--ds-edit-stroke));
+  width: var(--ds-edit-tick-length);
+  height: var(--ds-edit-stroke);
+  rx: calc(0.5 * var(--ds-edit-stroke));
+  fill: var(--ds-accent);
+  stroke: none;
+  transition: fill var(--ds-transition-fast);
 }
 
-.hover .ring {
+/* The primary's annotation ring: the selection member that owns the heading
+ * knob and any single-target command. A thin outline at a FIXED radius, so it
+ * reads as a mark about the anchor rather than as a bigger anchor. */
+.primaryRing {
+  r: var(--ds-edit-primary-ring-radius);
+  fill: none;
+  stroke: var(--ds-accent);
+  stroke-width: var(--ds-edit-hairline);
+}
+
+.hover .anchor {
   fill: var(--ds-surface-hover);
   stroke: var(--ds-accent-hover);
 }
 
 .hover .tick {
-  stroke: var(--ds-accent-hover);
+  fill: var(--ds-accent-hover);
 }
 
-.selected .ring,
-.primary .ring,
-.dragging .ring {
+/* Selected / primary: FILLED. This is the whole of "this one is held". */
+.selected .anchor,
+.primary .anchor {
   fill: var(--ds-accent);
   stroke: var(--ds-accent);
 }
 
-.selected .tick,
-.primary .tick,
-.dragging .tick {
-  stroke: var(--ds-accent);
+/* Being dragged right now: filled in the active register, so a held anchor is
+ * distinguishable from a merely selected one without either changing size. */
+.dragging .anchor {
+  fill: var(--ds-accent-hover);
+  stroke: var(--ds-accent-hover);
 }
 
-/* The primary's second ring: the selection member that owns the heading knob
- * and any single-target command. Drawn as a thin outline so it reads as an
- * annotation of the filled grip rather than a larger grip. */
-.primaryRing {
-  fill: none;
-  stroke: var(--ds-accent);
-  stroke-width: 1.5;
-  transition:
-    r var(--ds-transition-fast),
-    stroke var(--ds-transition-fast);
+.selected .tick,
+.primary .tick {
+  fill: var(--ds-accent);
+}
+
+.dragging .tick {
+  fill: var(--ds-accent-hover);
 }

@@ -30,8 +30,8 @@ function renderGuide(args: ComponentProps<typeof EditSnapGuide>) {
   return (
     <DirectManipulationStoryCanvas>
       <line x1={20} y1={90} x2={160} y2={90} stroke="var(--ds-border)" strokeWidth={2} />
-      <EditHandle x={140} y={40} state="idle" />
-      <EditHandle x={90} y={60} state="dragging" />
+      <EditHandle x={140} y={40} kind="place" state="idle" />
+      <EditHandle x={90} y={60} kind="place" state="dragging" />
       <EditSnapGuide {...args} />
     </DirectManipulationStoryCanvas>
   );

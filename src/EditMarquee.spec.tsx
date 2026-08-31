@@ -29,7 +29,11 @@ describe("EditMarquee", () => {
     expect(rect).toHaveAttribute("y", "20");
     expect(rect).toHaveAttribute("width", "30");
     expect(rect).toHaveAttribute("height", "40");
-    expect(rect).toHaveAttribute("stroke-dasharray", "5 4");
+    // The rectangle's extent is host geometry; its weight and dash are
+    // --ds-edit-* tokens in the module, declared as screen quantities. Neither
+    // is an attribute any more, so no call site can restate them.
+    expect(rect?.hasAttribute("stroke-dasharray")).toBe(false);
+    expect(rect).toHaveAttribute("vector-effect", "non-scaling-stroke");
   });
 
   it("normalises reversed corners, so a drag up-left is the same rectangle", () => {

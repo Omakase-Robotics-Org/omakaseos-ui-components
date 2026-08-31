@@ -1,58 +1,62 @@
 /**
- * @file EditRemoveBadge — the destructive delete affordance for an edit grip.
+ * @file EditRemoveBadge -- the destructive delete affordance for an edit grip.
  *
- * Direct-manipulation layer. This SVG fragment is a small danger-colored
- * circle with a two-stroke multiplication mark. The shape is decorative and
- * the host supplies the native accessible delete control alongside its map
- * overlay; this primitive never becomes an ARIA widget.
+ * Direct-manipulation layer. A small danger-colored circle with a two-bar
+ * multiplication mark. The shape is decorative and the host supplies the native
+ * accessible delete control alongside its map overlay; this primitive never
+ * becomes an ARIA widget.
+ *
+ * It is a CONTROL glyph, not an anchor: it is pressed rather than positioned, so
+ * it deliberately sits outside the square/diamond position vocabulary and is
+ * drawn a full anchor edge in radius (`--ds-edit-badge-radius`, two anchors
+ * across) with a mark spanning exactly one anchor edge. Nothing in the layer is
+ * distinguished from it by size alone -- the danger register and the cross carry
+ * it.
  *
  * Call-shape policy: one geometry call shape with an optional per-instance
  * offset; no passthrough SVG props are accepted. The default offset is owned
- * by the direct-manipulation grammar constants.
+ * by the direct-manipulation grammar constants, because WHERE the badge sits is
+ * a position (shared with the hit test) rather than a drawn size.
  *
  * Cross-app constraint: danger background and foreground are existing
  * semantic --ds-* tokens, so the badge remains a shape-and-contrast cue on
  * the fully desaturated inspection host too.
  */
+import { BADGE_OFFSET_PX } from "./direct-manipulation/constants";
 import {
-  BADGE_OFFSET_PX,
-  BADGE_RADIUS_PX,
-} from "./direct-manipulation/constants";
+  IDENTITY_UNITS_PER_PIXEL,
+  affordancePlacement,
+} from "./EditAffordancePlacement";
 import styles from "./EditRemoveBadge.module.css";
 
 export type EditRemoveBadgeProps = {
   x: number;
   y: number;
-  radiusPx?: number;
   offsetPx?: {
     x: number;
     y: number;
   };
   state: "idle" | "hover";
+  /** The host's user units per screen pixel; 1 when the surface is in pixels. */
+  unitsPerPixel?: number;
 };
 
-const MARK_HALF_FACTOR = 0.42;
-
 /**
- * A small danger badge with a two-stroke remove mark.
+ * A small danger badge with a two-bar remove mark.
  *
  * This is a COARSE-input affordance: a fine pointer has no delete badge at all
  * (it removes with Alt-click, the Delete key, or the host's native control), so
  * nothing destructive floats beside a precise gesture. `hover` exists for the
  * tablet-with-a-mouse case where a coarse-declared surface is nonetheless
- * hovered.
+ * hovered. Neither state changes its size.
  */
 export function EditRemoveBadge({
   x,
   y,
-  radiusPx = BADGE_RADIUS_PX,
   offsetPx = BADGE_OFFSET_PX,
   state,
+  unitsPerPixel = IDENTITY_UNITS_PER_PIXEL,
 }: EditRemoveBadgeProps) {
-  const badgeX = x + offsetPx.x;
-  const badgeY = y + offsetPx.y;
-  const markHalf = radiusPx * MARK_HALF_FACTOR;
-
   return (
     <g
       className={`${styles.group} ${styles[state]}`}
@@ -60,15 +64,14 @@ export function EditRemoveBadge({
       aria-hidden="true"
       focusable="false"
     >
-      <circle className={styles.badge} cx={badgeX} cy={badgeY} r={radiusPx} />
-      <path
-        className={styles.mark}
-        d={`M ${badgeX - markHalf} ${badgeY - markHalf} L ${badgeX + markHalf} ${badgeY + markHalf}`}
-      />
-      <path
-        className={styles.mark}
-        d={`M ${badgeX + markHalf} ${badgeY - markHalf} L ${badgeX - markHalf} ${badgeY + markHalf}`}
-      />
+      <g
+        className={styles.body}
+        transform={affordancePlacement(x + offsetPx.x, y + offsetPx.y, unitsPerPixel)}
+      >
+        <circle className={styles.badge} data-edit-glyph="badge" />
+        <rect className={styles.mark} transform="rotate(45)" />
+        <rect className={styles.mark} transform="rotate(-45)" />
+      </g>
     </g>
   );
 }

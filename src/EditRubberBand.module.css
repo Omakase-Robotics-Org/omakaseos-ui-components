@@ -1,8 +1,12 @@
 /* ---------- EditRubberBand ----------
- * The pending leg is thinner than a committed one (EditHandle's path stroke is
- * 3): what has not been placed yet must not look placed. The constrained state
- * thickens it slightly and drops the dash, so "the modifier is holding this
- * line" is legible without color alone.
+ * The leg's extent is host geometry (two positions); its drawn quantities are
+ * weight and dash, both --ds-edit-* tokens, both screen quantities through
+ * non-scaling-stroke.
+ *
+ * `constrained` differs by DASH, not by weight: the band keeps one weight in
+ * both states, so "the modifier is holding this line" is legible without either
+ * colour alone or a size change. The closing leg is a hairline, because a leg
+ * that has not been asked for yet must not look like the one being aimed.
  */
 
 .group {
@@ -12,21 +16,20 @@
 .band {
   fill: none;
   stroke: var(--ds-accent);
-  stroke-width: 1.5;
+  stroke-width: var(--ds-edit-stroke);
   stroke-linecap: round;
-  stroke-dasharray: 6 3;
+  stroke-dasharray: var(--ds-edit-dash-prospective);
 }
 
 .closing {
   fill: none;
   stroke: var(--ds-accent);
-  stroke-width: 1;
+  stroke-width: var(--ds-edit-hairline);
   stroke-linecap: round;
-  stroke-dasharray: 4 4;
+  stroke-dasharray: var(--ds-edit-dash-prospective);
   opacity: 0.7;
 }
 
 .constrained .band {
-  stroke-width: 2;
   stroke-dasharray: none;
 }

@@ -1,28 +1,56 @@
 /**
- * @file Pixel-frame constants and the cursor vocabulary of the
- * direct-manipulation layer.
+ * @file Pick tolerances and the cursor vocabulary of the direct-manipulation
+ * layer.
  *
  * Pure values only: no React, DOM, renderer, wire, clock or random. The
- * pixel numbers here are the POINTER frame (a pointer target's radius on
- * screen); metres are the caller's job (`toleranceMetres`).
+ * pixel numbers here are the POINTER frame (how near a pointer must come to
+ * a target on screen); metres are the caller's job (`toleranceMetres`).
+ *
+ * ## What this module is NOT
+ *
+ * It is not the drawn size of anything. Until v0.20 it was both: the same
+ * number was documented as "drawn and picked radius", which is why a glyph
+ * could not be made small without becoming unclickable, and why the drawn
+ * size ended up being multiplied per interaction state to compensate. The
+ * two are different quantities with different owners:
+ *
+ *  - DRAWN geometry belongs to the design system. It is declared as
+ *    `--ds-edit-*` tokens in `src/tokens.css` and consumed by the
+ *    `Edit*.module.css` modules through CSS geometry properties. It is small,
+ *    Illustrator-like, identical in fine and coarse input, and identical in
+ *    every interaction state (state is carried by fill and stroke).
+ *  - PICK tolerance belongs here. It is generous, it is unrelated to how
+ *    large the mark is, and it is the ONE place pointer modality is allowed
+ *    to matter -- `COARSE_PICK_SCALE`, applied by `grammar.ts`.
+ *
+ * Consequently every radius below is named `*_PICK_RADIUS_PX`, and the
+ * values were deliberately NOT changed when the glyphs shrank: the hit areas
+ * this layer offered before the shape vocabulary landed are the hit areas it
+ * offers after it.
+ *
+ * Positions are a third, separate thing, and they are neither of the above:
+ * where the heading knob or the delete badge SITS relative to its target must
+ * be one number shared by the drawn glyph and the hit test, or the two come
+ * apart. Those live here too (`BADGE_ANCHOR_OFFSET_SCALE`, `BADGE_OFFSET_PX`)
+ * because `grammar.ts` needs them, and the components take them as props.
  */
 
 import type { DragGrip, PointerModality } from "./grammar";
 
-/** Base drawn and picked radius of a handle in pixels. */
-export const HANDLE_RADIUS_PX = 9;
-/** Scale applied to a selected handle's radius. */
-export const HANDLE_SELECTED_SCALE = 1.7;
-/** Drawn radius of a path or ring ghost in pixels. */
-export const GHOST_RADIUS_PX = 6;
+/**
+ * Pick radius of a handle (an anchor or a place) in pixels.
+ *
+ * Unrelated to how large the anchor is drawn (`--ds-edit-anchor-edge`, 7px):
+ * this is how near the pointer must come to grab it, and it stays as wide as
+ * it was when the mark itself was 18px across.
+ */
+export const HANDLE_PICK_RADIUS_PX = 9;
 /** Pick radius of a path or ring ghost in pixels. */
 export const GHOST_PICK_RADIUS_PX = 8;
-/** Drawn and picked radius of a heading knob in pixels. */
-export const KNOB_RADIUS_PX = 7;
-/** Drawn and picked radius of a delete badge in pixels. */
-export const BADGE_RADIUS_PX = 8;
-/** Pixel offset from the area badge anchor to the badge. */
-export const BADGE_OFFSET_PX = { x: 11, y: -11 };
+/** Pick radius of a heading knob in pixels. */
+export const KNOB_PICK_RADIUS_PX = 7;
+/** Pick radius of a delete badge in pixels. */
+export const BADGE_PICK_RADIUS_PX = 8;
 /** Pick-radius multiplier for coarse pointer input. */
 export const COARSE_PICK_SCALE = 1.6;
 /**
@@ -30,14 +58,14 @@ export const COARSE_PICK_SCALE = 1.6;
  * selected target before that target's single-target affordances (its
  * heading knob) are revealed at all.
  *
- * About three handle radii, which is the distance at which an operator has
- * visibly "gone for" the thing rather than merely passed nearby. Reveal has
- * no meaning for coarse input (there is no hover), so COARSE_PICK_SCALE
+ * About three handle pick radii, which is the distance at which an operator
+ * has visibly "gone for" the thing rather than merely passed nearby. Reveal
+ * has no meaning for coarse input (there is no hover), so COARSE_PICK_SCALE
  * never applies to it.
  */
 export const REVEAL_RADIUS_PX = 28;
 /**
- * Snap capture radius in pixels — slightly wider than a pick radius so a
+ * Snap capture radius in pixels -- slightly wider than a pick radius so a
  * deliberate approach snaps, and narrow enough that it does not fight the
  * 45-degree constraint for the same pointer position.
  */
@@ -46,7 +74,7 @@ export const SNAP_RADIUS_PX = 10;
  * Badge anchors sit at this multiple of the badge pick radius from their
  * target. At 1x the badge's pick disc would pass exactly through the target's
  * own center, so clicking a selected handle or vertex would resolve to the
- * badge (delete) instead of the thing itself (deselect / grab) — an
+ * badge (delete) instead of the thing itself (deselect / grab) -- an
  * accidental-deletion hazard. At 2x the disc clears the target's center by a
  * full pick radius. Grammar and renderers must both use it, so the drawn
  * badge and its hit target stay coincident.
@@ -56,6 +84,21 @@ export const SNAP_RADIUS_PX = 10;
  * offset is a coarse-frame decision; see `badgeUnder` in grammar.ts.
  */
 export const BADGE_ANCHOR_OFFSET_SCALE = 2;
+/**
+ * Where `EditRemoveBadge` draws itself relative to the position it is given,
+ * when the caller has NOT already resolved the grammar's badge anchor.
+ *
+ * This is that same anchor rule -- `BADGE_ANCHOR_OFFSET_SCALE` pick radii
+ * from the target -- resolved onto the up-right diagonal, rather than a
+ * second, rounded restatement of it (it used to be the literal pair
+ * `{ x: 11, y: -11 }`, which is 16 / sqrt(2) written out by hand). A host
+ * that has already placed the badge at the grammar's anchor passes
+ * `{ x: 0, y: 0 }` and this default never applies.
+ */
+export const BADGE_OFFSET_PX = {
+  x: (BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX) / Math.SQRT2,
+  y: -(BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX) / Math.SQRT2,
+};
 
 /**
  * What a live drag is doing, for the purpose of choosing a slop threshold

@@ -24,9 +24,9 @@ type Story = StoryObj<typeof meta>;
 function renderMarquee(args: ComponentProps<typeof EditMarquee>) {
   return (
     <DirectManipulationStoryCanvas>
-      <EditHandle x={50} y={40} state="selected" />
-      <EditHandle x={90} y={70} state="selected" />
-      <EditHandle x={150} y={95} state="idle" />
+      <EditHandle x={50} y={40} kind="anchor" state="selected" />
+      <EditHandle x={90} y={70} kind="anchor" state="selected" />
+      <EditHandle x={150} y={95} kind="anchor" state="idle" />
       <EditMarquee {...args} />
     </DirectManipulationStoryCanvas>
   );

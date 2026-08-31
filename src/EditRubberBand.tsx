@@ -16,6 +16,11 @@
  * Call-shape policy: one geometry-and-state call shape; no passthrough SVG
  * props are accepted.
  *
+ * Neither leg has a body to size: they span host positions. Their only DRAWN
+ * quantities are weight and dash, both --ds-edit-* tokens, both screen
+ * quantities through `non-scaling-stroke`. `constrained` differs by dash alone --
+ * one weight in both states, so nothing about this glyph changes size either.
+ *
  * Cross-app constraint: both legs use the existing --ds-accent register, so the
  * preview stays visible on the fully desaturated inspection host.
  */
@@ -42,7 +47,14 @@ export function EditRubberBand({ from, to, state, closeTo }: EditRubberBandProps
       aria-hidden="true"
       focusable="false"
     >
-      <line className={styles.band} x1={from.x} y1={from.y} x2={to.x} y2={to.y} />
+      <line
+        className={styles.band}
+        x1={from.x}
+        y1={from.y}
+        x2={to.x}
+        y2={to.y}
+        vectorEffect="non-scaling-stroke"
+      />
       {closeTo === undefined ? null : (
         <line
           className={styles.closing}
@@ -50,7 +62,7 @@ export function EditRubberBand({ from, to, state, closeTo }: EditRubberBandProps
           y1={to.y}
           x2={closeTo.x}
           y2={closeTo.y}
-          strokeDasharray="4 4"
+          vectorEffect="non-scaling-stroke"
         />
       )}
     </g>

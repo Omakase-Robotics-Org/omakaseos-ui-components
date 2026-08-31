@@ -2,27 +2,39 @@
  * Danger is a semantic register already owned by every host. The circle and
  * mark use the same foreground so the cross cannot disappear on a tinted
  * background in a desaturated palette.
+ *
+ * The two bars are one rect rule drawn twice, rotated +/-45 degrees by the
+ * component: same length, same weight, no per-instance arithmetic. State rules
+ * set PAINT ONLY.
  */
 
 .group {
   overflow: visible;
 }
 
+.body {
+  overflow: visible;
+}
+
 .badge {
+  r: var(--ds-edit-badge-radius);
   fill: var(--ds-tone-danger-bg);
   stroke: var(--ds-tone-danger-fg);
-  stroke-width: 2;
+  stroke-width: var(--ds-edit-stroke);
   transition:
-    r var(--ds-transition-fast),
     fill var(--ds-transition-fast),
     stroke var(--ds-transition-fast);
 }
 
 .mark {
-  fill: none;
-  stroke: var(--ds-tone-danger-fg);
-  stroke-width: 2;
-  stroke-linecap: round;
+  x: calc(-1 * var(--ds-edit-badge-mark-half));
+  y: calc(-0.5 * var(--ds-edit-stroke));
+  width: calc(2 * var(--ds-edit-badge-mark-half));
+  height: var(--ds-edit-stroke);
+  rx: calc(0.5 * var(--ds-edit-stroke));
+  fill: var(--ds-tone-danger-fg);
+  stroke: none;
+  transition: fill var(--ds-transition-fast);
 }
 
 /* Hovered: the danger register inverts, so the destructive outcome is stated
@@ -33,5 +45,5 @@
 }
 
 .hover .mark {
-  stroke: var(--ds-surface);
+  fill: var(--ds-surface);
 }

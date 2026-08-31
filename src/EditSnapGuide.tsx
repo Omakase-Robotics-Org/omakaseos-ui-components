@@ -1,5 +1,5 @@
 /**
- * @file EditSnapGuide — the visible evidence that a position was snapped.
+ * @file EditSnapGuide -- the visible evidence that a position was snapped.
  *
  * Direct-manipulation layer. A snap that happens silently is a coordinate
  * changed behind the operator's back, and these are real measured poses, so
@@ -9,12 +9,20 @@
  * `kind` mirrors the grammar's own `SnapEvidence["kind"]` exactly, so a host
  * forwards the evidence it was handed instead of re-deciding what happened:
  *
- *  - `vertex` — an existing point. A cross, the sharpest mark available.
- *  - `edge` — a point on a line. A small square sitting on that line.
- *  - `align` — an axis shared with another point. The mark is the line itself,
+ *  - `vertex` -- an existing point. A PLUS: the sharpest mark available.
+ *  - `edge` -- a point on a line. A CROSS (the same two bars, rotated). It used
+ *    to be a small filled square, which is now what an anchor is: a mark may
+ *    not wear a position's shape, or "evidence" and "vertex" look alike at the
+ *    exact moment they are drawn on top of each other.
+ *  - `align` -- an axis shared with another point. The mark is the line itself,
  *    so `from`/`to` carry the whole meaning.
- *  - `grid` — a declared grid intersection. A dot, the quietest mark, because
+ *  - `grid` -- a declared grid intersection. A dot, the quietest mark, because
  *    the grid is everywhere and must not shout.
+ *
+ * A mark is drawn over the anchor it caught, so it is the largest thing in the
+ * vocabulary (`--ds-edit-snap-mark-half`, three anchor edges across) -- and it
+ * is transient, which is what licenses that. Its size is a token, not a prop:
+ * the host no longer states it and no state or modality varies it.
  *
  * Call-shape policy: one geometry-and-kind call shape; no passthrough SVG
  * props are accepted.
@@ -22,6 +30,10 @@
  * Cross-app constraint: mark and guide are the existing --ds-accent register,
  * legible on the fully desaturated inspection host as shape and contrast.
  */
+import {
+  IDENTITY_UNITS_PER_PIXEL,
+  affordancePlacement,
+} from "./EditAffordancePlacement";
 import styles from "./EditSnapGuide.module.css";
 
 type Point = { x: number; y: number };
@@ -35,11 +47,9 @@ export type EditSnapGuideProps = {
   from?: Point;
   /** The other end of that hairline. */
   to?: Point;
-  /** Half-size of the mark, in host units. */
-  sizePx?: number;
+  /** The host's user units per screen pixel; 1 when the surface is in pixels. */
+  unitsPerPixel?: number;
 };
-
-const SNAP_MARK_HALF_PX = 5;
 
 /** A snap mark with an optional guide line to what it snapped to. */
 export function EditSnapGuide({
@@ -47,7 +57,7 @@ export function EditSnapGuide({
   kind,
   from,
   to,
-  sizePx = SNAP_MARK_HALF_PX,
+  unitsPerPixel = IDENTITY_UNITS_PER_PIXEL,
 }: EditSnapGuideProps) {
   return (
     <g
@@ -63,37 +73,28 @@ export function EditSnapGuide({
           y1={from.y}
           x2={to.x}
           y2={to.y}
-          strokeDasharray="3 3"
+          vectorEffect="non-scaling-stroke"
         />
       )}
-      {kind === "vertex" ? (
-        <>
-          <line
-            className={styles.mark}
-            x1={at.x - sizePx}
-            y1={at.y}
-            x2={at.x + sizePx}
-            y2={at.y}
-          />
-          <line
-            className={styles.mark}
-            x1={at.x}
-            y1={at.y - sizePx}
-            x2={at.x}
-            y2={at.y + sizePx}
-          />
-        </>
-      ) : null}
-      {kind === "edge" ? (
-        <rect
-          className={styles.tile}
-          x={at.x - sizePx}
-          y={at.y - sizePx}
-          width={sizePx * 2}
-          height={sizePx * 2}
-        />
-      ) : null}
-      {kind === "grid" ? <circle className={styles.dot} cx={at.x} cy={at.y} r={sizePx / 2} /> : null}
+      {kind === "align" ? null : (
+        <g className={styles.body} transform={affordancePlacement(at.x, at.y, unitsPerPixel)}>
+          {kind === "grid" ? (
+            <circle className={styles.dot} data-edit-glyph="snap-grid" />
+          ) : (
+            <>
+              <rect
+                className={styles.mark}
+                data-edit-glyph={kind === "vertex" ? "snap-vertex" : "snap-edge"}
+                transform={kind === "vertex" ? "rotate(0)" : "rotate(45)"}
+              />
+              <rect
+                className={styles.mark}
+                transform={kind === "vertex" ? "rotate(90)" : "rotate(-45)"}
+              />
+            </>
+          )}
+        </g>
+      )}
     </g>
   );
 }

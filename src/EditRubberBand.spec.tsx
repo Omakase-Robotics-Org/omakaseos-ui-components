@@ -29,6 +29,23 @@ describe("EditRubberBand", () => {
     expect(band).toHaveAttribute("y2", "36");
   });
 
+  it("draws both states with the identical geometry: the dash is the difference", () => {
+    // A constrained leg used to also thicken. Weight is one value for both
+    // states now, so the modifier reads as a dash change and nothing resizes.
+    const geometryOf = (state: "free" | "constrained") => {
+      const { container } = render(
+        <svg>
+          <EditRubberBand from={{ x: 5, y: 6 }} to={{ x: 25, y: 36 }} state={state} />
+        </svg>,
+      );
+      const band = container.querySelector(`line.${styles.band}`);
+      return ["x1", "y1", "x2", "y2", "stroke-width", "stroke-dasharray"].map((name) =>
+        band?.getAttribute(name),
+      );
+    };
+    expect(geometryOf("constrained")).toEqual(geometryOf("free"));
+  });
+
   it("states the constraint on the group, not by color alone", () => {
     const free = render(
       <svg>
@@ -68,5 +85,7 @@ describe("EditRubberBand", () => {
     const leg = closing.container.querySelector(`line.${styles.closing}`);
     expect(leg).toHaveAttribute("x1", "10");
     expect(leg).toHaveAttribute("x2", "20");
+    expect(leg?.hasAttribute("stroke-dasharray")).toBe(false);
+    expect(leg).toHaveAttribute("vector-effect", "non-scaling-stroke");
   });
 });

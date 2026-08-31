@@ -33,8 +33,8 @@ function renderBand(args: ComponentProps<typeof EditRubberBand>) {
         strokeWidth={3}
         strokeLinecap="round"
       />
-      <EditHandle x={30} y={90} state="idle" />
-      <EditHandle x={60} y={60} state="primary" />
+      <EditHandle x={30} y={90} kind="anchor" state="idle" />
+      <EditHandle x={60} y={60} kind="anchor" state="primary" />
       <EditRubberBand {...args} />
     </DirectManipulationStoryCanvas>
   );
