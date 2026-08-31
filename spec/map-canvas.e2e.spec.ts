@@ -22,16 +22,31 @@
  * jsdom has no layout, no pixels, no CSS transform and no pointer dispatch, so
  * a `render()` of this editor is evidence about none of it.
  *
- * ## Two ways to measure a drawn circle, and why BOTH are used
+ * ## What the affordances are DRAWN as, since v0.20
+ *
+ * There are no `<circle>` handles any more. Every glyph body carries
+ * `data-edit-glyph` ("anchor" | "place" | "ghost" | "knob" | "badge" | the
+ * three snap marks) and is drawn AT THE ORIGIN, positioned by a
+ * `translate(...) scale(...)` on its placement group, so there is no `cx`,
+ * `cy` or `r` to read anywhere: an anchor is a 7 px `<rect>`, and a place is
+ * that same rect rotated 45° into a diamond. The `primary` annotation is a
+ * `<circle data-edit-annotation="primary">` ABOUT the anchor, not a larger
+ * anchor. So this file locates a drawn body by that role attribute, never by
+ * tag and never by `nth-of-type`, and it reads POSITION from measured
+ * rectangles rather than from geometry attributes.
+ *
+ * ## Two ways to measure a drawn shape, and why BOTH are used
  *
  * For an SVG shape, Blink's `Element.getBoundingClientRect()` returns the
  * shape's GEOMETRY mapped to the viewport and EXCLUDES the stroke, while
  * Playwright's `Locator.boundingBox()` (CDP `DOM.getBoxModel`) returns the
  * VISUAL box and INCLUDES it. That is not a nuisance here — it is the
  * measuring instrument. The difference between the two, on one element, is
- * exactly that element's painted stroke width in screen pixels, and it is
- * confirmed on two elements with different declared strokes inside
- * `screen-constant-handles` below rather than assumed.
+ * exactly that element's painted stroke width in screen pixels — for an
+ * AXIS-ALIGNED shape; a mitred corner on a rotated one inflates it, which is
+ * why the two declared weights are confirmed on the unrotated anchor and the
+ * annotation circle of ONE path point inside `screen-constant-handles` below,
+ * rather than on the rotated diamond a station is drawn as.
  *
  * ## Scoping
  *
@@ -219,7 +234,7 @@ async function zoomInAbout(
     await page.mouse.wheel(0, NOTCH);
     await expect.poll(async () => zoomOf(editor)).toBeGreaterThan(before);
   }
-  // The handles' radii transition over --ds-transition-fast; wait for the
+  // The glyphs transition their paint over --ds-transition-fast; wait for the
   // drawn picture to settle rather than measure an animation frame.
   await settle(editor);
 }
@@ -227,14 +242,15 @@ async function zoomInAbout(
 /**
  * Wait until nothing in the editor is still animating.
  *
- * `EditHandle`'s ring transitions its `r` over `--ds-transition-fast`
- * (120 ms), and `r` is exactly the property the counter-scale rewrites on
- * every zoom — so a measurement taken right after a wheel event reads a frame
- * from the MIDDLE of that transition. That is not a hypothetical: the first
- * run of this spec measured 22.15 px and 41.90 px for a circle that settles at
- * 25.88 px both times. Polling for a value that "stops changing" is not enough
- * either (an ease-out's last frames differ by less than the reading), so this
- * asks the browser directly which transitions are still running.
+ * A glyph body transitions its PAINT over `--ds-transition-fast` (120 ms), and
+ * the counter-scale on its placement group is rewritten on every zoom — so a
+ * measurement taken right after a wheel event can read a frame from the MIDDLE
+ * of a transition. That is not a hypothetical: before v0.20 the ring
+ * transitioned its `r`, and the first run of this spec measured 22.15 px and
+ * 41.90 px for a shape that settles at one size. Polling for a value that
+ * "stops changing" is not enough either (an ease-out's last frames differ by
+ * less than the reading), so this asks the browser directly which transitions
+ * are still running.
  */
 async function settle(editor: Locator): Promise<void> {
   await expect
@@ -329,6 +345,133 @@ async function disableMagnet(editor: Locator): Promise<void> {
  */
 const EMPTY_FLOOR: WorldPoint = unproject(FRAME, { col: 60, row: 60 });
 
+/** `home` (vertex "0000"), the station most of these tests work on. */
+const HOME: WorldPoint = { x: -0.089, y: 0.043 };
+
+/**
+ * The clear WEST of the map, where everything drawn by the tests below goes.
+ *
+ * The whole road graph lies east of x = -25 m and the raster spans x ∈
+ * [-52.67, 17.93] and y ∈ [-32.69, 8.51], so these positions are on mapped
+ * floor with no vertex, line or seeded area within 9 m of them — far enough
+ * that no click can be caught by something that was already there, and the
+ * magnet has nothing to snap to.
+ */
+const FLOOR_A: WorldPoint = { x: -46.5, y: 2.5 };
+const FLOOR_B: WorldPoint = { x: -40.5, y: 2.5 };
+const WALL_A: WorldPoint = { x: -46.5, y: -2.5 };
+const WALL_B: WorldPoint = { x: -34.5, y: -2.5 };
+const WALL_MID: WorldPoint = { x: -40.5, y: -2.5 };
+const ZONE_RUN: readonly WorldPoint[] = [
+  { x: -46.5, y: -8 },
+  { x: -38.5, y: -8 },
+  { x: -38.5, y: -14 },
+];
+
+/**
+ * The keys the document model allocates to the FIRST thing these tests create.
+ *
+ * The seed leaves `sequence` at 4 (two keep-out entries and two zones, keyed 0
+ * to 3), and `newKey` spells a session key `new:<kind>:<sequence>` — the
+ * console's own spelling. Restated here rather than matched loosely so a
+ * change of id shape is a failure and not a silently weaker assertion.
+ */
+const NEW_KEEP_OUT = "new:keepout:4";
+const NEW_ZONE = "new:splice:4";
+const NEW_EDGE = "new:edge:4";
+
+/** Arm one of the four editing modes through its own button. */
+async function armMode(
+  editor: Locator,
+  mode: "direct" | "append" | "draw-keep-out" | "draw-zone",
+): Promise<void> {
+  await editor.locator(`[data-mode="${mode}"]`).click();
+  await expect(editor.locator(`[data-mode="${mode}"]`)).toHaveAttribute("aria-pressed", "true");
+}
+
+/**
+ * The selection's own controls, over the map.
+ *
+ * Scoped, because `TargetActions` is rendered TWICE from one definition — here
+ * and in the twin's inspector — so an unscoped `getByRole` would be strict-mode
+ * ambiguous. This bar is the route a mouse operator has, which is the one these
+ * tests drive.
+ */
+function selectionBar(editor: Locator): Locator {
+  return editor.locator('[data-selection-actions="true"]');
+}
+
+/** Click a world position on the raster. */
+async function clickWorld(page: Page, editor: Locator, at: WorldPoint): Promise<void> {
+  const point = await clientOf(editor, at);
+  await page.mouse.click(point.x, point.y);
+}
+
+/** One committed station's own name, as the document holds it. */
+async function labelOf(editor: Locator, id: string): Promise<string> {
+  return (
+    (await editor
+      .locator(`[data-testid="mc-point"][data-id="${id}"]`)
+      .getAttribute("data-label")) ?? ""
+  );
+}
+
+/** One committed keep-out entry: how many corners it has, and what that makes it. */
+async function keepOutOf(
+  editor: Locator,
+  id: string,
+): Promise<{ points: number; kind: string }> {
+  const locator = editor.locator(`[data-testid="mc-keepout"][data-id="${id}"]`);
+  return {
+    points: await numberOf(locator, "data-points"),
+    kind: (await locator.getAttribute("data-kind")) ?? "",
+  };
+}
+
+/** The `oneWay` numeral the drawn line's own group carries. */
+async function drawnOneWay(editor: Locator, id: string): Promise<string> {
+  return editor.locator(`[data-edge-id="${id}"]`).evaluate((element) => {
+    const group = element.parentElement;
+    if (group === null) {
+      throw new Error("a drawn line has no group to carry its direction");
+    }
+    return group.getAttribute("data-one-way") ?? "";
+  });
+}
+
+/** The centre of one drawn glyph body, in client pixels. */
+async function glyphCentre(locator: Locator): Promise<Point> {
+  return locator.locator("[data-edit-glyph]").evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  });
+}
+
+/**
+ * Draw a two-point keep-out entry — a virtual WALL — and finish it.
+ *
+ * Two corners is the whole of what makes it a wall (`keepOutKindOf`: the point
+ * count decides), so this is also the only way to make one.
+ */
+async function drawWall(page: Page, editor: Locator): Promise<void> {
+  // The magnet off, so the corners land exactly where they were dropped and
+  // {@link WALL_MID} really is the drawn segment's midpoint. With it on they
+  // would not: the geometry snap includes ALIGNMENT candidates, and the seeded
+  // keep-out wall sits at y = 1.643 m, which is within one snap radius of this
+  // clear floor at the fitted zoom — measured, after a placement came out
+  // 0.857 m north of where it was clicked.
+  await disableMagnet(editor);
+  await armMode(editor, "draw-keep-out");
+  await expect(editor.getByTestId("mc-mode")).toHaveText("draw-area");
+  await clickWorld(page, editor, WALL_A);
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("1");
+  await clickWorld(page, editor, WALL_B);
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("2");
+  await editor.getByRole("button", { name: "Finish" }).click();
+  await expect(editor.getByTestId("mc-keepout-count")).toHaveText("3");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+}
+
 /**
  * The most crowded corner of the label set: `entranceinsmall` (0008),
  * `entranceoutsmall` (0009) and `keisoku` (0010) sit within three metres of
@@ -398,22 +541,28 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
   // "0000" is `home`, the handle the demo also nominates for its own
   // measurement readout. Park the pointer ON it and zoom about it: the handle
   // stays under the pointer (proved above), so its hover state — and therefore
-  // its drawn radius scale — is identical at both measurements, and the
-  // comparison is of one circle with itself.
+  // its paint — is identical at both measurements, and the comparison is of
+  // one glyph with itself.
+  //
+  // `home` is a STATION, so its body is the anchor rect rotated 45° into a
+  // place's diamond. Nothing below depends on which of the two it is: the
+  // element is located by `data-edit-glyph`, and the assertions are about that
+  // one element's size not changing.
   const home: WorldPoint = { x: -0.089, y: 0.043 };
-  const ring = editor.locator('[data-point-id="0000"] circle:last-of-type');
+  const glyph = drawn(editor, '[data-point-id="0000"] [data-edit-glyph]');
+  await expect(glyph).toHaveCount(1);
   const at = await clientOf(editor, home);
   await page.mouse.move(at.x, at.y);
   await expect(editor.getByTestId("mc-affordance")).toHaveText("affordance: handle");
   await settle(editor);
 
   const geometryAt = async (): Promise<Box> =>
-    ring.evaluate((element) => {
+    glyph.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
     });
   const visualWidthAt = async (): Promise<number> => {
-    const box = await ring.boundingBox();
+    const box = await glyph.boundingBox();
     if (box === null) {
       throw new Error("the nominated handle is not measurable");
     }
@@ -424,7 +573,7 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
   const geometryBefore = await geometryAt();
   const visualBefore = await visualWidthAt();
 
-  // The demo measures the same circle from inside the page. Two independent
+  // The demo measures the same element from inside the page. Two independent
   // instruments, one number: if the readout and this spec disagreed, one of
   // them would be measuring something else.
   expect(await numberOf(editor.getByTestId("mc-handle-measure"), "data-width")).toBeCloseTo(
@@ -443,10 +592,13 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
   // ---- 1. The counter-scale works. -------------------------------------
   // The raster is now 3.86x larger on screen; the handle is not larger at all.
   // A tolerance of 1/20 of a pixel, against a change of 3.86x that a missing
-  // counter-scale would produce (25.9 px -> 99.9 px).
+  // counter-scale would produce.
   expect(geometryAfter.width).toBeCloseTo(geometryBefore.width, 1);
   expect(geometryAfter.height).toBeCloseTo(geometryBefore.height, 1);
   expect(Math.abs(geometryAfter.width - geometryBefore.width)).toBeLessThan(0.05);
+  // And the whole painted box, outline included, is the same width too — so
+  // the mark did not grow by having its outline scaled either.
+  expect(Math.abs(visualAfter - visualBefore)).toBeLessThan(0.05);
   // And it stayed where the pointer was, so this is the same handle in the
   // same place, not a different one that happens to be the same size. One
   // pixel, for the transform-rounding residual the zoom-at-cursor test
@@ -459,7 +611,8 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
   // includes it, so the difference is the painted outline in screen pixels.
   // The outline is what `MapCanvas.module.css` declares
   // `vector-effect: non-scaling-stroke` for: an `Edit*` glyph states its
-  // weight in SCREEN pixels (the ring 2, the primary ring 1.5), and the props
+  // weight in SCREEN pixels (`--ds-edit-stroke` 1.5 for an anchor body,
+  // `--ds-edit-hairline` 1 for the primary annotation ring), and the props
   // carry no stroke width, so the stylesheet is the only place that can say
   // so.
   //
@@ -469,15 +622,15 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
   // overlay was laid out at the raster's own pixel size. `getComputedStyle`
   // reported `non-scaling-stroke` and the outline was painted `2 * zoom` px
   // wide anyway: 1.700 px at 0.8499, 6.557 at 3.2783, 25.291 at 12.6457 —
-  // at that last one a handle's outline is WIDER than the 25.9 px handle it
-  // outlines. `MapCanvas` now applies the zoom as the drawn SIZE of the stack
-  // (the image and the overlay fill it) and the pan as the only transform, so
-  // the zoom lives in the overlay's own viewBox mapping, which is exactly the
-  // mapping the cancellation is defined against.
+  // at that last one a handle's outline is WIDER than the handle it outlines.
+  // `MapCanvas` now applies the zoom as the drawn SIZE of the stack (the image
+  // and the overlay fill it) and the pan as the only transform, so the zoom
+  // lives in the overlay's own viewBox mapping, which is exactly the mapping
+  // the cancellation is defined against.
   //
   // Asserted as CONSTANT — not as a ratio and not as a range both behaviours
-  // would satisfy. `2 * zoom` is off by 0.3 px at the fitted zoom and by 23 px
-  // at 12.6x, so the old behaviour fails every one of these.
+  // would satisfy. `1.5 * zoom` is off at the fitted zoom and by 17 px at
+  // 12.6x, so the old behaviour fails every one of these.
   const strokeOf = async (locator: Locator): Promise<number> => {
     const geometry = await locator.evaluate((element) => element.getBoundingClientRect().width);
     const visual = await locator.boundingBox();
@@ -486,43 +639,55 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
     }
     return visual.width - geometry;
   };
-  // The hovered handle, at the two zooms already measured above.
-  expect(visualBefore - geometryBefore.width).toBeCloseTo(2, 2);
-  expect(visualAfter - geometryAfter.width).toBeCloseTo(2, 2);
-  // Stated as the ratio a reviewer would see: the outline is the SAME weight
-  // after a zoom that magnified the picture 3.86x. (It used to be 3.86x
-  // heavier — that is what `magnification` here would have been.)
+  // The hovered handle, at the two zooms already measured above. `home` is a
+  // place, so its body is the rect rotated 45°: the difference here is the
+  // 1.5 px stroke inflated by the mitre at a 90° corner (1.5 * SQRT2), which
+  // is arithmetic about a rotation rather than about the declared weight. So
+  // it is asserted as UNCHANGED across the zoom and the absolute weights are
+  // taken below off shapes whose bounding box the stroke enters squarely.
+  expect(visualAfter - geometryAfter.width).toBeCloseTo(
+    visualBefore - geometryBefore.width,
+    2,
+  );
   expect((visualAfter - geometryAfter.width) / (visualBefore - geometryBefore.width)).toBeCloseTo(
     1,
     2,
   );
   expect(magnification).toBeGreaterThan(3);
 
-  // The distinct weights must SURVIVE the fix: the two rings are declared 2
-  // and 1.5, and a repair that flattened every stroke to one number would be
-  // a visual regression that a constant-stroke assertion alone cannot see. So
-  // both are measured, at three zooms spanning 14.9x, and each holds its own
-  // declared value.
+  // The distinct weights must SURVIVE the fix: the anchor body is declared 1.5
+  // and the primary annotation ring 1, and a repair that flattened every
+  // stroke to one number would be a visual regression that a constant-stroke
+  // assertion alone cannot see. So both are measured, at three zooms spanning
+  // 14.9x, and each holds its own declared value.
+  //
+  // Measured on "0013" — a PATH POINT, so its body is the anchor rect
+  // UNROTATED and the stroke enters its bounding box squarely: the difference
+  // is then exactly the declared weight, with no mitre term. The annotation
+  // circle is a circle at any rotation, so it needs no such care.
   await editor.getByRole("button", { name: "Fit" }).click();
   await settle(editor);
-  const homeAt = await clientOf(editor, home);
-  await page.mouse.click(homeAt.x, homeAt.y);
-  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0000");
+  const pathPoint: WorldPoint = { x: 2.761, y: -10.057 };
+  const pathAt = await clientOf(editor, pathPoint);
+  await page.mouse.click(pathAt.x, pathAt.y);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0013");
   await settle(editor);
-  const outer = editor.locator('[data-point-id="0000"] circle:nth-of-type(1)');
-  const inner = editor.locator('[data-point-id="0000"] circle:nth-of-type(2)');
-  const sampled: { readonly zoom: number; readonly outer: number; readonly inner: number }[] = [];
+  const body = drawn(editor, '[data-point-id="0013"] [data-edit-glyph]');
+  const annotation = drawn(editor, '[data-point-id="0013"] [data-edit-annotation="primary"]');
+  await expect(body).toHaveCount(1);
+  await expect(annotation).toHaveCount(1);
+  const sampled: { readonly zoom: number; readonly body: number; readonly ring: number }[] = [];
   // Three samples spanning 14.9x, stopping short of MAX_ZOOM: `zoomInAbout`
   // waits for each notch to CHANGE the zoom, so a sample past the clamp would
   // wait for a change that cannot come.
   for (const notches of [0, 3, 3]) {
     if (notches > 0) {
-      await zoomInAbout(page, editor, home, notches);
+      await zoomInAbout(page, editor, pathPoint, notches);
     }
     sampled.push({
       zoom: await zoomOf(editor),
-      outer: await strokeOf(outer),
-      inner: await strokeOf(inner),
+      body: await strokeOf(body),
+      ring: await strokeOf(annotation),
     });
   }
   const first = sampled.at(0);
@@ -532,12 +697,12 @@ test("screen-constant-handles: the drawn geometry AND its outline hold their siz
   }
   expect(last.zoom / first.zoom).toBeGreaterThan(10);
   for (const sample of sampled) {
-    expect(sample.inner).toBeCloseTo(2, 2);
-    expect(sample.outer).toBeCloseTo(1.5, 2);
+    expect(sample.body).toBeCloseTo(1.5, 2);
+    expect(sample.ring).toBeCloseTo(1, 2);
     // Distinct, and distinct in the declared proportion — not merely both
-    // "about two pixels".
-    expect(sample.inner / sample.outer).toBeCloseTo(2 / 1.5, 3);
-    expect(sample.inner - sample.outer).toBeCloseTo(0.5, 2);
+    // "about a pixel".
+    expect(sample.body / sample.ring).toBeCloseTo(1.5, 2);
+    expect(sample.body - sample.ring).toBeCloseTo(0.5, 2);
   }
 
   expect(errors).toEqual([]);
@@ -640,7 +805,10 @@ test("edge-click-selects: a click on the line between two stations names that li
 
   await expect(editor.getByTestId("mc-selection")).toHaveText("selection: path:0005");
   // ...and the selection NAMES it, in the vocabulary of the twin's own list.
-  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 → xray");
+  // The glyph between the two ends is the line's DIRECTION (`edgeLabel`):
+  // "↔" because this line is bidirectional, "→"/"←" once an operator sets
+  // `oneWay` — which `edge-direction-cycles` below drives.
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 ↔ xray");
   await expect(editor.getByTestId("mc-selection-count")).toHaveText("1");
   // Selecting is not editing.
   await expect(editor.getByTestId("mc-undo-depth")).toHaveText("0");
@@ -668,7 +836,7 @@ test("edge-click-selects: a click on the line between two stations names that li
   // Without `capabilities.edges` the selection would still read
   // `handle:0012` here: the click would have meant nothing at all.
   await expect(editor.getByTestId("mc-selection")).toHaveText("selection: path:0005");
-  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 → xray");
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 ↔ xray");
   await expect(editor.getByTestId("mc-undo-depth")).toHaveText("0");
   expect(errors).toEqual([]);
 });
@@ -808,12 +976,17 @@ test("dblclick-inserts: a double click on a line splits it in two at the point c
   await expect(editor.getByTestId("mc-edge-count")).toHaveText("23");
   const edges = await edgesOf(editor);
   expect(edges).not.toContain("0005:0013→0012");
-  expect(edges).toContain("0005a0:0013→n0");
-  expect(edges).toContain("0005b0:n0→0012");
+  // The ids the document model allocates: a split's vertex takes the next FREE
+  // vendor id (`nextPointId` — highest-plus-one, so "0022" in a scene holding
+  // "0000".."0021"), and each half-line takes a session key from the
+  // document's own allocation counter (`newKey`, which the seed left at 4).
+  // Both are the console's own spelling; nothing here invents an id shape.
+  expect(edges).toContain("new:edge:4:0013→0022");
+  expect(edges).toContain("new:edge:5:0022→0012");
 
   // The new vertex is where the operator pointed — within a pick radius, which
   // is the tolerance the insertion itself is resolved at.
-  const inserted = await vertexOf(editor, "n0");
+  const inserted = await vertexOf(editor, "0022");
   const metres = await metresPerPixel(editor);
   expect(Math.hypot(inserted.x - third.x, inserted.y - third.y) / metres).toBeLessThan(9);
   // A path point, not a station: it carries no name and gets no heading.
@@ -825,8 +998,12 @@ test("dblclick-inserts: a double click on a line splits it in two at the point c
   await expect(editor.getByTestId("mc-notice")).toHaveText("none");
   // Both halves are drawn, and the line they replaced is not.
   await expect(drawn(editor, '[data-edge-id="0005"]')).toHaveCount(0);
-  await expect(drawn(editor, '[data-edge-id="0005a0"]')).toHaveCount(1);
-  await expect(drawn(editor, '[data-edge-id="0005b0"]')).toHaveCount(1);
+  await expect(drawn(editor, '[data-edge-id="new:edge:4"]')).toHaveCount(1);
+  await expect(drawn(editor, '[data-edge-id="new:edge:5"]')).toHaveCount(1);
+  // The new vertex is SELECTED, so the operator can drag the point they just
+  // made without hunting for it first.
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0022");
+  await expect(drawn(editor, '[data-point-id="0022"]')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 
@@ -945,5 +1122,689 @@ test("station-labels-never-overprint: a name with no room is dropped, and zoomin
   expect(after.map((label) => label.id)).not.toContain("0001");
   expect(collidingPairs(after)).toEqual([]);
 
+  expect(errors).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Full element CRUD, on the real graph, through the gestures an operator has.
+//
+// Every test below drives ONE of the operations the editor claims and asserts
+// on the committed document rather than on the picture alone — a drawn mark
+// that moved is not the same statement as a document that changed, and only
+// the second one is what the robot would be given.
+// ---------------------------------------------------------------------------
+
+test("point-create-sustained: Add points places a vertex and the pen survives its own placement", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  // The magnet off: this test is about WHERE a click puts a vertex, and with
+  // the magnet on it would not be where it was clicked. The geometry snap
+  // includes ALIGNMENT candidates, and the seeded keep-out wall's corners sit
+  // at y = 1.643 m — within one snap radius (10 screen px ≈ 1.18 m at the
+  // fitted zoom) of this clear floor, so the first run of this test placed the
+  // vertex 0.857 m north of the pointer, aligned to that wall. Correct
+  // behaviour, and not the behaviour under test here.
+  await disableMagnet(editor);
+
+  await armMode(editor, "append");
+  await expect(editor.getByTestId("mc-mode")).toHaveText("append");
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("0");
+
+  // First click: one vertex, and nothing to join it to yet.
+  await clickWorld(page, editor, FLOOR_A);
+  await expect(editor.getByTestId("mc-vertex-count")).toHaveText("23");
+  await expect(editor.getByTestId("mc-edge-count")).toHaveText("22");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+
+  // The pen is still armed WITHOUT touching the toolbar, and it holds the run's
+  // anchor — this is the "sustained" rhythm the surface declares, and the
+  // difference between drawing a corridor and pressing a button per point.
+  await expect(editor.getByTestId("mc-mode")).toHaveText("append");
+  await expect(editor.locator('[data-mode="append"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("1");
+
+  // Second click: another vertex, and the leg that joins it to the last.
+  await clickWorld(page, editor, FLOOR_B);
+  await expect(editor.getByTestId("mc-vertex-count")).toHaveText("24");
+  await expect(editor.getByTestId("mc-edge-count")).toHaveText("23");
+  await expect(editor.getByTestId("mc-mode")).toHaveText("append");
+
+  // The vertices are where they were clicked, and they are STATIONS: the
+  // default the mode opens on, which is what the "New: station" control is
+  // pressed for.
+  const metres = await metresPerPixel(editor);
+  const first = await vertexOf(editor, "0022");
+  const second = await vertexOf(editor, "0023");
+  expect(Math.hypot(first.x - FLOOR_A.x, first.y - FLOOR_A.y) / metres).toBeLessThan(1);
+  expect(Math.hypot(second.x - FLOOR_B.x, second.y - FLOOR_B.y) / metres).toBeLessThan(1);
+  expect(first.kind).toBe("station");
+  expect(second.kind).toBe("station");
+  // ...and they are DRAWN, as places (a station carries a facing) rather than
+  // as bare anchors.
+  await expect(drawn(editor, '[data-point-id="0022"] [data-edit-glyph="place"]')).toHaveCount(1);
+  await expect(drawn(editor, '[data-point-id="0023"] [data-edit-glyph="place"]')).toHaveCount(1);
+  expect(await edgesOf(editor)).toContain(`${NEW_EDGE}:0022→0023`);
+
+  // Two clicks, two timeline steps: each placement is its own undo.
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("2");
+  await editor.getByRole("button", { name: "Undo" }).click();
+  await expect(editor.getByTestId("mc-vertex-count")).toHaveText("23");
+  await expect(editor.getByTestId("mc-edge-count")).toHaveText("22");
+  expect(errors).toEqual([]);
+});
+
+test("point-rename: the selection's own field names a station, and the canvas prints it", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  // Zoom about `home` first: at the fitted zoom its neighbour "0021" is only
+  // 10 screen pixels away and the pick radius is 9, so a click there is a
+  // coin toss between two vertices rather than a test of renaming.
+  await zoomInAbout(page, editor, HOME, 3);
+  await clickWorld(page, editor, HOME);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0000");
+  expect(await labelOf(editor, "0000")).toBe("home");
+  await expect(drawn(editor, '[data-station-label="0000"]')).toHaveText("home");
+
+  // Renaming has no pointer gesture — a name is typed — so it lives in the
+  // selection's own controls over the map. There is no keyboard route into the
+  // canvas at all, which is exactly why the chrome has to carry this.
+  const controls = selectionBar(editor);
+  await expect(controls).toHaveCount(1);
+  const field = controls.getByRole("textbox", { name: "Name of station 0000" });
+  await field.fill("hangar");
+  await controls.getByRole("button", { name: "Rename" }).click();
+
+  expect(await labelOf(editor, "0000")).toBe("hangar");
+  // The canvas is the surface an operator reads, so the assertion that matters
+  // is the printed word — not just the document field behind it.
+  await expect(drawn(editor, '[data-station-label="0000"]')).toHaveText("hangar");
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("hangar");
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("1");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+
+  // And it comes back: a rename is one step of the same timeline every other
+  // edit is on.
+  await editor.getByRole("button", { name: "Undo" }).click();
+  expect(await labelOf(editor, "0000")).toBe("home");
+  await expect(drawn(editor, '[data-station-label="0000"]')).toHaveText("home");
+  expect(errors).toEqual([]);
+});
+
+test("point-retype: a station becomes a path point and loses its name and its facing", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  await zoomInAbout(page, editor, HOME, 3);
+  await clickWorld(page, editor, HOME);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0000");
+
+  const before = await vertexOf(editor, "0000");
+  expect(before.kind).toBe("station");
+  expect(await labelOf(editor, "0000")).toBe("home");
+  // Non-zero, so "the yaw was dropped" is a statement about a real facing and
+  // not about a field that was already 0.
+  expect(before.yaw).toBeCloseTo(-0.055, 6);
+  await expect(drawn(editor, '[data-point-id="0000"] [data-edit-glyph="place"]')).toHaveCount(1);
+
+  const controls = selectionBar(editor);
+  await controls.getByRole("button", { name: "Make path point" }).click();
+
+  // A path point is a coordinate the chassis drives THROUGH: it carries no
+  // name and no facing, and the two are not two spellings of one thing.
+  const asPath = await vertexOf(editor, "0000");
+  expect(asPath.kind).toBe("path-point");
+  expect(asPath.yaw).toBe(0);
+  expect(await labelOf(editor, "0000")).toBe("");
+  // It moved nowhere.
+  expect(asPath.x).toBeCloseTo(before.x, 6);
+  expect(asPath.y).toBeCloseTo(before.y, 6);
+  // The picture says the same thing: the diamond is an anchor now, the printed
+  // name is gone, and there is no field to type a name into.
+  await expect(drawn(editor, '[data-point-id="0000"] [data-edit-glyph="anchor"]')).toHaveCount(1);
+  await expect(drawn(editor, '[data-point-id="0000"] [data-edit-glyph="place"]')).toHaveCount(0);
+  await expect(drawn(editor, '[data-point-id="0000"][data-point-kind="path-point"]')).toHaveCount(1);
+  await expect(drawn(editor, '[data-station-label="0000"]')).toHaveCount(0);
+  await expect(controls.getByRole("textbox")).toHaveCount(0);
+
+  // ...and back. The name is NOT resurrected: it was removed from the
+  // document, and a retype cannot know what the operator called it.
+  await controls.getByRole("button", { name: "Make station" }).click();
+  const asStation = await vertexOf(editor, "0000");
+  expect(asStation.kind).toBe("station");
+  expect(await labelOf(editor, "0000")).toBe("");
+  await expect(drawn(editor, '[data-point-id="0000"] [data-edit-glyph="place"]')).toHaveCount(1);
+  // Being a station again is what gives it a field to be named in.
+  await expect(controls.getByRole("textbox", { name: "Name of station 0000" })).toHaveCount(1);
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("2");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+  expect(errors).toEqual([]);
+});
+
+test("edge-create: in Add points, two clicks on existing vertices join them", async ({ page }) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  // "0011" (yoshin) and "0012" (xray) are both in the scene and are NOT
+  // joined — the pair the pen has to be able to connect without placing
+  // anything. Each is more than 3 m from its nearest neighbour, so a click at
+  // the fitted zoom lands on the intended one.
+  const yoshin: WorldPoint = { x: 3.461, y: 1.343 };
+  const xray: WorldPoint = { x: 8.561, y: -10.207 };
+  expect(await edgesOf(editor)).not.toContain(`${NEW_EDGE}:0011→0012`);
+
+  await armMode(editor, "append");
+  // A click that lands ON an existing vertex MEANS that vertex: the magnet
+  // resolves it to the vertex's own position and the document reads that
+  // coincidence, which is why the same pen both places and joins.
+  await clickWorld(page, editor, yoshin);
+  await expect(editor.getByTestId("mc-vertex-count")).toHaveText("22");
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("1");
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("0");
+
+  await clickWorld(page, editor, xray);
+
+  // One line, no new vertex: it JOINED rather than placed.
+  await expect(editor.getByTestId("mc-edge-count")).toHaveText("23");
+  await expect(editor.getByTestId("mc-vertex-count")).toHaveText("22");
+  expect(await edgesOf(editor)).toContain(`${NEW_EDGE}:0011→0012`);
+  await expect(drawn(editor, `[data-edge-id="${NEW_EDGE}"]`)).toHaveCount(1);
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("1");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+
+  // A second attempt at the same pair is REFUSED, not silently duplicated: one
+  // pair of vertices holds one line whichever way round it is stated.
+  await clickWorld(page, editor, yoshin);
+  await expect(editor.getByTestId("mc-notice")).toContainText("already joined by a line");
+  await expect(editor.getByTestId("mc-edge-count")).toHaveText("23");
+  expect(errors).toEqual([]);
+});
+
+test("edge-direction-cycles: Direction walks oneWay 0-1-2-0 and the drawn line follows", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  // Edge "0005", the same clear 5.8 m of line `edge-click-selects` uses.
+  const midpoint: WorldPoint = { x: (2.761 + 8.561) / 2, y: (-10.057 + -10.207) / 2 };
+  await zoomInAbout(page, editor, midpoint, 2);
+  await clickWorld(page, editor, midpoint);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: path:0005");
+
+  const controls = selectionBar(editor);
+  const direction = controls.getByRole("button", { name: /^Direction:/ });
+  const arrow = drawn(editor, '[data-one-way] path');
+
+  // Bidirectional to begin with: the numeral the vendor's wire carries is "0",
+  // and a two-way line is drawn with no arrow at all.
+  expect(await drawnOneWay(editor, "0005")).toBe("0");
+  await expect(direction).toHaveText("Direction: Bidirectional");
+  await expect(arrow).toHaveCount(0);
+
+  // 0 -> 1: source to destination.
+  await direction.click();
+  expect(await drawnOneWay(editor, "0005")).toBe("1");
+  await expect(direction).toHaveText("Direction: One way, source to destination");
+  await expect(arrow).toHaveCount(1);
+  // The name the twin and the readout give the line carries the direction too,
+  // so the fact is not only in an attribute.
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 → xray");
+
+  // 1 -> 2: destination to source. Still one arrow, pointing the other way.
+  await direction.click();
+  expect(await drawnOneWay(editor, "0005")).toBe("2");
+  await expect(direction).toHaveText("Direction: One way, destination to source");
+  await expect(arrow).toHaveCount(1);
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 ← xray");
+
+  // 2 -> 0: back to two-way, and the arrow goes.
+  await direction.click();
+  expect(await drawnOneWay(editor, "0005")).toBe("0");
+  await expect(direction).toHaveText("Direction: Bidirectional");
+  await expect(arrow).toHaveCount(0);
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("line point 0013 ↔ xray");
+
+  // Three presses, three timeline steps, and no refusal on the way round.
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("3");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+  expect(errors).toEqual([]);
+});
+
+test("keepout-wall-is-selectable: a two-point entry is drawn as a line and can be clicked", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  await drawWall(page, editor);
+
+  // Two corners is the whole of what makes it a wall: the point count decides,
+  // and `keepOutKindOf` is where that is stated.
+  expect(await keepOutOf(editor, NEW_KEEP_OUT)).toEqual({ points: 2, kind: "wall" });
+
+  // Drawn as a `<line>`, not as a polygon — a wall has no interior to fill.
+  const shape = drawn(editor, `[data-area-id="${NEW_KEEP_OUT}"]`);
+  await expect(shape).toHaveCount(1);
+  expect(await shape.evaluate((element) => element.tagName.toLowerCase())).toBe("line");
+  await expect(shape).toHaveAttribute("data-area-kind", "keep-out");
+
+  // It is selected the moment it is committed...
+  await expect(editor.getByTestId("mc-selection")).toHaveText(
+    `selection: path:ring:${NEW_KEEP_OUT}`,
+  );
+
+  // ...which proves nothing about whether an operator can ever click it again,
+  // and that is the case this test exists for. The grammar offers a committed
+  // AREA's corners only once the area is armed, and it arms an area by
+  // hit-testing its INTERIOR — so a wall presented as an area would be a thing
+  // an operator can see and can never touch. It is presented as a two-handle
+  // PATH instead. So: leave the drawing mode, drop the selection, and click
+  // the wall.
+  await armMode(editor, "direct");
+  await clickWorld(page, editor, EMPTY_FLOOR);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: none");
+
+  const mid = await clientOf(editor, WALL_MID);
+  await page.mouse.move(mid.x, mid.y);
+  // The grammar's own word for what is under the pointer: a path, which is
+  // exactly what a wall is offered to it as.
+  await expect(editor.getByTestId("mc-affordance")).toHaveText("affordance: path");
+  await page.mouse.click(mid.x, mid.y);
+
+  await expect(editor.getByTestId("mc-selection")).toHaveText(
+    `selection: path:ring:${NEW_KEEP_OUT}`,
+  );
+  // Named as the keep-out it is, not as a road line: the ring-proxy id routed
+  // the intent back to the entry it stands for.
+  await expect(editor.getByTestId("mc-selection-primary")).toHaveText("keep-out wall 3 (2 pts)");
+  // And selecting it brings up its own controls, so everything the entry
+  // accepts is reachable for a mouse.
+  await expect(selectionBar(editor)).toHaveCount(1);
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+  expect(errors).toEqual([]);
+});
+
+test("keepout-wall-promotes-and-demotes: a corner makes it a polygon, and losing one makes it a wall", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  await drawWall(page, editor);
+  expect(await keepOutOf(editor, NEW_KEEP_OUT)).toEqual({ points: 2, kind: "wall" });
+  await armMode(editor, "direct");
+
+  // ---- promotion -------------------------------------------------------
+  // Adding a corner to a two-point entry is not "editing a wall": the point
+  // count IS the kind, so a third corner makes it a forbidden polygon, in the
+  // document and to the grammar alike.
+  await selectionBar(editor).getByRole("button", { name: "Add corner" }).click();
+  expect(await keepOutOf(editor, NEW_KEEP_OUT)).toEqual({ points: 3, kind: "polygon" });
+  // The selection follows the thing the operator was editing across the change
+  // of presentation: it was a path, it is now an area.
+  await expect(editor.getByTestId("mc-selection")).toHaveText(`selection: area:${NEW_KEEP_OUT}`);
+  await expect(drawn(editor, `g[data-area-id="${NEW_KEEP_OUT}"] > polygon`)).toHaveCount(1);
+  await expect(drawn(editor, `line[data-area-id="${NEW_KEEP_OUT}"]`)).toHaveCount(0);
+  await expect(drawn(editor, `[data-area-label="${NEW_KEEP_OUT}"]`)).toHaveText("keep-out");
+
+  // The new corner is the midpoint of the widest side, so the three corners are
+  // collinear and the polygon has no interior yet. Pull the middle one off the
+  // line — which is also the proof that the promotion reached the GRAMMAR: only
+  // an area is hit-tested by its inside, so a click in the middle of this
+  // triangle can only select it if the entry really is one now.
+  const middleCorner = drawn(
+    editor,
+    `[data-area-corners="${NEW_KEEP_OUT}"] [data-corner-index="1"]`,
+  );
+  await expect(middleCorner).toHaveCount(1);
+  const from = await glyphCentre(middleCorner);
+  const apex: WorldPoint = { x: WALL_MID.x, y: WALL_MID.y + 4 };
+  await drag(page, from, await clientOf(editor, apex));
+
+  const centroid: WorldPoint = {
+    x: (WALL_A.x + WALL_B.x + apex.x) / 3,
+    y: (WALL_A.y + WALL_B.y + apex.y) / 3,
+  };
+  // Drop the selection first. A click on something already selected and alone
+  // in the set DESELECTS it (the grammar's own toggle), so clicking the
+  // interior while the entry is still held would prove the opposite of what it
+  // looks like: this has to start from nothing selected.
+  await clickWorld(page, editor, EMPTY_FLOOR);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: none");
+
+  const inside = await clientOf(editor, centroid);
+  await page.mouse.move(inside.x, inside.y);
+  await expect(editor.getByTestId("mc-affordance")).toHaveText("affordance: area");
+  await page.mouse.click(inside.x, inside.y);
+  await expect(editor.getByTestId("mc-selection")).toHaveText(`selection: area:${NEW_KEEP_OUT}`);
+
+  // ---- demotion --------------------------------------------------------
+  // Three corners down to two is the same rule read the other way. The corner
+  // is selected on the map and removed through the selection's own control —
+  // the route a mouse has.
+  const firstCorner = drawn(
+    editor,
+    `[data-area-corners="${NEW_KEEP_OUT}"] [data-corner-index="0"]`,
+  );
+  const cornerAt = await glyphCentre(firstCorner);
+  await page.mouse.move(cornerAt.x, cornerAt.y);
+  await expect(editor.getByTestId("mc-affordance")).toHaveText("affordance: vertex");
+  await page.mouse.click(cornerAt.x, cornerAt.y);
+  await expect(editor.getByTestId("mc-selection")).toHaveText(
+    `selection: vertex:${NEW_KEEP_OUT}#0`,
+  );
+
+  await selectionBar(editor).getByRole("button", { name: "Remove" }).click();
+  expect(await keepOutOf(editor, NEW_KEEP_OUT)).toEqual({ points: 2, kind: "wall" });
+  // And the picture is a line again, with no polygon left behind.
+  await expect(drawn(editor, `line[data-area-id="${NEW_KEEP_OUT}"]`)).toHaveCount(1);
+  await expect(drawn(editor, `g[data-area-id="${NEW_KEEP_OUT}"] > polygon`)).toHaveCount(0);
+  await expect(drawn(editor, `[data-area-label="${NEW_KEEP_OUT}"]`)).toHaveText("keep-out wall");
+  // The entry survived: a demotion is a corner leaving, never the entry being
+  // emptied out.
+  await expect(editor.getByTestId("mc-keepout-count")).toHaveText("3");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+  expect(errors).toEqual([]);
+});
+
+test("zone-create-and-retype: a typed zone is drawn, and its vendor type is changed on the map", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+  await disableMagnet(editor);
+
+  await armMode(editor, "draw-zone");
+  await expect(editor.getByTestId("mc-mode")).toHaveText("draw-area");
+  // The type is stated BEFORE the drawing: a zone with no type is not a thing
+  // the vendor's wire can carry.
+  await expect(editor.getByRole("combobox", { name: "Zone type to draw" })).toHaveValue("3");
+
+  for (const corner of ZONE_RUN) {
+    await clickWorld(page, editor, corner);
+  }
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("3");
+  await editor.getByRole("button", { name: "Finish" }).click();
+
+  await expect(editor.getByTestId("mc-splice-count")).toHaveText("3");
+  const zone = editor.locator(`[data-testid="mc-splice"][data-id="${NEW_ZONE}"]`);
+  await expect(zone).toHaveAttribute("data-type", "3");
+  await expect(zone).toHaveAttribute("data-points", "3");
+  await expect(editor.getByTestId("mc-selection")).toHaveText(`selection: area:${NEW_ZONE}`);
+  // Three corners, so it is an AREA and drawn as one — dashed, and captioned
+  // with what it is in WORDS, because one consuming host spends no hue at all.
+  await expect(drawn(editor, `g[data-area-id="${NEW_ZONE}"] > polygon`)).toHaveCount(1);
+  await expect(drawn(editor, `[data-area-label="${NEW_ZONE}"]`)).toHaveText("Ramp / slope");
+
+  // Retype it from the selection's own controls, over the map.
+  await armMode(editor, "direct");
+  await selectionBar(editor).getByRole("combobox", { name: "Zone type" }).selectOption("5");
+
+  await expect(zone).toHaveAttribute("data-type", "5");
+  await expect(drawn(editor, `[data-area-label="${NEW_ZONE}"]`)).toHaveText("Deceleration");
+  // Its corners did not move: a retype is a change of meaning, not of shape.
+  await expect(zone).toHaveAttribute("data-points", "3");
+  // One step to draw it, one to retype it.
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("2");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+  expect(errors).toEqual([]);
+});
+
+test("degenerate-keepout-refused: a run the vendor lint forbids is refused by name, not committed", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+  await disableMagnet(editor);
+
+  await armMode(editor, "draw-keep-out");
+  await clickWorld(page, editor, WALL_A);
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("1");
+
+  // A corner ON the previous corner is not a second corner: the surface reads
+  // it as the second half of a double click and drops it, and `preparedRun`
+  // collapses anything within a millimetre anyway. So two coincident presses
+  // leave a run of ONE point — which is how the zero-extent arm of the lint
+  // rule is reached from a pointer at all.
+  await clickWorld(page, editor, WALL_A);
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("1");
+
+  await editor.getByRole("button", { name: "Finish" }).click();
+
+  // Refused, by the name of the rule it would have violated — not committed as
+  // a one-point entry the linter would later refuse to save, and not silently
+  // dropped either.
+  await expect(editor.getByTestId("mc-notice")).toContainText("geometry.keepout-degenerate");
+  await expect(editor.getByTestId("mc-notice")).toContainText("1 point(s)");
+  await expect(editor.getByTestId("mc-keepout-count")).toHaveText("2");
+  await expect(editor.getByTestId("mc-undo-depth")).toHaveText("0");
+  await expect(drawn(editor, `[data-area-id="${NEW_KEEP_OUT}"]`)).toHaveCount(0);
+
+  // And the refusal did not throw the work away: the run is still in progress,
+  // so the operator adds the corner it was short of and finishes.
+  await clickWorld(page, editor, WALL_B);
+  await expect(editor.getByTestId("mc-run-length")).toHaveText("2");
+  await editor.getByRole("button", { name: "Finish" }).click();
+  await expect(editor.getByTestId("mc-keepout-count")).toHaveText("3");
+  await expect(editor.getByTestId("mc-notice")).toHaveText("none");
+  expect(await keepOutOf(editor, NEW_KEEP_OUT)).toEqual({ points: 2, kind: "wall" });
+  expect(errors).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// The picture's own pixels, and the operator's complaint about the handles.
+// ---------------------------------------------------------------------------
+
+/**
+ * Arm the raster paint fixture and hand back its root.
+ *
+ * A separate armable block from the editor above (`demo/map-canvas-demo.tsx`):
+ * `<MapRasterLayer/>` edits the RASTER rather than affordances over it, so it
+ * shares nothing with the editor's document, and mounting it with the editor
+ * would put a second decoded picture on every page load of every other spec.
+ */
+async function openRaster(page: Page): Promise<Locator> {
+  await page.goto("/");
+  await page.locator(`${HOST} [data-testid="mcr-arm-omks-web"]`).click();
+  const fixture = page.locator(`${HOST} [data-testid="mcr-fixture"]`);
+  await fixture.locator("[data-map-raster-layer-canvas]").scrollIntoViewIfNeeded();
+  return fixture;
+}
+
+/** The byte the fixture publishes for its nominated cell. */
+async function paintedByte(fixture: Locator): Promise<number> {
+  return numberOf(fixture.getByTestId("mcr-pixel"), "data-value");
+}
+
+/**
+ * Where the nominated cell is on screen.
+ *
+ * Taken from the cell the fixture NAMES (`data-col` / `data-row`) and the
+ * canvas' own document size (its `width` / `height` attributes, which are the
+ * document's dimensions) — so this spec and the fixture cannot disagree about
+ * which cell is being pressed. Half a cell is added so the press lands inside
+ * it rather than on its boundary.
+ */
+async function nominatedCellAt(fixture: Locator): Promise<Point> {
+  const pixel = fixture.getByTestId("mcr-pixel");
+  const col = await numberOf(pixel, "data-col");
+  const row = await numberOf(pixel, "data-row");
+  const canvas = fixture.locator("[data-map-raster-layer-canvas]");
+  const geometry = await canvas.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const canvasElement = element as HTMLCanvasElement;
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      cellsX: canvasElement.width,
+      cellsY: canvasElement.height,
+    };
+  });
+  return {
+    x: geometry.left + ((col + 0.5) / geometry.cellsX) * geometry.width,
+    y: geometry.top + ((row + 0.5) / geometry.cellsY) * geometry.height,
+  };
+}
+
+/** One stroke: press, drag a few pixels, release. `onPaint` fires on release. */
+async function paintStrokeAt(page: Page, at: Point): Promise<void> {
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  await page.mouse.move(at.x + 6, at.y + 4, { steps: 4 });
+  await page.mouse.up();
+}
+
+test("raster-paint: a brush writes its own byte into the picture, and undo puts the picture back", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const fixture = await openRaster(page);
+
+  // The document opens as `unknown` — 128, the byte the robot's SLAM writes for
+  // ground nothing has mapped. It is the value an operator paints OVER, which
+  // is why the fixture opens on it rather than on free space.
+  expect(await paintedByte(fixture)).toBe(128);
+  await expect(fixture.getByTestId("mcr-changed")).toHaveAttribute("data-changed", "0");
+  await expect(fixture.getByTestId("mcr-undo-depth")).toHaveText("0");
+
+  // ---- occupied: 0 -----------------------------------------------------
+  await expect(fixture.getByTestId("mcr-brush-occupied")).toHaveAttribute("aria-pressed", "true");
+  await paintStrokeAt(page, await nominatedCellAt(fixture));
+  expect(await paintedByte(fixture)).toBe(0);
+  // The brush is a disc, not one pixel, so a whole neighbourhood changed with
+  // it — and a stroke that moved covers the drag without leaving gaps.
+  const changed = await numberOf(fixture.getByTestId("mcr-changed"), "data-changed");
+  expect(changed).toBeGreaterThan(20);
+  // ONE stroke is ONE step: the whole drag is a single undo, not one per
+  // pointer sample.
+  await expect(fixture.getByTestId("mcr-undo-depth")).toHaveText("1");
+
+  // ---- undo restores the PICTURE, not just the nominated cell ----------
+  await fixture.getByTestId("mcr-undo").click();
+  expect(await paintedByte(fixture)).toBe(128);
+  await expect(fixture.getByTestId("mcr-changed")).toHaveAttribute("data-changed", "0");
+  await expect(fixture.getByTestId("mcr-undo-depth")).toHaveText("0");
+
+  // ---- free: 255 -------------------------------------------------------
+  await fixture.getByTestId("mcr-brush-free").click();
+  await paintStrokeAt(page, await nominatedCellAt(fixture));
+  expect(await paintedByte(fixture)).toBe(255);
+
+  // ---- unknown: 128, painted back OVER a value, not merely left alone --
+  // The cell is 255 at this point, so this is a real write of the unknown byte
+  // rather than an assertion about the fill the document opened with.
+  await fixture.getByTestId("mcr-brush-unknown").click();
+  await paintStrokeAt(page, await nominatedCellAt(fixture));
+  expect(await paintedByte(fixture)).toBe(128);
+  // Two steps, not three: the undo above dropped one, and an edit made after an
+  // undo is the operator choosing this future over the one they took back.
+  await expect(fixture.getByTestId("mcr-undo-depth")).toHaveText("2");
+
+  expect(errors).toEqual([]);
+});
+
+test("handle-size-is-state-invariant: a selected anchor is a filled anchor of the SAME size", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+
+  // This is the operator's actual complaint, and the one assertion in this file
+  // that would fail against the behaviour it replaces: a selected handle used
+  // to be drawn at 1.7x (38 px across, ringed to 48) and read as a swelling
+  // blob. Selection is now a FILLED anchor of the same size — Illustrator's
+  // rule — and the component computes no size at all, so nothing can multiply
+  // one. What is measured below is that mechanism, in a real browser.
+  await zoomInAbout(page, editor, HOME, 3);
+
+  const glyph = drawn(editor, '[data-point-id="0000"] [data-edit-glyph]');
+  const annotation = drawn(editor, '[data-point-id="0000"] [data-edit-annotation="primary"]');
+  const state = drawn(editor, '[data-point-id="0000"] [data-state]');
+
+  const sizeOf = async (): Promise<{ geometry: number; visual: number; height: number }> => {
+    await settle(editor);
+    const box = await glyph.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    });
+    const visual = await glyph.boundingBox();
+    if (visual === null) {
+      throw new Error("the handle is not measurable");
+    }
+    return { geometry: box.width, visual: visual.width, height: box.height };
+  };
+
+  // ---- idle ------------------------------------------------------------
+  // `zoomInAbout` parks the pointer on the handle, so move away first: a
+  // hovered handle is a different STATE, and the comparison below has to start
+  // from the resting one.
+  const away = await clientOf(editor, { x: HOME.x, y: HOME.y + 3 });
+  await page.mouse.move(away.x, away.y);
+  await expect(editor.getByTestId("mc-affordance")).toHaveText("affordance: floor");
+  await expect(state).toHaveAttribute("data-state", "idle");
+  await expect(annotation).toHaveCount(0);
+  const idle = await sizeOf();
+  // The token's own number: a 7 px anchor, rotated 45° into a place's diamond,
+  // so its axis-aligned box is 7 * SQRT2 across. Pinned so that "unchanged"
+  // cannot be satisfied by two equally wrong readings.
+  expect(idle.geometry).toBeCloseTo(7 * Math.SQRT2, 1);
+  expect(idle.height).toBeCloseTo(idle.geometry, 3);
+
+  // ---- primary ---------------------------------------------------------
+  const at = await clientOf(editor, HOME);
+  await page.mouse.click(at.x, at.y);
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0000");
+  await expect(state).toHaveAttribute("data-state", "primary");
+  // The state really changed — this is what stops the comparison from being
+  // one unchanged element measured twice. The primary is marked by an
+  // ANNOTATION ring appearing about the anchor, at a fixed radius.
+  await expect(annotation).toHaveCount(1);
+  const primary = await sizeOf();
+
+  // ---- selected (a member of the set, not its primary) -----------------
+  // Shift-click a second station: "0011" (yoshin), 3.6 m away and on screen at
+  // this zoom. "0000" is then selected but no longer primary, which is the
+  // third and last state a handle can be held in.
+  const yoshin = await clientOf(editor, { x: 3.461, y: 1.343 });
+  await page.keyboard.down("Shift");
+  await page.mouse.click(yoshin.x, yoshin.y);
+  await page.keyboard.up("Shift");
+  await expect(editor.getByTestId("mc-selection")).toHaveText(
+    "selection: handle:0000,handle:0011",
+  );
+  await expect(state).toHaveAttribute("data-state", "selected");
+  await expect(annotation).toHaveCount(0);
+  const selected = await sizeOf();
+
+  // ---- the assertion --------------------------------------------------
+  // Identical, geometry and painted outline alike, in all three states. A
+  // thousandth of a pixel: this is not a tolerance, it is the same number.
+  expect(primary.geometry).toBeCloseTo(idle.geometry, 3);
+  expect(selected.geometry).toBeCloseTo(idle.geometry, 3);
+  expect(primary.visual).toBeCloseTo(idle.visual, 3);
+  expect(selected.visual).toBeCloseTo(idle.visual, 3);
+  // Stated as the ratio a reviewer would read, against the number the old
+  // behaviour would have produced. 1.7 fails every assertion above and this
+  // one; so does any scale-up at all beyond half a percent.
+  expect(primary.geometry / idle.geometry).toBeCloseTo(1, 2);
+  expect(primary.geometry / idle.geometry).toBeLessThan(1.005);
+  expect(selected.geometry / idle.geometry).toBeLessThan(1.005);
+
+  // And the demo's own in-page measurement of the same element agrees, in the
+  // state it is now in: two instruments, one number.
+  expect(await numberOf(editor.getByTestId("mc-handle-measure"), "data-width")).toBeCloseTo(
+    selected.geometry,
+    1,
+  );
   expect(errors).toEqual([]);
 });

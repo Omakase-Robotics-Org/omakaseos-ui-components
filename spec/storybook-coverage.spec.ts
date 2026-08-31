@@ -399,6 +399,7 @@ const EXPORTS_CLASSIFICATION: Record<string, ExportsClassification> = {
   "./aui": "component-aui",
   "./direct-manipulation": "kernel-no-components",
   "./map-canvas": "kernel-no-components",
+  "./affordance-geometry": "kernel-no-components",
 };
 
 /**
@@ -410,6 +411,7 @@ const EXPORTS_CLASSIFICATION: Record<string, ExportsClassification> = {
 const KERNEL_BARREL_IMPORT: Record<string, () => Promise<Record<string, unknown>>> = {
   "./direct-manipulation": () => import("../src/direct-manipulation"),
   "./map-canvas": () => import("../src/map-canvas"),
+  "./affordance-geometry": () => import("../src/readAffordanceGeometry"),
 };
 
 function classifyExportsKey(key: string): ExportsClassification | undefined {

@@ -166,12 +166,19 @@ export type { EditRubberBandProps } from "./EditRubberBand";
 // editing-agnostic; the direct-manipulation grammar composes onto it. Its pure
 // pan/zoom/projection kernel is the `./map-canvas` subpath.
 export { MapCanvas, useMapCanvasProjector, worldPointFromClient } from "./MapCanvas";
+
+// v0.21: the occupancy raster as an EDITABLE picture. MapCanvas stays
+// presentational and takes the layer through its `picture` slot; the layer owns
+// the canvas it paints into, and the pure brush/PGM kernel is `./map-canvas`.
+export { MapRasterLayer } from "./MapRasterLayer";
+export type { MapRasterLayerProps } from "./MapRasterLayer";
 export type {
   MapCanvasProps,
   MapCanvasGeometry,
   MapCanvasProjector,
   MapCanvasPressModifiers,
   MapCanvasSurfaceProps,
+  MapCanvasPictureSlot,
 } from "./MapCanvas";
 
 export { ButtonRow } from "./ButtonRow";

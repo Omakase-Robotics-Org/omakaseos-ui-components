@@ -35,10 +35,10 @@ import {
 } from "../src/index";
 import {
   BADGE_ANCHOR_OFFSET_SCALE,
-  BADGE_RADIUS_PX,
+  BADGE_PICK_RADIUS_PX,
   EMPTY_SELECTION,
-  HANDLE_RADIUS_PX,
-  KNOB_RADIUS_PX,
+  HANDLE_PICK_RADIUS_PX,
+  KNOB_PICK_RADIUS_PX,
   GHOST_PICK_RADIUS_PX,
   REVEAL_RADIUS_PX,
   SNAP_RADIUS_PX,
@@ -115,10 +115,10 @@ const SEED_DOCUMENT: DemoDocument = {
 };
 
 const TOLERANCE: EditTolerances = {
-  handleM: HANDLE_RADIUS_PX,
+  handleM: HANDLE_PICK_RADIUS_PX,
   ghostM: GHOST_PICK_RADIUS_PX,
-  knobM: KNOB_RADIUS_PX,
-  badgeM: BADGE_RADIUS_PX,
+  knobM: KNOB_PICK_RADIUS_PX,
+  badgeM: BADGE_PICK_RADIUS_PX,
   headingArmM: HEADING_ARM_PX,
   revealM: REVEAL_RADIUS_PX,
   snapM: SNAP_RADIUS_PX,
@@ -801,6 +801,8 @@ export function DirectManipulationDemo() {
               <g
                 key={`persistent-${ghost.pathId}-${ghost.segmentIndex}`}
                 data-testid="dm-persistent-ghost"
+                data-x={ghost.at.x}
+                data-y={ghost.at.y}
               >
                 <EditGhostHandle x={ghost.at.x} y={ghost.at.y} state="idle" />
               </g>
@@ -868,6 +870,7 @@ export function DirectManipulationDemo() {
                 <EditHandle
                   x={point.x}
                   y={point.y}
+                  kind="place"
                   state={stateForTarget(
                     { kind: "handle", id: point.id },
                     surface.affordance,
@@ -892,6 +895,7 @@ export function DirectManipulationDemo() {
                 <EditHandle
                   x={point.x}
                   y={point.y}
+                  kind="anchor"
                   state={stateForTarget(
                     { kind: "vertex", areaId: AREA_ID, index },
                     surface.affordance,
@@ -936,12 +940,12 @@ export function DirectManipulationDemo() {
             {badgesVisible && primaryHandle !== null ? (
               <g
                 data-testid="dm-remove-badge"
-                data-x={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).x}
-                data-y={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).y}
+                data-x={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).x}
+                data-y={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).y}
               >
                 <EditRemoveBadge
-                  x={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).x}
-                  y={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).y}
+                  x={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).x}
+                  y={handleBadgeAnchor(primaryHandle, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).y}
                   offsetPx={{ x: 0, y: 0 }}
                   state="idle"
                 />
@@ -953,18 +957,18 @@ export function DirectManipulationDemo() {
                 <g
                   data-testid="dm-remove-badge"
                   data-badge-target="area"
-                  data-x={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).x}
-                  data-y={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).y}
+                  data-x={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).x}
+                  data-y={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).y}
                 >
                   <EditRemoveBadge
-                    x={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).x}
-                    y={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX).y}
+                    x={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).x}
+                    y={areaBadgeAnchor(renderedRing, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX).y}
                     offsetPx={{ x: 0, y: 0 }}
                     state="idle"
                   />
                 </g>
                 {renderedRing.map((point, index) => {
-                  const anchor = handleBadgeAnchor(point, BADGE_ANCHOR_OFFSET_SCALE * BADGE_RADIUS_PX);
+                  const anchor = handleBadgeAnchor(point, BADGE_ANCHOR_OFFSET_SCALE * BADGE_PICK_RADIUS_PX);
                   return (
                     <g
                       key={`ring-badge-${index}`}

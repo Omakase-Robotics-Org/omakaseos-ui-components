@@ -14,6 +14,7 @@
     "./tokens.css": "./src/tokens.css",
     "./direct-manipulation": "./src/direct-manipulation/index.ts",
     "./map-canvas": "./src/map-canvas/index.ts",
+    "./affordance-geometry": "./src/readAffordanceGeometry.ts",
     "./aui": {
       "types": "./dist/aui/index.d.ts",
       "import": "./dist/aui/index.js"

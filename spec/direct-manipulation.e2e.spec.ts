@@ -76,8 +76,18 @@ async function svgPoint(editor: Locator, x: number, y: number): Promise<{ x: num
   return { x: box.x + x, y: box.y + y };
 }
 
+/**
+ * The centre of an affordance's drawn body, in client pixels.
+ *
+ * Located by ROLE (`[data-edit-glyph]`) and not by tag. Since v0.20 the
+ * vocabulary's shapes differ per glyph — an anchor and a ghost are `<rect>`s,
+ * a knob and a badge are `<circle>`s — so a `circle` selector here silently
+ * matched nothing for half of them and `boundingBox()` returned null. Every
+ * glyph body carries `data-edit-glyph`, whatever it is drawn as, which is
+ * exactly the identity a pointer target needs.
+ */
 async function centerOf(locator: Locator): Promise<{ x: number; y: number }> {
-  const box = await locator.locator("circle").first().boundingBox();
+  const box = await locator.locator("[data-edit-glyph]").first().boundingBox();
   if (box === null) {
     throw new Error("SVG affordance is not measurable");
   }
@@ -669,11 +679,34 @@ test("multi-select-shift-click: Shift toggles, and only the primary carries the 
   await expect(editor.getByTestId("dm-selection-count")).toHaveText("selected: 2");
   await expect(editor.getByTestId("dm-primary")).toHaveText("primary: handle:p1");
 
-  // The primary is drawn with a second ring; the other member is not.
+  // The primary carries the annotation ring; the other member does not. Asked
+  // for by what the ring MEANS (`data-edit-annotation="primary"`) rather than
+  // by counting circles: a filled anchor and a filled-anchor-plus-ring used to
+  // differ by one `<circle>`, and since v0.20 the anchor itself is a `<rect>`,
+  // so the count would now be 1 and 0 — a number that says nothing about which
+  // of the two is annotated.
   await expect(editor.getByTestId("dm-handle-p1").locator('[data-state="primary"]')).toBeVisible();
   await expect(editor.getByTestId("dm-handle-p0").locator('[data-state="selected"]')).toBeVisible();
-  await expect(editor.getByTestId("dm-handle-p1").locator("circle")).toHaveCount(2);
-  await expect(editor.getByTestId("dm-handle-p0").locator("circle")).toHaveCount(1);
+  await expect(
+    editor.getByTestId("dm-handle-p1").locator('[data-edit-annotation="primary"]'),
+  ).toHaveCount(1);
+  await expect(
+    editor.getByTestId("dm-handle-p0").locator('[data-edit-annotation="primary"]'),
+  ).toHaveCount(0);
+  // And the ring is an ANNOTATION of the anchor, not a second anchor: both
+  // handles still draw exactly one glyph body, and the two bodies are the same
+  // size — the selected one has not grown.
+  await expect(editor.getByTestId("dm-handle-p1").locator("[data-edit-glyph]")).toHaveCount(1);
+  await expect(editor.getByTestId("dm-handle-p0").locator("[data-edit-glyph]")).toHaveCount(1);
+  const primaryBody = await editor
+    .getByTestId("dm-handle-p1")
+    .locator("[data-edit-glyph]")
+    .evaluate((element) => element.getBoundingClientRect().width);
+  const memberBody = await editor
+    .getByTestId("dm-handle-p0")
+    .locator("[data-edit-glyph]")
+    .evaluate((element) => element.getBoundingClientRect().width);
+  expect(primaryBody).toBeCloseTo(memberBody, 3);
 
   // Exactly one knob exists, and it belongs to the primary: approaching p1
   // reveals it, approaching p0 does not.
@@ -1154,10 +1187,59 @@ test("coarse-regression-suite: every touch behaviour of v0.16 still holds", asyn
   await expect(editor.getByTestId("dm-modality")).toHaveText("modality: coarse");
   const ghosts = editor.locator('[data-testid="dm-persistent-ghost"]');
   await expect(ghosts).toHaveCount(4);
-  const ghostX = await editor
-    .locator('[data-testid="dm-persistent-ghost"] circle')
-    .evaluateAll((circles) => circles.map((circle) => Number(circle.getAttribute("cx"))));
-  expect(ghostX).toEqual([140, 265, 400, 460]);
+  // Read from the WRAPPER's `data-x`, the way this file's own `pointAt()` reads
+  // a committed point — not from the drawn shape's geometry attributes.
+  //
+  // This assertion is the one place in the suite where a repair can produce a
+  // green that means nothing. The ghost is a `<rect>` positioned by a
+  // `transform` on its placement group, so it has no `cx` at all, and the two
+  // obvious repairs are both vacuous — MEASURED against this page, not
+  // reasoned about:
+  //
+  //  - keeping the `circle` selector matches ZERO elements, so `evaluateAll`
+  //    answers `[]` and any per-element loop over it passes having asserted
+  //    nothing;
+  //  - reading `cx` off the rect instead answers `[0, 0, 0, 0]`, because
+  //    `getAttribute` returns null for an absent attribute and `Number(null)`
+  //    is 0 — NOT NaN. A plausible-looking coordinate that sails through any
+  //    "is it finite / in range" check.
+  //
+  // So both halves below are stated as EQUALITY against exact expected values,
+  // never as a range and never per-element: `[]` and `[0,0,0,0]` each fail the
+  // whole comparison.
+  const ghostAt = await ghosts.evaluateAll((elements) =>
+    elements.map((element) => ({
+      x: element.getAttribute("data-x"),
+      y: element.getAttribute("data-y"),
+    })),
+  );
+  expect(ghostAt).toEqual([
+    { x: "140", y: "105" },
+    { x: "265", y: "105" },
+    { x: "400", y: "120" },
+    { x: "460", y: "200" },
+  ]);
+  // And the DRAWN mark really sits there: the body's own rectangle, centred on
+  // the position the wrapper claims. Measured, so a wrapper that published a
+  // coordinate the transform did not apply would fail here.
+  const ghostDrawnX = await ghosts.evaluateAll((elements) =>
+    elements.map((element) => {
+      const body = element.querySelector("[data-edit-glyph]");
+      if (body === null) {
+        throw new Error("a persistent ghost has no drawn body");
+      }
+      const rect = body.getBoundingClientRect();
+      const svg = element.closest("svg");
+      if (svg === null) {
+        throw new Error("a persistent ghost is not inside an svg");
+      }
+      // The demo's SVG is 1:1 with CSS pixels (viewBox "0 0 600 400" at
+      // 600x400), so subtracting the SVG's own origin puts this back in the
+      // user units the wrapper publishes.
+      return Math.round(rect.left + rect.width / 2 - svg.getBoundingClientRect().left);
+    }),
+  );
+  expect(ghostDrawnX).toEqual([140, 265, 400, 460]);
 
   // A tap selects; the 1.6x radius means a finger 12 px off still lands (a
   // fine pointer's 9 px would not).

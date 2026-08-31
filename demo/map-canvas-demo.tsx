@@ -43,16 +43,41 @@
  * The one readout that is a MEASUREMENT rather than a state (`mc-handle-measure`)
  * publishes the nominated handle's rendered box, read back from the live DOM
  * with `getBoundingClientRect`. It is polled to a fixed point across frames
- * because `EditHandle`'s ring transitions its `r` over
- * `--ds-transition-fast` (120 ms): a single post-render measurement would
- * publish a number from the middle of an animation.
+ * because the glyph body transitions its PAINT over `--ds-transition-fast`
+ * (120 ms) and the placement group's counter-scale is rewritten on every
+ * zoom: a single post-render measurement would publish a number from the
+ * middle of an animation.
+ *
+ * ## The raster paint fixture, armed separately
+ *
+ * `<MapRasterLayer/>` edits the PICTURE's own pixels rather than affordances
+ * over it, so nothing about it is visible in the editor's readouts and no
+ * story runs in a browser. It is mounted here, in its own armable block, with
+ * a nominated cell's byte published as `mcr-pixel` — the one number that says
+ * whether a brush actually wrote the vocabulary's value into the document
+ * (0 occupied / 255 free / 128 unknown, `map-canvas/raster-edit.ts`).
  */
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Button, Card, CardHeader } from "../src/index";
+import { Button, ButtonRow, Card, CardHeader } from "../src/index";
 import {
   MapCanvasEditorSurface,
   type MapCanvasEditorReadout,
 } from "../src/MapCanvasEditorSurface";
+import { MapRasterLayer } from "../src/MapRasterLayer";
+import { keepOutKindOf } from "../src/map-canvas/scene-document";
+import {
+  UNKNOWN_PIXEL,
+  blankOccupancyDocument,
+  type OccupancyDocument,
+  type OccupancyValue,
+} from "../src/map-canvas";
+import {
+  beginSession,
+  commitEdit,
+  undoEdit,
+  type EditSession,
+  type EditTarget,
+} from "../src/direct-manipulation";
 
 /**
  * The handle whose rendered size is published. "0000" is `home`, a station
@@ -81,8 +106,14 @@ type Measured = { readonly width: number; readonly height: number };
  *
  * Re-armed on EVERY render (no dependency array) because every viewport,
  * selection and document change re-renders this component, and each of those
- * can move or resize the circle. The poll stops itself after
- * {@link STABLE_FRAMES} identical frames, so a settled editor costs nothing.
+ * can move the glyph. The poll stops itself after {@link STABLE_FRAMES}
+ * identical frames, so a settled editor costs nothing.
+ *
+ * The measured element is the glyph BODY (`[data-edit-glyph]`), asked for by
+ * ROLE and not by tag: since v0.20 an anchor is a `<rect>` and a place is the
+ * same rect rotated, so a `circle` selector here would silently match nothing
+ * and publish "unmeasured" forever — a readout that a spec could compare
+ * against and learn nothing from.
  */
 function useMeasuredHandle(root: RefObject<HTMLDivElement | null>): Measured | null {
   const [measured, setMeasured] = useState<Measured | null>(null);
@@ -91,20 +122,20 @@ function useMeasuredHandle(root: RefObject<HTMLDivElement | null>): Measured | n
     let stable = 0;
     let last = "";
     const tick = () => {
-      const circle = root.current?.querySelector(
-        `[data-point-id="${NOMINATED_HANDLE}"] circle:last-of-type`,
+      const glyph = root.current?.querySelector(
+        `[data-point-id="${NOMINATED_HANDLE}"] [data-edit-glyph]`,
       );
-      if (circle !== null && circle !== undefined) {
-        const box = circle.getBoundingClientRect();
+      if (glyph !== null && glyph !== undefined) {
+        const box = glyph.getBoundingClientRect();
         const key = `${box.width.toFixed(3)}x${box.height.toFixed(3)}`;
-        const animating = circle
+        const animating = glyph
           .getAnimations()
           .some((animation) => animation.playState === "running");
         if (animating) {
-          // The ring transitions its `r` over --ds-transition-fast, and `r` is
-          // what the counter-scale rewrites on every zoom. An ease-out's last
-          // frames differ by less than this reading, so "three identical
-          // frames" alone would publish a number from the middle of a zoom.
+          // The body transitions its paint over --ds-transition-fast, and the
+          // placement group's counter-scale is rewritten on every zoom. An
+          // ease-out's last frames differ by less than this reading, so "three
+          // identical frames" alone would publish a number from mid-zoom.
           stable = 0;
           last = key;
         } else if (key === last) {
@@ -127,8 +158,19 @@ function useMeasuredHandle(root: RefObject<HTMLDivElement | null>): Measured | n
   return measured;
 }
 
-function targetKey(target: { readonly kind: string; readonly id?: string }): string {
-  return target.id === undefined ? target.kind : `${target.kind}:${target.id}`;
+/**
+ * One selection target, in one string.
+ *
+ * A ring corner names an AREA and an INDEX rather than an id, and it is a
+ * target an operator reaches by clicking an armed keep-out's corner — so it is
+ * spelled out here rather than collapsed to the bare word "vertex", which
+ * would make every corner of every area read as the same selection.
+ */
+function targetKey(target: EditTarget): string {
+  if (target.kind === "vertex") {
+    return `vertex:${target.areaId}#${String(target.index)}`;
+  }
+  return `${target.kind}:${target.id}`;
 }
 
 /** Everything about the live editor that the picture does not say. */
@@ -157,6 +199,16 @@ function MapCanvasReadouts({
       </span>
       <span data-testid="mc-vertex-count">{readout.points.length}</span>
       <span data-testid="mc-edge-count">{readout.edges.length}</span>
+      {/* The two element kinds the picture states only as shapes: a spec
+          cannot tell a two-point keep-out from a three-point one by looking
+          at a `<line>`, and it cannot read a zone's vendor numeral at all. */}
+      <span data-testid="mc-keepout-count">{readout.keepOuts.length}</span>
+      <span data-testid="mc-splice-count">{readout.spliceAreas.length}</span>
+      {/* Which mode is armed decides what the NEXT click means, and the run
+          length is how far into a drawing the operator is — both are chrome
+          state that no drawn object carries. */}
+      <span data-testid="mc-mode">{readout.mode}</span>
+      <span data-testid="mc-run-length">{readout.runLength}</span>
       <span data-testid="mc-undo-depth">{readout.undoDepth}</span>
       <span data-testid="mc-redo-depth">{readout.redoDepth}</span>
       <span data-testid="mc-selection">
@@ -198,7 +250,10 @@ function MapCanvasReadouts({
       </span>
       {/* The committed document, one element per object. A spec asserts on
           coordinates and on which lines still exist after a delete or a
-          split; both are numbers no screenshot carries. */}
+          split; both are numbers no screenshot carries. `data-label` is the
+          station's operator name, published because a retype DROPS it — and
+          "the canvas stopped drawing a word" is a weaker statement than "the
+          document no longer holds one". */}
       <span>
         {readout.points.map((point) => (
           <span
@@ -209,6 +264,7 @@ function MapCanvasReadouts({
             data-y={point.y}
             data-yaw={point.yaw}
             data-type={point.type === 2 ? "station" : "path-point"}
+            data-label={point.defineType ?? ""}
           >
             {point.id}:{point.x.toFixed(3)},{point.y.toFixed(3)}{" "}
           </span>
@@ -224,6 +280,39 @@ function MapCanvasReadouts({
             data-dst={edge.dst}
           >
             {edge.id}:{edge.src}→{edge.dst}{" "}
+          </span>
+        ))}
+      </span>
+      {/* Keep-out entries, with the POINT COUNT that decides what each one is
+          (`keepOutKindOf`: two points are a virtual wall, three or more a
+          forbidden polygon). `data-kind` is that decision, taken FROM
+          that function rather than re-derived here, so a spec asserting on
+          the promotion asserts against the rule the document applies. The drawn objects carry
+          `data-area-kind`, which is the entry's LIST (`keep-out` / `splice`)
+          and not its shape. */}
+      <span>
+        {readout.keepOuts.map((area) => (
+          <span
+            key={area.id}
+            data-testid="mc-keepout"
+            data-id={area.id}
+            data-points={area.points.length}
+            data-kind={keepOutKindOf(area.points)}
+          >
+            {area.id}:{area.points.length}{" "}
+          </span>
+        ))}
+      </span>
+      <span>
+        {readout.spliceAreas.map((area) => (
+          <span
+            key={area.id}
+            data-testid="mc-splice"
+            data-id={area.id}
+            data-type={area.type}
+            data-points={area.points.length}
+          >
+            {area.id}:{area.type}{" "}
           </span>
         ))}
       </span>
@@ -263,7 +352,149 @@ export function MapCanvasDemoPanel({ host }: { readonly host: string }) {
             />
           </div>
         ) : null}
+        <RasterPaintFixture host={host} />
       </div>
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The raster paint fixture
+// ---------------------------------------------------------------------------
+
+/**
+ * The paintable document's size, in cells.
+ *
+ * Small and deliberately not the real 706x412 export: the claim under test is
+ * that a brush writes the vocabulary's BYTE into the cells it covers, and a
+ * 3,072-cell document lets this file count every changed cell on every render
+ * instead of sampling.
+ */
+const RASTER_CELLS = { width: 64, height: 48 } as const;
+
+/** How large the layer is drawn, in CSS pixels: exactly four per cell. */
+const RASTER_DRAWN = { width: 256, height: 192 } as const;
+
+/** The brush radius, in cells. Large enough to cover the nominated cell from its own centre. */
+const RASTER_BRUSH_CELLS = 3;
+
+/**
+ * The cell whose byte is published.
+ *
+ * The document's own centre, so a spec computes where to press from the
+ * published `data-col` / `data-row` and the layer's live rectangle rather than
+ * from a number agreed by convention with this file.
+ */
+const NOMINATED_CELL = {
+  col: Math.floor(RASTER_CELLS.width / 2),
+  row: Math.floor(RASTER_CELLS.height / 2),
+} as const;
+
+/** The three values the brush can paint, in the order the buttons appear. */
+const BRUSH_VALUES: readonly OccupancyValue[] = ["occupied", "free", "unknown"];
+
+/**
+ * `<MapRasterLayer/>` in a browser, with an undo timeline and the one byte a
+ * spec has to read.
+ *
+ * The document opens filled with `unknown` (128) — the byte the robot's SLAM
+ * writes for ground nothing has mapped — because that is the value an operator
+ * paints OVER, and because a document that opened as `free` would make a
+ * "paint free" assertion vacuous.
+ *
+ * The timeline is here rather than in the component on purpose: the layer
+ * fires `onPaint` exactly once per finished stroke (its "commit granularity"
+ * rule), which is precisely the granularity `commitEdit` wants, and a host
+ * that wired one call per pointer sample would be the thing that broke undo.
+ */
+function RasterPaintFixture({ host }: { readonly host: string }) {
+  const [armed, setArmed] = useState(false);
+  const [session, setSession] = useState<EditSession<OccupancyDocument>>(() =>
+    beginSession(blankOccupancyDocument(RASTER_CELLS.width, RASTER_CELLS.height, "unknown")),
+  );
+  const [brush, setBrush] = useState<OccupancyValue>("occupied");
+
+  const document = session.current;
+  const nominated =
+    document.pixels[NOMINATED_CELL.row * document.width + NOMINATED_CELL.col] ?? UNKNOWN_PIXEL;
+  // How much of the picture is no longer what it opened as. Counted over the
+  // whole buffer, so "the stroke wrote something" and "undo put it all back"
+  // are the same number read twice, not two different instruments.
+  let changed = 0;
+  for (const value of document.pixels) {
+    if (value !== UNKNOWN_PIXEL) {
+      changed += 1;
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: "var(--ds-space-sm)", minWidth: 0 }}>
+      <div>
+        <Button
+          size="sm"
+          data-testid={`mcr-arm-${host}`}
+          aria-pressed={armed}
+          onClick={() => {
+            setArmed((current) => !current);
+          }}
+        >
+          {armed ? "Disarm raster paint" : "Arm raster paint"}
+        </Button>
+      </div>
+      {!armed ? null : (
+        <div data-testid="mcr-fixture" style={{ display: "grid", gap: "var(--ds-space-sm)" }}>
+          <ButtonRow>
+            {BRUSH_VALUES.map((value) => (
+              <Button
+                key={value}
+                size="sm"
+                data-testid={`mcr-brush-${value}`}
+                aria-pressed={brush === value}
+                variant={brush === value ? "primary" : "secondary"}
+                onClick={() => {
+                  setBrush(value);
+                }}
+              >
+                {value}
+              </Button>
+            ))}
+            <Button
+              size="sm"
+              data-testid="mcr-undo"
+              disabled={session.past.length === 0}
+              onClick={() => {
+                setSession(undoEdit);
+              }}
+            >
+              Undo paint
+            </Button>
+          </ButtonRow>
+          <MapRasterLayer
+            document={document}
+            onPaint={(next) => {
+              setSession((current) => commitEdit(current, next));
+            }}
+            brushRadiusCells={RASTER_BRUSH_CELLS}
+            brushValue={brush}
+            widthPx={RASTER_DRAWN.width}
+            heightPx={RASTER_DRAWN.height}
+          />
+          <div style={readoutStyle}>
+            <span
+              data-testid="mcr-pixel"
+              data-col={NOMINATED_CELL.col}
+              data-row={NOMINATED_CELL.row}
+              data-value={nominated}
+            >
+              cell {NOMINATED_CELL.col},{NOMINATED_CELL.row}: {nominated}
+            </span>
+            <span data-testid="mcr-changed" data-changed={changed}>
+              changed cells: {changed}
+            </span>
+            <span data-testid="mcr-undo-depth">{session.past.length}</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
