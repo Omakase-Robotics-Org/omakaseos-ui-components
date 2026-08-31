@@ -160,6 +160,20 @@ export type { EditSnapGuideProps } from "./EditSnapGuide";
 export { EditRubberBand } from "./EditRubberBand";
 export type { EditRubberBandProps } from "./EditRubberBand";
 
+// v0.20: MapCanvas — the map editors' raster surface: an occupancy raster, an
+// SVG overlay in the raster's own pixel space, and the viewport that moves
+// both (wheel-zoom at the cursor, drag-to-pan, fit-to-box). Presentational and
+// editing-agnostic; the direct-manipulation grammar composes onto it. Its pure
+// pan/zoom/projection kernel is the `./map-canvas` subpath.
+export { MapCanvas, useMapCanvasProjector, worldPointFromClient } from "./MapCanvas";
+export type {
+  MapCanvasProps,
+  MapCanvasGeometry,
+  MapCanvasProjector,
+  MapCanvasPressModifiers,
+  MapCanvasSurfaceProps,
+} from "./MapCanvas";
+
 export { ButtonRow } from "./ButtonRow";
 
 // v0.10: promoted from robot-status-server-app — see the file header above.

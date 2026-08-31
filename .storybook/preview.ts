@@ -80,6 +80,7 @@ const preview: Preview = {
           "Chat-log",
           "Live-stage",
           "DirectManipulation",
+          "MapCanvas",
           "Aui",
         ],
       },

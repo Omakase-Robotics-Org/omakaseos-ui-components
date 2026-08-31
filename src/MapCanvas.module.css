@@ -1,0 +1,100 @@
+/* MapCanvas — an occupancy raster, an SVG overlay stretched over it, and the
+ * viewport that moves both.
+ *
+ * The overlay's `viewBox` is the raster's OWN pixel space and the image is
+ * drawn at its OWN pixel size, so one CSS transform on the stack scales the
+ * picture and the drawing by exactly the same factor. Nothing here may size
+ * the image relative to its container (no `max-width: 100%`): the viewport
+ * kernel's `fitToBox` computes a content-pixel-to-CSS-pixel ratio, which is
+ * only the zoom actually applied when the image's LAYOUT width is its pixel
+ * width. A responsive image would make `zoom` mean something different at
+ * every panel width, and `rasterUnitsPerScreenPixel` would then be measuring
+ * a number this component never set.
+ *
+ * Every colour is a `--ds-*` token so the same surface stays legible on the
+ * dark console palette, the light dashboard one, and the desaturated
+ * inspection one. The raster's own backing is the single exception, and it is
+ * an inline style in the component rather than a literal here — see there.
+ */
+
+/* The viewport: what the operator sees of a picture they may have zoomed
+ * into. The clip is what makes the transform below a viewport rather than a
+ * page-wide layout change, and `touch-action: none` is what lets a drag
+ * inside it be this canvas's gesture instead of a browser pan. */
+.box {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+  touch-action: none;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface-inset);
+}
+
+/* The transformed frame. `transform-origin: 0 0` is load-bearing: every
+ * formula in `map-canvas/viewport.ts` is written for a transform anchored at
+ * the top-left corner, and a centred origin would put every pan half a box
+ * out. */
+.stack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* The raster is a grayscale occupancy grid: nearest-neighbour scaling keeps a
+ * cell a cell instead of blurring the wall an operator is aiming at.
+ *
+ * The open hand is the map's RESTING affordance — empty raster is draggable
+ * whatever else is going on, so the picture says so before anything is
+ * pressed. It is stated in the stylesheet precisely because it is the
+ * fallback: an editing consumer's `surfaceProps` writes an INLINE cursor for
+ * everything the grammar recognises, and an inline style outranks a class
+ * rule, so the grammar's answer wins wherever it has one and this applies
+ * exactly where it does not. */
+.raster {
+  display: block;
+  image-rendering: pixelated;
+  user-select: none;
+  cursor: grab;
+}
+
+/* While the picture is being dragged. The grammar writes no inline cursor for
+ * a press that took no grip, so this is not fighting one: it is the closed
+ * hand that belongs to the open hand above. */
+.box[data-map-canvas-panning="true"] .raster {
+  cursor: grabbing;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Pointer events belong to the image underneath: it is the element whose
+   * bounding rectangle defines the frame, so routing every gesture through it
+   * means the overlay can never disagree with it about where the pointer
+   * was. */
+  pointer-events: none;
+}
+
+/* The shared `Edit*` glyph fragments state their stroke weights in SCREEN
+ * pixels (2, 1.5, 2.5), and the host counter-scales their radii by
+ * `geometry.scale` on the way in. Their strokes have no such seam — the props
+ * carry no stroke width — so they are declared here to be screen quantities
+ * too. Without it a 2-unit ring outline is 2 raster units, which is two screen
+ * pixels at 1x and sixteen at 8x: the ring would swallow the handle whose
+ * radius the host was carefully holding at nine.
+ *
+ * The selector is `g[focusable="false"]`, which is exactly the set of those
+ * fragments and nothing else: every `Edit*` component's outermost group
+ * carries that attribute, and `spec/direct-manipulation-boundary.spec.ts`
+ * enforces it for every file in the family, so this cannot quietly stop
+ * matching. An overlay's OWN drawing is deliberately left alone — it states
+ * its own units and may want a weight that grows with the picture. */
+.overlay g[focusable="false"] :is(circle, ellipse, line, path, polygon, polyline, rect) {
+  vector-effect: non-scaling-stroke;
+}
