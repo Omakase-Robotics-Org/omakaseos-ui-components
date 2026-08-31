@@ -19,6 +19,13 @@
  *  - Invariant D: an armed mode's drag always belongs to the camera, and a grip is the only thing that locks it.
  *  - Invariant F': a deformable sub-element (a ring vertex, a ring edge, a path segment) is a candidate only while its owning object is in the selection, and an unarmed object offers nothing except the affordance that selects it; fine input alone is armed this way, because coarse input has no hover with which to arm anything.
  *
+ * What a path IS, on the other hand, is the host's fact and not the grammar's:
+ * an ordered route by default, or — where the host declares
+ * {@link EditCapabilities.edges} — a road graph whose lines are objects an
+ * operator selects. That declaration widens the CLICK table alone; candidacy,
+ * grips and pick order are the same either way, so invariant F' reads the same
+ * under both and needs no exception.
+ *
  * Pure functions only: no React, DOM, renderer, pixels, wire, clock, or random.
  */
 
@@ -154,7 +161,31 @@ export type EditSnapping = {
 export type EditSupport =
   | { readonly supported: true }
   | { readonly supported: false; readonly reason: string };
-export type EditCapabilities = { readonly areas: EditSupport };
+
+/**
+ * What the host's artifact can express, in the grammar's own vocabulary.
+ *
+ *  - `areas` … the artifact stores keep-out geometry, so `draw-area` has
+ *    somewhere to go. REQUIRED: a host that forgot it would silently run an
+ *    armed mode with no document behind it.
+ *  - `edges` … OPT-IN: the artifact is a road GRAPH, whose lines are
+ *    selectable objects, rather than an ordered route whose segments nobody
+ *    selects. Optional because its absence is not a forgotten declaration: it
+ *    is the ordered-route reading this grammar has always had, and every
+ *    answer is unchanged without it. Declaring it changes exactly one thing —
+ *    what a CLICK on a line means (see {@link resolveClick}) — and nothing
+ *    about which affordance a probe resolves to, which grip a press takes, or
+ *    the order the classes are picked in.
+ *
+ *    A path that carries more than one segment is an ordered route and not an
+ *    edge, so clicking one under this declaration is REFUSED rather than
+ *    approximated by selecting the whole route: {@link EditTarget} can name a
+ *    path but not one segment of it.
+ */
+export type EditCapabilities = {
+  readonly areas: EditSupport;
+  readonly edges?: EditSupport;
+};
 
 export type HittablePath = { readonly id: string; readonly handleIds: readonly string[] };
 export type HittableArea = { readonly id: string; readonly ring: readonly Vertex[] };
@@ -1651,6 +1682,46 @@ export function marqueeTargets(probe: EditProbe, from: Vertex, to: Vertex): Marq
 export const AREA_MUST_CLOSE = "An area must be closed.";
 /** The refusal a ring with too few corners earns when asked to close. */
 export const AREA_TOO_FEW = "An area needs at least 3 corners before it can be closed.";
+/** The refusal a multi-segment path earns from a host that declared graph edges. */
+export const EDGE_NOT_A_SINGLE_LINE =
+  "Selectable edges were declared, but this path carries more than one segment: the grammar can name the path, not one segment of it.";
+
+/** Whether the host declared its paths to be selectable graph edges. */
+function edgesAreSelectable(probe: EditProbe): boolean {
+  return probe.capabilities.edges?.supported === true;
+}
+
+/**
+ * What a click on a line means where the host declared graph edges.
+ *
+ * It always SELECTS, in both modalities and whether or not the line is already
+ * armed — it is never the `deselect` that {@link selectionClick} answers for a
+ * lone selected object. A road graph is edited by walking a corridor line by
+ * line, and a click that silently dropped the selection halfway along would
+ * make that walk unusable; the floor is still there to deselect with, and
+ * Shift still toggles, so nothing is lost. Selection is non-destructive, so
+ * invariant A' holds in fine input, and the coarse badge is still the only tap
+ * that removes.
+ *
+ * The refusal is the fail-first half: a host that declared its paths to be
+ * edges and then supplied an ordered route gets told so, because selecting the
+ * whole route would be an approximation of the segment the operator pointed at.
+ *
+ * @param probe The pointer probe.
+ * @param pathId The path the resolved segment belongs to.
+ * @returns The selection intent, or the refusal the declaration earned.
+ */
+function edgeSelectionClick(probe: EditProbe, pathId: string): EditIntent {
+  const path = probe.scene.paths.find((candidate) => candidate.id === pathId);
+  if (path === undefined || pathPoints(probe.scene, path).length !== 2) {
+    return { kind: "refused", reason: EDGE_NOT_A_SINGLE_LINE };
+  }
+  return {
+    kind: "select-set",
+    targets: [{ kind: "path", id: pathId }],
+    additive: probe.modifiers.shift,
+  };
+}
 
 /**
  * Where a placed point lands: the pointer position after the constraint and
@@ -1689,6 +1760,14 @@ function selectionClick(probe: EditProbe, target: EditTarget): EditIntent {
  * point removes it, and that is a MODIFIED click, declared and previewed by
  * the `pen-minus` cursor. In coarse input the persistent badge stays the tap
  * that deletes.
+ *
+ * A line is the one entry here whose meaning the HOST decides. By default a
+ * path's segment answers `nothing` once the path is armed, and answers nothing
+ * in coarse input at all: an ordered route's segments are not things anybody
+ * selects. Where the host declares {@link EditCapabilities.edges}, every click
+ * on a line instead selects the path it belongs to — armed or not, fine or
+ * coarse — or is refused when that path turns out to be a route rather than an
+ * edge. Nothing else about the grammar moves with it.
  */
 export function resolveClick(probe: EditProbe): EditIntent {
   const refusal = declarationRefusal(probe);
@@ -1745,15 +1824,23 @@ export function resolveClick(probe: EditProbe): EditIntent {
     case "badge":
       return { kind: "delete-set", targets: [affordance.target] };
     case "ghost":
-      // Alt in fine input; coarse keeps its previous "a tap on a ghost does
-      // nothing, a drag inserts" answer.
-      return probe.modality === "fine" && probe.modifiers.alt
-        ? {
-            kind: "insert",
-            pathId: affordance.pathId,
-            afterIndex: affordance.segmentIndex,
-            at: affordance.at,
-          }
+      // Alt in fine input inserts, and keeps precedence: it is a MODIFIED
+      // click with a declared meaning of its own. Otherwise a host that
+      // declared graph edges selects the line — this is the coarse answer, the
+      // one modality with no hover and no double click, where a tap therefore
+      // has to carry the selection and the drag keeps the insertion. Undeclared,
+      // coarse keeps its previous "a tap on a ghost does nothing, a drag
+      // inserts" answer.
+      if (probe.modality === "fine" && probe.modifiers.alt) {
+        return {
+          kind: "insert",
+          pathId: affordance.pathId,
+          afterIndex: affordance.segmentIndex,
+          at: affordance.at,
+        };
+      }
+      return edgesAreSelectable(probe)
+        ? edgeSelectionClick(probe, affordance.pathId)
         : { kind: "nothing" };
     case "ghost-vertex":
       return probe.modality === "fine" && probe.modifiers.alt
@@ -1765,16 +1852,29 @@ export function resolveClick(probe: EditProbe): EditIntent {
           }
         : { kind: "nothing" };
     case "path":
-      return selectionClick(probe, { kind: "path", id: affordance.id });
+      // An unarmed line. `selectionClick` already selects it, and for a
+      // two-point edge the two answers coincide; the declared path is taken all
+      // the same, so that EVERY click on a line is judged by the declaration —
+      // including the refusal an ordered route earns from a host that promised
+      // edges.
+      return edgesAreSelectable(probe)
+        ? edgeSelectionClick(probe, affordance.id)
+        : selectionClick(probe, { kind: "path", id: affordance.id });
     case "area":
       return selectionClick(probe, { kind: "area", id: affordance.id });
     case "floor":
       return { kind: "deselect" };
     case "refused":
       return { kind: "refused", reason: affordance.reason };
+    case "path-edge":
+      // An armed line. Without the declaration this stays `nothing`: an ordered
+      // route's segment is not a thing anybody selects, and the press already
+      // took a grip that translates it.
+      return edgesAreSelectable(probe)
+        ? edgeSelectionClick(probe, affordance.pathId)
+        : { kind: "nothing" };
     case "none":
     case "knob":
-    case "path-edge":
     case "ring-edge":
     case "run-first":
     case "run-last":

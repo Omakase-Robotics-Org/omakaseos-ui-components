@@ -30,6 +30,7 @@ import {
 import {
   AREA_MUST_CLOSE,
   AREA_TOO_FEW,
+  EDGE_NOT_A_SINGLE_LINE,
   EDIT_CURSOR_VALUES,
   EMPTY_SELECTION,
   cursorFor,
@@ -2279,6 +2280,178 @@ describe("the cursor vocabulary is total", () => {
       // whole declaration is dropped, so the keyword is a required part of the
       // value rather than a silent fallback.
       expect(value, name).toMatch(/,\s*[a-z-]+$/);
+    }
+  });
+});
+
+describe("a host may declare its paths to be selectable graph edges", () => {
+  /**
+   * Two waypoints joined by one line: what a road graph's edge actually is.
+   *
+   * The suite's own SCENE is deliberately NOT this — its `route` resolves to
+   * three points, which is an ordered route — so the two scenes together cover
+   * both sides of the declaration's own precondition.
+   */
+  const GRAPH: EditScene = {
+    handles: [
+      { id: "h0", x: 0, y: 0 },
+      { id: "h1", x: 4, y: 0 },
+    ],
+    paths: [{ id: "e0", handleIds: ["h0", "h1"] }],
+    areas: [],
+  };
+  const EDGE: EditTarget = { kind: "path", id: "e0" };
+  /** Mid-line, two metres from either endpoint, so no handle is in reach. */
+  const ON_THE_LINE = { x: 2, y: 0 };
+
+  const DECLARED: EditCapabilities = { areas: { supported: true }, edges: { supported: true } };
+  const REFUSES_EDGES: EditCapabilities = {
+    areas: { supported: true },
+    edges: { supported: false, reason: "This recording is an ordered route." },
+  };
+
+  /** A probe pointing at the line, with the arming and the declaration named. */
+  function atLine(options: {
+    readonly capabilities?: EditCapabilities;
+    readonly selection?: EditSelection;
+    readonly modality?: "fine" | "coarse";
+  }): EditProbe {
+    return probe({
+      scene: GRAPH,
+      at: ON_THE_LINE,
+      capabilities: options.capabilities ?? SUPPORTED,
+      selection: options.selection ?? EMPTY_SELECTION,
+      modality: options.modality ?? "fine",
+    });
+  }
+
+  const ARMED_BY_ITSELF = selected(EDGE);
+  const ARMED_BY_A_HANDLE = selected({ kind: "handle", id: "h0" });
+
+  describe("declared: a click on a line selects it, in both modalities and armed or not", () => {
+    const armings = [
+      ["unarmed", EMPTY_SELECTION],
+      ["armed by itself", ARMED_BY_ITSELF],
+      ["armed by one of its handles", ARMED_BY_A_HANDLE],
+    ] as const;
+    for (const modality of ["fine", "coarse"] as const) {
+      for (const [arming, selection] of armings) {
+        it(`selects the path in ${modality} input when it is ${arming}`, () => {
+          expect(
+            resolveClick(atLine({ capabilities: DECLARED, selection, modality })),
+          ).toEqual({ kind: "select-set", targets: [EDGE], additive: false });
+        });
+      }
+    }
+
+    it("never answers deselect for a line that is already the whole selection", () => {
+      // `selectionClick` would, for a lone selected object. A corridor is
+      // walked line by line, so a click that dropped the selection halfway
+      // along would make the walk unusable; the floor still deselects.
+      const answer = resolveClick(
+        atLine({ capabilities: DECLARED, selection: ARMED_BY_ITSELF }),
+      );
+      expect(answer.kind).not.toBe("deselect");
+      expect(
+        resolveClick(
+          probe({ scene: GRAPH, at: { x: 30, y: 30 }, capabilities: DECLARED }),
+        ),
+      ).toEqual({ kind: "deselect" });
+    });
+
+    it("still toggles additively under Shift", () => {
+      expect(
+        resolveClick(withShift(atLine({ capabilities: DECLARED, selection: ARMED_BY_ITSELF }))),
+      ).toEqual({ kind: "select-set", targets: [EDGE], additive: true });
+    });
+
+    it("leaves Alt-click on an armed line as the insertion it already was", () => {
+      // Invariant A': the modified click keeps its declared, previewed meaning.
+      expect(
+        resolveClick(
+          withAlt(atLine({ capabilities: DECLARED, selection: ARMED_BY_ITSELF })),
+        ),
+      ).toEqual({ kind: "insert", pathId: "e0", afterIndex: 0, at: ON_THE_LINE });
+    });
+
+    it("changes no affordance, no grip and no pick order", () => {
+      // The declaration widens the CLICK table alone. If it moved a path edge
+      // up the pick order, a handle or a ring edge could lose a press to it.
+      for (const modality of ["fine", "coarse"] as const) {
+        for (const [, selection] of armings) {
+          const declared = atLine({ capabilities: DECLARED, selection, modality });
+          const plain = atLine({ capabilities: SUPPORTED, selection, modality });
+          expect(resolveAffordance(declared)).toEqual(resolveAffordance(plain));
+          expect(resolveGrip(declared)).toEqual(resolveGrip(plain));
+        }
+      }
+    });
+
+    it("keeps the drag on an armed line a translation, so tap and drag differ deliberately", () => {
+      const grip = resolveGrip(atLine({ capabilities: DECLARED, selection: ARMED_BY_ITSELF }));
+      expect(grip?.kind).toBe("move-set");
+      // Coarse has no hover and no double click, so the tap carries the
+      // selection while the drag keeps the insertion the midpoint advertises.
+      expect(
+        resolveGrip(atLine({ capabilities: DECLARED, modality: "coarse" }))?.kind,
+      ).toBe("insert");
+    });
+  });
+
+  describe("declared over an ordered route: refused, never approximated", () => {
+    it("refuses a click on a path that carries more than one segment", () => {
+      // EditTarget can name a path but not one segment of it, so selecting the
+      // whole route would answer a question the operator did not ask.
+      for (const modality of ["fine", "coarse"] as const) {
+        for (const selection of [EMPTY_SELECTION, selected(ROUTE)]) {
+          expect(
+            resolveClick(
+              probe({ capabilities: DECLARED, selection, modality, at: { x: 2, y: 0 } }),
+            ),
+          ).toEqual({ kind: "refused", reason: EDGE_NOT_A_SINGLE_LINE });
+        }
+      }
+    });
+
+    it("leaves that same route alone when the capability is not declared", () => {
+      expect(
+        resolveClick(probe({ selection: selected(ROUTE), at: { x: 2, y: 0 } })),
+      ).toEqual({ kind: "nothing" });
+    });
+  });
+
+  describe("undeclared and declared-unsupported: today's answers, unchanged", () => {
+    const undeclared = [
+      ["omitted", SUPPORTED],
+      ["declared unsupported", REFUSES_EDGES],
+    ] as const;
+    for (const [how, capabilities] of undeclared) {
+      it(`answers nothing for an armed line in fine input (${how})`, () => {
+        expect(
+          resolveClick(atLine({ capabilities, selection: ARMED_BY_ITSELF })),
+        ).toEqual({ kind: "nothing" });
+      });
+
+      it(`answers nothing for a line in coarse input, armed or not (${how})`, () => {
+        expect(
+          resolveClick(atLine({ capabilities, modality: "coarse" })),
+        ).toEqual({ kind: "nothing" });
+        expect(
+          resolveClick(
+            atLine({ capabilities, modality: "coarse", selection: ARMED_BY_ITSELF }),
+          ),
+        ).toEqual({ kind: "nothing" });
+      });
+
+      it(`still selects an UNARMED line in fine input (${how})`, () => {
+        // The affordance that selects an unarmed object (invariant F') has
+        // always been there; the capability adds nothing to this case.
+        expect(resolveClick(atLine({ capabilities }))).toEqual({
+          kind: "select-set",
+          targets: [EDGE],
+          additive: false,
+        });
+      });
     }
   });
 });
