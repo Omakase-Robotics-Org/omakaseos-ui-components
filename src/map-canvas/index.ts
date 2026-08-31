@@ -1,7 +1,9 @@
 /**
  * @file Subpath barrel for the map canvas kernel: viewport pan/zoom algebra,
- * world ↔ raster-pixel projection, and the counter-scale that keeps
- * on-screen affordances screen-constant under zoom.
+ * world ↔ raster-pixel projection, the counter-scale that keeps on-screen
+ * affordances screen-constant under zoom, and the occupancy-grid document
+ * (three-valued vocabulary, brush/stroke painting, PGM encoding) a host
+ * paints the raster's own pixels through.
  *
  * Everything re-exported here is pure and React-free — see the `@file`
  * header of each module for why. A host wires these functions to its own
@@ -11,3 +13,4 @@
 export * from "./viewport";
 export * from "./projection";
 export * from "./screen-scale";
+export * from "./raster-edit";

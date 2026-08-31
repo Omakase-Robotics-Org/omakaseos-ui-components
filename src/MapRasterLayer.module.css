@@ -1,0 +1,74 @@
+/* MapRasterLayer — an occupancy document drawn to a <canvas> and painted on
+ * pointer drag.
+ *
+ * The root is a plain block the size the caller (either `<MapCanvas
+ * picture>` or a standalone consumer) hands it via inline style; nothing
+ * here sizes it. The canvas fills that box exactly, and the brush cursor is
+ * a sibling absolutely positioned over it, so a ring drawn there can never
+ * disagree with the canvas's own box.
+ *
+ * Every colour is a `--ds-*` token, and the brush's colour reads the same
+ * three-value vocabulary `raster-edit.ts` classifies pixels through — a
+ * "danger" ring while painting occupied is the same register a destructive
+ * action uses elsewhere in this library, not a colour invented for this one
+ * cursor.
+ */
+
+.root {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Nearest-neighbour: a cell stays a cell, matching MapCanvas's own raster. */
+  image-rendering: pixelated;
+  user-select: none;
+  touch-action: none;
+  /* The custom ring below is this layer's cursor; the native one would draw
+   * a second, competing indicator on top of it. */
+  cursor: none;
+}
+
+.canvas[data-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* The brush cursor: a ring centred on the pointer, sized to the brush's
+ * drawn diameter. `transform: translate(-50%, -50%)` is what lets `left`/
+ * `top` be the pointer's own position rather than the ring's corner. */
+.cursor {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-width: 2px;
+  border-style: solid;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.cursorDisc {
+  border-radius: 50%;
+}
+
+.cursorSquare {
+  border-radius: 0;
+}
+
+.cursorOccupied {
+  border-color: var(--ds-tone-danger-fg);
+  background: var(--ds-tone-danger-bg);
+}
+
+.cursorFree {
+  border-color: var(--ds-tone-success-fg);
+  background: var(--ds-tone-success-bg);
+}
+
+.cursorUnknown {
+  border-color: var(--ds-tone-neutral-fg);
+  background: var(--ds-tone-neutral-bg);
+}

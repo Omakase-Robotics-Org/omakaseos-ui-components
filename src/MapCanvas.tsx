@@ -97,6 +97,26 @@
  * (see `MapCanvasEditor.stories.tsx`). The overlay `<svg>` is `aria-hidden`
  * for the same reason every `Edit*` fragment's group is: it restates, in
  * pictures, what the twin already says in text.
+ *
+ * ## Swapping the picture itself: {@link MapCanvasProps.picture}
+ *
+ * Everything above is about the plain `<img src>` this component draws by
+ * default. A consumer that needs the picture to be something ELSE — an
+ * editable `<canvas>` an operator paints the occupancy grid on, for instance
+ * (`<MapRasterLayer/>`) — passes {@link MapCanvasProps.picture} instead of
+ * `src`/`alt`. It is a render prop, not a plain `ReactNode`, because the
+ * replacement element still needs the three things the built-in `<img>`
+ * gets: the `attach` ref {@link useMapCanvasProjector} (or the consumer's own
+ * projector) needs for `toWorld`, the drawn-size style the viewport computed,
+ * and the same pointer-prop spread {@link MapCanvasProps.surfaceProps}
+ * already hands the built-in image. Composing on this ONE seam — one
+ * element, one ref, one box — is what keeps this component from growing
+ * paint logic of its own: it still does not know what a brush, a stroke or
+ * an occupancy value is, only that something else now owns the picture's
+ * pixels. `src`/`alt` and `picture` are mutually exclusive; passing neither
+ * is refused the same way an uncontrolled `viewport` without
+ * `onViewportChange` is (see the constructor's own checks) — a canvas with
+ * no picture at all would render an empty box and say nothing about why.
  */
 import {
   useCallback,
@@ -184,13 +204,41 @@ export type MapCanvasGeometry = {
   readonly toWorld: (clientX: number, clientY: number) => WorldPoint | null;
 };
 
+/**
+ * What a custom {@link MapCanvasProps.picture} render prop is handed, so
+ * whatever it renders sits in exactly the box and takes exactly the ref the
+ * built-in `<img>` would have.
+ */
+export type MapCanvasPictureSlot = {
+  /** Ref callback for the picture element. Wires it into `toWorld`/hit-testing, the same as the built-in image. */
+  readonly attach: (element: HTMLElement | null) => void;
+  /** The drawn-size style (`background` plus the editing layer's own `style`, if any) the built-in image would carry. */
+  readonly style: CSSProperties;
+  /** The raster's own pixel width — the element's intrinsic size, not its drawn one. */
+  readonly widthPx: number;
+  /** The raster's own pixel height — the element's intrinsic size, not its drawn one. */
+  readonly heightPx: number;
+  /** {@link MapCanvasProps.surfaceProps}, minus `style` (folded into {@link MapCanvasPictureSlot.style} already). Spread onto the picture element, same as the built-in image gets it. */
+  readonly surfaceProps: Record<string, unknown>;
+};
+
 export type MapCanvasProps = {
   /** The raster's placement in the world. */
   readonly frame: RasterFrame;
-  /** The raster image's URL — a data URI is as good as any other. */
-  readonly src: string;
-  /** The picture's own text alternative. Required: an unnamed map is not one. */
-  readonly alt: string;
+  /**
+   * The raster image's URL — a data URI is as good as any other. Mutually
+   * exclusive with {@link MapCanvasProps.picture}: pass this (with `alt`) for
+   * a plain picture, or `picture` for a custom one, never neither.
+   */
+  readonly src?: string;
+  /** The picture's own text alternative. Required alongside `src`: an unnamed map is not one. */
+  readonly alt?: string;
+  /**
+   * Render the picture itself, in place of the plain `<img src>` — see the
+   * file header ("Swapping the picture itself"). Mutually exclusive with
+   * `src`/`alt`.
+   */
+  readonly picture?: (slot: MapCanvasPictureSlot) => ReactNode;
   /**
    * The viewport, when the CONSUMER owns it.
    *
@@ -293,8 +341,12 @@ export function worldPointFromClient(
  * @returns The projector to pass to {@link MapCanvas}.
  */
 export function useMapCanvasProjector(frame: RasterFrame): MapCanvasProjector {
-  const elementRef = useRef<HTMLImageElement | null>(null);
-  const attach = useCallback((element: HTMLImageElement | null) => {
+  // HTMLElement, not HTMLImageElement: the ref may land on a plain `<img>`
+  // (the default picture) or on whatever a `picture` render prop returns
+  // (`<MapRasterLayer/>`'s `<canvas>`, say). Only `getBoundingClientRect` is
+  // used below, which every element has.
+  const elementRef = useRef<HTMLElement | null>(null);
+  const attach = useCallback((element: HTMLElement | null) => {
     elementRef.current = element;
   }, []);
   const toWorld = useCallback(
@@ -312,8 +364,8 @@ export function useMapCanvasProjector(frame: RasterFrame): MapCanvasProjector {
 
 /** A client-position-to-world conversion bound to one canvas's raster element. */
 export type MapCanvasProjector = {
-  /** Ref callback for the raster image. {@link MapCanvas} calls it. */
-  readonly attach: (element: HTMLImageElement | null) => void;
+  /** Ref callback for the raster picture element (an `<img>`, or whatever a `picture` render prop returns). {@link MapCanvas} calls it. */
+  readonly attach: (element: HTMLElement | null) => void;
   /** The pointer conversion, stable for as long as the frame is. */
   readonly toWorld: (clientX: number, clientY: number) => WorldPoint | null;
 };
@@ -364,6 +416,7 @@ export function MapCanvas({
   frame,
   src,
   alt,
+  picture,
   viewport: controlledViewport,
   onViewportChange,
   fitNonce,
@@ -378,6 +431,13 @@ export function MapCanvas({
       "MapCanvas: a controlled `viewport` requires `onViewportChange`. Without it every " +
         "wheel, pan and fit the operator performs would be computed and then discarded, and " +
         "the canvas would look broken rather than say so.",
+    );
+  }
+  if (picture === undefined && (src === undefined || alt === undefined)) {
+    throw new Error(
+      "MapCanvas: pass `src` and `alt` for a plain picture, or `picture` for a custom one " +
+        "(see the file header, \"Swapping the picture itself\") — never neither. An empty box " +
+        "would render with nothing to say why it has no picture.",
     );
   }
 
@@ -630,36 +690,51 @@ export function MapCanvas({
       onPointerLeave={abandonCandidate}
     >
       <div className={styles.stack} data-map-canvas-stack="true" style={stackStyle}>
-        <img
-          ref={activeProjector.attach}
-          className={styles.raster}
-          src={src}
-          alt={alt}
-          width={frame.pixelWidth}
-          height={frame.pixelHeight}
-          draggable={false}
-          data-map-canvas-raster="true"
-          {...surfaceRest}
-          // The occupancy grid is black-on-white and its transparent regions
-          // mean UNKNOWN space rather than "whatever the page is", so the
-          // picture needs its own white backing on a dark palette. It is the
-          // one literal in this component, and it is the picture's own fact
-          // rather than a colour choice a theme could restate.
-          //
-          // The DRAWN size is stated here in the same number the stack and
-          // the overlay get, so the picture and the drawing cannot round to
-          // two different boxes. It is written LAST — after the pointer
-          // layer's style rather than before it — because it is not a style
-          // an editing layer gets a say in: the image's rectangle is what
-          // every pointer conversion on this surface divides by, so a
-          // consumer that resized it would not restyle the canvas, it would
-          // silently move the world under the operator's cursor.
-          //
-          // The `width`/`height` ATTRIBUTES stay the raster's natural pixel
-          // box: they are the intrinsic size, and the aspect ratio the box
-          // reserves before the image decodes.
-          style={{ background: "#ffffff", ...surfaceStyle, ...drawnSize }}
-        />
+        {picture === undefined ? (
+          <img
+            ref={activeProjector.attach}
+            className={styles.raster}
+            src={src}
+            alt={alt}
+            width={frame.pixelWidth}
+            height={frame.pixelHeight}
+            draggable={false}
+            data-map-canvas-raster="true"
+            {...surfaceRest}
+            // The occupancy grid is black-on-white and its transparent regions
+            // mean UNKNOWN space rather than "whatever the page is", so the
+            // picture needs its own white backing on a dark palette. It is the
+            // one literal in this component, and it is the picture's own fact
+            // rather than a colour choice a theme could restate.
+            //
+            // The DRAWN size is stated here in the same number the stack and
+            // the overlay get, so the picture and the drawing cannot round to
+            // two different boxes. It is written LAST — after the pointer
+            // layer's style rather than before it — because it is not a style
+            // an editing layer gets a say in: the image's rectangle is what
+            // every pointer conversion on this surface divides by, so a
+            // consumer that resized it would not restyle the canvas, it would
+            // silently move the world under the operator's cursor.
+            //
+            // The `width`/`height` ATTRIBUTES stay the raster's natural pixel
+            // box: they are the intrinsic size, and the aspect ratio the box
+            // reserves before the image decodes.
+            style={{ background: "#ffffff", ...surfaceStyle, ...drawnSize }}
+          />
+        ) : (
+          // The same box, the same ref, the same style and the same pointer
+          // props the built-in `<img>` above would get — see this file's
+          // header ("Swapping the picture itself"). Whatever `picture`
+          // renders is this surface's ONE picture element, not a second one
+          // beside it.
+          picture({
+            attach: activeProjector.attach,
+            style: { background: "#ffffff", ...surfaceStyle, ...drawnSize },
+            widthPx: frame.pixelWidth,
+            heightPx: frame.pixelHeight,
+            surfaceProps: surfaceRest,
+          })
+        )}
         <svg
           className={styles.overlay}
           viewBox={`0 0 ${String(frame.pixelWidth)} ${String(frame.pixelHeight)}`}
