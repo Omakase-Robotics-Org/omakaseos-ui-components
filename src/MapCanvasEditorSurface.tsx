@@ -112,6 +112,7 @@
  */
 import {
   useCallback,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -194,6 +195,30 @@ const SNAP_MARK_HALF_PX = 5;
 /** The halo that keeps a label legible over both floor and wall, in screen pixels. */
 const LABEL_HALO_PX = 3;
 
+/**
+ * A station handle's drawn radius, in screen pixels.
+ *
+ * A station is drawn a quarter larger than a path point — it is a named place
+ * rather than a coordinate the robot drives through — and the label's offsets
+ * and its collision box are both stated as multiples of it, so there is one
+ * number to change.
+ */
+const STATION_RADIUS_PX = HANDLE_RADIUS_PX * 1.25;
+
+/** Where a label sits relative to its station, in screen pixels. */
+const LABEL_OFFSET_X_PX = STATION_RADIUS_PX * 1.6;
+const LABEL_OFFSET_Y_PX = STATION_RADIUS_PX * 1.2;
+
+/**
+ * The clear space demanded around a label, in screen pixels.
+ *
+ * Half of it is the halo the label paints outside its own glyphs
+ * ({@link LABEL_HALO_PX} is centred on the outline), and the rest is the gap
+ * that makes two surviving labels read as two labels rather than as one
+ * run-on word touching at the edges.
+ */
+const LABEL_CLEARANCE_PX = LABEL_HALO_PX / 2 + 2;
+
 export type EditorPoint = {
   readonly id: string;
   readonly x: number;
@@ -247,6 +272,48 @@ function edgeLabel(document: EditorDocument, edge: EditorEdge): string {
   const to = destination === undefined ? edge.dst : pointLabel(destination);
   return `${from} → ${to}`;
 }
+
+/**
+ * A rectangle in SCREEN pixels: what a label occupies of the operator's view.
+ *
+ * "Screen" here means "screen pixels, with the pan left out" — the pan
+ * translates every drawn object by the same vector, so it cannot change
+ * whether two of them overlap, and leaving it out is what keeps the surviving
+ * set of labels from reshuffling while an operator drags the picture around.
+ */
+type LabelBox = {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+};
+
+/** Whether two screen boxes share any area at all. */
+function overlaps(a: LabelBox, b: LabelBox): boolean {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+/**
+ * One label's measured extent, relative to its own text anchor, in screen
+ * pixels at {@link LABEL_SIZE_PX}.
+ *
+ * Measured rather than estimated from a character count: the suppression
+ * below is only as good as the box it compares, and a box narrower than the
+ * word inside it would let exactly the collision this exists to prevent
+ * through. See {@link MapCanvasEditorSurface}'s measuring `<svg>`.
+ */
+type LabelExtent = {
+  readonly dx: number;
+  readonly dy: number;
+  readonly width: number;
+  readonly height: number;
+};
+
+/** A named station and the word drawn beside it. */
+type LabelCandidate = {
+  readonly point: EditorPoint;
+  readonly text: string;
+};
 
 function movePoints(
   points: readonly EditorPoint[],
@@ -698,6 +765,106 @@ export function MapCanvasEditorSurface({
     [selection],
   );
 
+  // ---- station labels ----------------------------------------------------
+  // Thirteen stations carry a name, and at the zoom the map opens at their
+  // names are longer than the distance between them: `entrancein` and
+  // `entranceout` print on top of each other as "entranceinceout", which
+  // names nothing. This is the map-renderer's answer rather than a smaller
+  // font — a label that will not fit is NOT DRAWN, and zooming in, which is
+  // what an operator does when they want to read a crowded area, separates
+  // the stations and lets more of them appear.
+  //
+  // The order below is the whole of the "which one survives" decision, so it
+  // is stated explicitly and it does not depend on anything that moves:
+  //
+  //  1. the SELECTED stations, which are drawn whatever they collide with —
+  //     the operator asked for that one by name, and a label that vanishes
+  //     because of what is near it is worse than one that overprints;
+  //  2. every other named station, in ascending vertex id.
+  //
+  // Ascending id and not, say, distance from the centre or document order: a
+  // priority that reads a POSITION re-ranks the whole set while a station is
+  // being dragged, and a priority that reads document order re-ranks it when
+  // an insertion appends a vertex. Either one makes labels flicker in and out
+  // during an unrelated gesture, which is worse than the collision this is
+  // fixing. A vertex id is assigned once and never moves.
+  const labelCandidates = useMemo<readonly LabelCandidate[]>(() => {
+    const named = drawn.points.flatMap((point) =>
+      point.type === STATION && point.defineType !== undefined && point.defineType !== ""
+        ? [{ point, text: point.defineType }]
+        : [],
+    );
+    named.sort((a, b) => (a.point.id < b.point.id ? -1 : a.point.id > b.point.id ? 1 : 0));
+    return [
+      ...named.filter((candidate) => selectedPointIds.has(candidate.point.id)),
+      ...named.filter((candidate) => !selectedPointIds.has(candidate.point.id)),
+    ];
+  }, [drawn, selectedPointIds]);
+
+  // Every distinct word that has to be measured, in a stable order so the
+  // hidden measuring `<svg>` below does not reorder its children on a
+  // selection change.
+  const labelTexts = useMemo(() => {
+    const texts = [...new Set(labelCandidates.map((candidate) => candidate.text))];
+    texts.sort();
+    return texts;
+  }, [labelCandidates]);
+
+  // How wide each word actually is, in screen pixels, measured from the SAME
+  // font the labels are drawn in (see the measuring `<svg>` in the returned
+  // tree). An estimate from a character count would be the wrong instrument:
+  // a box narrower than the word inside it lets through exactly the
+  // overprinting this is here to stop.
+  const [labelExtents, setLabelExtents] = useState<ReadonlyMap<string, LabelExtent>>(
+    () => new Map(),
+  );
+  const measureRef = useRef<SVGSVGElement | null>(null);
+  useLayoutEffect(() => {
+    const svg = measureRef.current;
+    if (svg === null) {
+      throw new Error(
+        "MapCanvasEditorSurface: the label measuring <svg> is not mounted, so no station " +
+          "label's width is known. Suppression cannot be decided without it.",
+      );
+    }
+    const measured = new Map<string, LabelExtent>();
+    for (const node of svg.querySelectorAll("text")) {
+      const text = node.getAttribute("data-label-measure");
+      if (text === null) {
+        continue;
+      }
+      const bbox = node.getBBox();
+      if (!(bbox.width > 0) || !(bbox.height > 0)) {
+        throw new Error(
+          `MapCanvasEditorSurface: the label "${text}" measured ${String(bbox.width)} x ` +
+            `${String(bbox.height)} px, which is not a box a word can occupy. Refusing to place ` +
+            "labels against a measurement that cannot be true.",
+        );
+      }
+      measured.set(text, { dx: bbox.x, dy: bbox.y, width: bbox.width, height: bbox.height });
+    }
+    setLabelExtents((current) => {
+      // Same words, same numbers: keep the identity so this effect cannot
+      // become a render loop.
+      if (
+        current.size === measured.size &&
+        [...measured].every(([text, extent]) => {
+          const held = current.get(text);
+          return (
+            held !== undefined &&
+            held.dx === extent.dx &&
+            held.dy === extent.dy &&
+            held.width === extent.width &&
+            held.height === extent.height
+          );
+        })
+      ) {
+        return current;
+      }
+      return measured;
+    });
+  }, [labelTexts]);
+
   const handleStateOf = (
     point: EditorPoint,
   ): "idle" | "hover" | "selected" | "primary" | "dragging" => {
@@ -762,6 +929,40 @@ export function MapCanvasEditorSurface({
 
   return (
     <div style={{ display: "grid", gap: "var(--ds-space-md)" }}>
+      {/* The label ruler. Every station name is drawn here once, at the size
+          labels are drawn on the map and in the same font, in an UNTRANSFORMED
+          <svg> — so one user unit is one screen pixel and `getBBox()` answers
+          in exactly the units the suppression above compares. Measuring the
+          real element in the real cascade is the point: a width guessed from a
+          character count, or from a canvas told a font string this file made
+          up, would be a second opinion about the picture, and a box narrower
+          than its word lets the overprinting straight back through.
+
+          It is `visibility: hidden` and not `display: none` (which has no
+          geometry to measure), takes no space (absolute, zero-sized), and is
+          hidden from assistive technology because the names it holds are the
+          same ones the native twin lists below in text. */}
+      <svg
+        ref={measureRef}
+        aria-hidden="true"
+        width={0}
+        height={0}
+        style={{ position: "absolute", width: 0, height: 0, visibility: "hidden" }}
+        data-testid="mc-label-ruler"
+      >
+        {labelTexts.map((text) => (
+          <text
+            key={text}
+            data-label-measure={text}
+            x={0}
+            y={0}
+            fontSize={LABEL_SIZE_PX}
+            fontFamily="var(--ds-font-sans)"
+          >
+            {text}
+          </text>
+        ))}
+      </svg>
       <ButtonRow>
         <Button
           size="sm"
@@ -832,7 +1033,74 @@ export function MapCanvasEditorSurface({
           >
             {({ project, scale }) => {
               const handleRadius = HANDLE_RADIUS_PX * scale;
-              const stationRadius = handleRadius * 1.25;
+              const stationRadius = STATION_RADIUS_PX * scale;
+
+              // Which station labels are drawn at THIS zoom. Walked in the
+              // priority order `labelCandidates` fixed (selected first, then
+              // ascending id), keeping each one that still finds clear space
+              // and dropping the rest — the map-renderer's rule, and the
+              // reason zooming in reveals more names rather than shrinking
+              // the ones already there.
+              //
+              // The arithmetic is in SCREEN pixels with the pan left out:
+              // `col / scale` is where a raster column falls on screen up to
+              // that constant translation, and every offset and every extent
+              // below is already a screen quantity. Working in raster units
+              // instead would make the boxes grow with the zoom and the
+              // collisions never resolve.
+              const placed: LabelBox[] = [];
+              const labels = labelCandidates.flatMap((candidate) => {
+                const extent = labelExtents.get(candidate.text);
+                if (extent === undefined) {
+                  // Nothing is placed against an unmeasured word — that would
+                  // be guessing at the box the whole rule turns on. The layout
+                  // effect measures every word in the same commit that mounts
+                  // the measuring <svg>, before the browser paints, so this is
+                  // reachable only in that one pre-paint pass.
+                  return [];
+                }
+                const at = project(candidate.point);
+                const centreX = at.col / scale;
+                const centreY = at.row / scale;
+                const anchorX = centreX + LABEL_OFFSET_X_PX;
+                const anchorY = centreY - LABEL_OFFSET_Y_PX;
+                const box: LabelBox = {
+                  left: anchorX + extent.dx - LABEL_CLEARANCE_PX,
+                  top: anchorY + extent.dy - LABEL_CLEARANCE_PX,
+                  right: anchorX + extent.dx + extent.width + LABEL_CLEARANCE_PX,
+                  bottom: anchorY + extent.dy + extent.height + LABEL_CLEARANCE_PX,
+                };
+                // The selected station's name is drawn whatever it collides
+                // with, and it still takes its space in `placed` — so it is
+                // the others that give way to it, which is what selecting it
+                // was for.
+                if (!selectedPointIds.has(candidate.point.id)) {
+                  const ownHandle: LabelBox = {
+                    left: centreX - STATION_RADIUS_PX,
+                    top: centreY - STATION_RADIUS_PX,
+                    right: centreX + STATION_RADIUS_PX,
+                    bottom: centreY + STATION_RADIUS_PX,
+                  };
+                  // Its OWN handle and not every handle on the map: the disc a
+                  // label names is the one thing it must never sit on top of
+                  // (a name over its own mark hides the mark and reads as a
+                  // stray word), while the other stations' discs are the
+                  // reason their labels exist at all, and dropping a name
+                  // because an unrelated dot passes under it would remove
+                  // information the operator can still read perfectly well.
+                  if (overlaps(box, ownHandle) || placed.some((taken) => overlaps(taken, box))) {
+                    return [];
+                  }
+                }
+                placed.push(box);
+                return [
+                  {
+                    candidate,
+                    x: at.col + LABEL_OFFSET_X_PX * scale,
+                    y: at.row - LABEL_OFFSET_Y_PX * scale,
+                  },
+                ];
+              });
               return (
                 <>
                   <g>
@@ -934,23 +1202,25 @@ export function MapCanvasEditorSurface({
                   </g>
 
                   <g>
-                    {drawn.points.map((point) =>
-                      point.type !== STATION || point.defineType === undefined ? null : (
-                        <text
-                          key={`label-${point.id}`}
-                          x={project(point).col + stationRadius * 1.6}
-                          y={project(point).row - stationRadius * 1.2}
-                          fontSize={LABEL_SIZE_PX * scale}
-                          fontFamily="var(--ds-font-sans)"
-                          fill="var(--ds-text)"
-                          stroke="var(--ds-surface)"
-                          strokeWidth={LABEL_HALO_PX * scale}
-                          paintOrder="stroke"
-                        >
-                          {point.defineType}
-                        </text>
-                      ),
-                    )}
+                    {labels.map((label) => (
+                      <text
+                        key={`label-${label.candidate.point.id}`}
+                        // The drawn object's own identity, like the handles'
+                        // `data-point-id`: it is what lets a reviewer and the
+                        // e2e ask which names survived a given zoom.
+                        data-station-label={label.candidate.point.id}
+                        x={label.x}
+                        y={label.y}
+                        fontSize={LABEL_SIZE_PX * scale}
+                        fontFamily="var(--ds-font-sans)"
+                        fill="var(--ds-text)"
+                        stroke="var(--ds-surface)"
+                        strokeWidth={LABEL_HALO_PX * scale}
+                        paintOrder="stroke"
+                      >
+                        {label.candidate.text}
+                      </text>
+                    ))}
                   </g>
 
                   {revealed === null || revealedPoint === undefined ? null : (

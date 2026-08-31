@@ -96,9 +96,15 @@ describe("MapCanvas structure", () => {
     expect(image).toHaveAttribute("alt", ALT);
     // Explicit, frame-derived, and NOT responsive: the viewport kernel's
     // `fitToBox` returns a content-pixel-to-CSS-pixel ratio, which is only the
-    // zoom actually applied when the layout width is the pixel width.
+    // zoom actually applied when the drawn width is the pixel width times the
+    // zoom. The ATTRIBUTES are the raster's natural pixel box (the intrinsic
+    // size, and the aspect the box reserves before the image decodes); the
+    // drawn size is stated in CSS beside them, and at the default zoom of 1
+    // the two agree.
     expect(image).toHaveAttribute("width", String(FRAME.pixelWidth));
     expect(image).toHaveAttribute("height", String(FRAME.pixelHeight));
+    expect((image as HTMLElement).style.width).toBe(`${String(FRAME.pixelWidth)}px`);
+    expect((image as HTMLElement).style.height).toBe(`${String(FRAME.pixelHeight)}px`);
     expect(image).toHaveAttribute("draggable", "false");
   });
 
@@ -119,16 +125,30 @@ describe("MapCanvas structure", () => {
     expect(child).not.toBeNull();
   });
 
-  it("writes the viewport kernel's own transform string on the stack", () => {
+  it("applies the zoom as the drawn SIZE and the pan as the only transform", () => {
     const viewport: MapViewport = { zoom: 2.5, panX: -30, panY: 17 };
     const { container } = renderCanvas({ viewport, onViewportChange: vi.fn() });
     const stack = container.querySelector('[data-map-canvas-stack="true"]');
     expect(stack).not.toBeNull();
-    expect((stack as HTMLElement).style.transform).toBe(viewportTransform(viewport));
-    // The stack is sized to the untransformed picture; the transform does the
-    // rest, which is why nothing downstream has to know the zoom happened.
-    expect((stack as HTMLElement).style.width).toBe(`${String(FRAME.pixelWidth)}px`);
-    expect((stack as HTMLElement).style.height).toBe(`${String(FRAME.pixelHeight)}px`);
+    // NOT `viewportTransform(viewport)`, which writes `translate(pan)
+    // scale(zoom)`. A `scale()` here would sit ABOVE the overlay `<svg>`, and
+    // Blink cancels a `vector-effect: non-scaling-stroke` against that svg's
+    // own viewBox mapping alone — so the stylesheet's screen-pixel stroke
+    // weights would land and do nothing (measured: 2 px declared, `2 * zoom`
+    // painted). The zoom is the stack's SIZE instead, which puts it inside
+    // that mapping. See the component's header, and the constant-stroke
+    // assertion in `spec/map-canvas.e2e.spec.ts` that holds it there.
+    expect((stack as HTMLElement).style.transform).toBe("translate(-30px, 17px)");
+    expect((stack as HTMLElement).style.transform).not.toContain("scale");
+    expect((stack as HTMLElement).style.width).toBe(`${String(FRAME.pixelWidth * 2.5)}px`);
+    expect((stack as HTMLElement).style.height).toBe(`${String(FRAME.pixelHeight * 2.5)}px`);
+    // The picture fills that box exactly, in the same numbers, so the raster
+    // and the drawing over it cannot round to two different rectangles.
+    const image = raster(container) as HTMLElement;
+    expect(image.style.width).toBe(`${String(FRAME.pixelWidth * 2.5)}px`);
+    expect(image.style.height).toBe(`${String(FRAME.pixelHeight * 2.5)}px`);
+    // And the pan alone still composes the way the kernel writes it.
+    expect(viewportTransform(viewport)).toContain("translate(-30px, 17px)");
   });
 
   it("merges an editing layer's inline style OVER the raster's own backing", () => {

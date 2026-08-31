@@ -43,16 +43,49 @@
  * consumer re-derive the conversion from an element ref, is two pieces of
  * arithmetic that can disagree about where the pointer was.
  *
- * ## Why the image is drawn at its natural pixel size
+ * ## Why the zoom is a LAYOUT size and only the pan is a transform
+ *
+ * The obvious arrangement — one CSS `translate(pan) scale(zoom)` on the stack
+ * that holds the image and the overlay — is the one this component started
+ * with, and it is wrong in exactly one respect, measurably:
+ *
+ * A `scale()` on an ANCESTOR of the overlay `<svg>` leaves the SVG's own
+ * viewBox-to-viewport mapping at identity, and Blink cancels a
+ * `vector-effect: non-scaling-stroke` against that inner mapping ALONE. So
+ * every stroke in the overlay was painted `declared * zoom` screen pixels
+ * wide no matter how loudly `MapCanvas.module.css` declared otherwise: at
+ * 12.6x a handle's 2-unit outline was painted 25 px, wider than the 25.9 px
+ * handle it outlines. Measured in Chromium, both arrangements, in
+ * `spec/map-canvas.e2e.spec.ts`:
+ *
+ * ```text
+ *                        geometry (stroke excluded)   painted stroke
+ *   ancestor transform   25.875 px at every zoom      1.70 / 6.56 / 25.29 px
+ *   layout size          25.875 px at every zoom      2.00 / 2.00 /  2.00 px
+ * ```
+ *
+ * So the zoom is applied as a SIZE: the stack, the image and the overlay are
+ * all laid out at `pixel size * zoom`, the overlay keeps `viewBox` = the
+ * raster's own pixel box, and the transform carries the pan alone. The zoom
+ * is then inside the SVG's viewBox mapping, which is the mapping the stroke
+ * cancellation is defined against, and every `Edit*` fragment's declared
+ * weight (2, 1.5, 2.5) is painted at that many screen pixels and stays
+ * distinguishable from the others. Nothing else changes: a viewBox mapping
+ * and a `scale()` scale the drawn geometry by the identical factor, so the
+ * counter-scaled radii, the projection, the pointer conversion and every
+ * formula in `map-canvas/viewport.ts` (all written for an origin at the
+ * top-left, which a translate-only transform still honours) are untouched.
  *
  * `fitToBox` returns a content-pixel-to-CSS-pixel ratio, and that ratio is
- * only the zoom actually applied when the image's untransformed layout width
- * IS its pixel width. So the image carries explicit `width`/`height`
- * attributes from the frame and the stylesheet never makes it responsive. The
- * payoff is that `rasterUnitsPerScreenPixel` is exact and known without
- * measuring anything: this component SET the layout width, so it can state it
- * rather than read `offsetWidth` back and hope the browser has laid out. That
- * is also why {@link MapCanvasGeometry.scale} is a number and not
+ * only the zoom actually applied when the image is drawn at its pixel size
+ * times the zoom and nothing else resizes it — so the stylesheet still never
+ * makes the image responsive, and the `width`/`height` ATTRIBUTES stay the
+ * frame's own numbers (the intrinsic size, and the box reserved before the
+ * raster decodes) while the drawn size is stated in CSS beside them. The
+ * payoff is unchanged: `rasterUnitsPerScreenPixel` is exact and known without
+ * measuring anything, because this component SET the drawn width rather than
+ * reading `offsetWidth` back and hoping the browser has laid out. That is
+ * also why {@link MapCanvasGeometry.scale} is a number and not
  * `number | null` — the "not measured yet" case the kernel reports with
  * `null` cannot arise here.
  *
@@ -84,7 +117,6 @@ import {
   project,
   rasterUnitsPerScreenPixel,
   unproject,
-  viewportTransform,
   wheelZoom,
   zoomAbout,
   type MapViewport,
@@ -534,9 +566,10 @@ export function MapCanvas({
   }, []);
 
   // ---- geometry ----------------------------------------------------------
-  // `frame.pixelWidth` is passed as the LAYOUT width, not `offsetWidth`,
-  // because this component sets the image's width attribute from exactly that
-  // number (see the file header). Both kernel calls therefore answer a real
+  // `frame.pixelWidth` and the zoom are passed separately, not as the drawn
+  // width and 1, and not as `offsetWidth`: the kernel multiplies them, and
+  // that product is exactly the width this component writes into the picture
+  // below (see the file header). Both kernel calls therefore answer a real
   // measurement and neither can return the kernel's "not laid out yet" null.
   const geometry = useMemo<MapCanvasGeometry>(() => {
     const scale = rasterUnitsPerScreenPixel(frame, frame.pixelWidth, viewport.zoom);
@@ -561,10 +594,27 @@ export function MapCanvas({
 
   const { style: surfaceStyle, ...surfaceRest } = surfaceProps ?? {};
 
+  // ---- where the zoom is applied -----------------------------------------
+  // The zoom is a LAYOUT size and only the pan is a transform. See the file
+  // header ("Why the zoom is a layout size"): a `scale()` on this element
+  // leaves the overlay `<svg>`'s own CTM at identity, and Blink cancels a
+  // `non-scaling-stroke` against that CTM alone — so every stroke in the
+  // overlay was painted `declared * zoom` screen pixels wide however loudly
+  // the stylesheet declared otherwise. Sizing the stack (and with it the
+  // image and the overlay, which fill it) to the DRAWN size puts the zoom
+  // inside the SVG's viewBox mapping, where the stroke cancellation happens.
+  const drawnWidthPx = frame.pixelWidth * viewport.zoom;
+  const drawnHeightPx = frame.pixelHeight * viewport.zoom;
+  const drawnSize: CSSProperties = {
+    width: `${String(drawnWidthPx)}px`,
+    height: `${String(drawnHeightPx)}px`,
+  };
   const stackStyle: CSSProperties = {
-    transform: viewportTransform(viewport),
-    width: `${String(frame.pixelWidth)}px`,
-    height: `${String(frame.pixelHeight)}px`,
+    // `viewportTransform` writes `translate(pan) scale(zoom)`, which is the
+    // arrangement this component no longer uses; the kernel keeps it for a
+    // host that scales by transform and accepts what that costs its strokes.
+    transform: `translate(${String(viewport.panX)}px, ${String(viewport.panY)}px)`,
+    ...drawnSize,
   };
 
   return (
@@ -595,7 +645,20 @@ export function MapCanvas({
           // picture needs its own white backing on a dark palette. It is the
           // one literal in this component, and it is the picture's own fact
           // rather than a colour choice a theme could restate.
-          style={{ background: "#ffffff", ...surfaceStyle }}
+          //
+          // The DRAWN size is stated here in the same number the stack and
+          // the overlay get, so the picture and the drawing cannot round to
+          // two different boxes. It is written LAST — after the pointer
+          // layer's style rather than before it — because it is not a style
+          // an editing layer gets a say in: the image's rectangle is what
+          // every pointer conversion on this surface divides by, so a
+          // consumer that resized it would not restyle the canvas, it would
+          // silently move the world under the operator's cursor.
+          //
+          // The `width`/`height` ATTRIBUTES stay the raster's natural pixel
+          // box: they are the intrinsic size, and the aspect ratio the box
+          // reserves before the image decodes.
+          style={{ background: "#ffffff", ...surfaceStyle, ...drawnSize }}
         />
         <svg
           className={styles.overlay}

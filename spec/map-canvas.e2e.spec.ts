@@ -249,6 +249,54 @@ async function settle(editor: Locator): Promise<void> {
     .toBe(0);
 }
 
+/**
+ * Every station name currently DRAWN, with the screen rectangle it occupies.
+ *
+ * The rectangle is Blink's own for the `<text>` element, not one recomputed
+ * from the editor's arithmetic: the point of the assertion below is that the
+ * PAINTED words do not touch, so a box derived from the same numbers the
+ * suppression used would prove only that the arithmetic agrees with itself.
+ */
+async function labelBoxes(
+  editor: Locator,
+): Promise<{ readonly id: string; readonly text: string; readonly box: Box }[]> {
+  return drawn(editor, "[data-station-label]").evaluateAll((elements) =>
+    elements.map((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        id: element.getAttribute("data-station-label") ?? "?",
+        text: element.textContent ?? "",
+        box: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      };
+    }),
+  );
+}
+
+/** Every pair of the given boxes that share any area, named for the failure message. */
+function collidingPairs(
+  labels: readonly { readonly text: string; readonly box: Box }[],
+): string[] {
+  const collisions: string[] = [];
+  for (let i = 0; i < labels.length; i += 1) {
+    for (let j = i + 1; j < labels.length; j += 1) {
+      const a = labels[i];
+      const b = labels[j];
+      if (a === undefined || b === undefined) {
+        continue;
+      }
+      if (
+        a.box.left < b.box.left + b.box.width &&
+        b.box.left < a.box.left + a.box.width &&
+        a.box.top < b.box.top + b.box.height &&
+        b.box.top < a.box.top + a.box.height
+      ) {
+        collisions.push(`${a.text} x ${b.text}`);
+      }
+    }
+  }
+  return collisions;
+}
+
 /** Drag between two client points, in steps so the moves coalesce as usual. */
 async function drag(
   page: Page,
@@ -280,6 +328,14 @@ async function disableMagnet(editor: Locator): Promise<void> {
  * and this is at x ≈ -46.7 m, more than 200 raster pixels clear of it.
  */
 const EMPTY_FLOOR: WorldPoint = unproject(FRAME, { col: 60, row: 60 });
+
+/**
+ * The most crowded corner of the label set: `entranceinsmall` (0008),
+ * `entranceoutsmall` (0009) and `keisoku` (0010) sit within three metres of
+ * each other, so a zoom about here separates the names that the fitted view
+ * has to hold back.
+ */
+const LABEL_CROWD: WorldPoint = { x: 2.9, y: -6.2 };
 
 // ---------------------------------------------------------------------------
 // The two properties that only a real browser can answer.
@@ -333,7 +389,7 @@ test("zoom-at-cursor: the world point under the pointer survives a wheel zoom", 
   expect(errors).toEqual([]);
 });
 
-test("screen-constant-handles: the drawn geometry holds its size across a zoom, and the outline does not", async ({
+test("screen-constant-handles: the drawn geometry AND its outline hold their size across a zoom", async ({
   page,
 }) => {
   const errors = trackErrors(page);
@@ -398,15 +454,30 @@ test("screen-constant-handles: the drawn geometry holds its size across a zoom, 
   expect(Math.abs(geometryAfter.left - geometryBefore.left)).toBeLessThan(1);
   expect(Math.abs(geometryAfter.top - geometryBefore.top)).toBeLessThan(1);
 
-  // ---- 2. The STROKE does not. -----------------------------------------
+  // ---- 2. And neither does the STROKE. ---------------------------------
   // `getBoundingClientRect` excludes the stroke and Playwright's boundingBox
   // includes it, so the difference is the painted outline in screen pixels.
-  // First, that instrument is verified rather than assumed: the ring declares
-  // `stroke-width: 2` and the primary ring `1.5`, and the two differences must
-  // come out in that ratio at one zoom.
-  await editor.getByRole("button", { name: "Fit" }).click();
-  await settle(editor);
-  const fitted = await zoomOf(editor);
+  // The outline is what `MapCanvas.module.css` declares
+  // `vector-effect: non-scaling-stroke` for: an `Edit*` glyph states its
+  // weight in SCREEN pixels (the ring 2, the primary ring 1.5), and the props
+  // carry no stroke width, so the stylesheet is the only place that can say
+  // so.
+  //
+  // That declaration used to LAND and do NOTHING. The zoom was an ancestor
+  // CSS transform on `.stack`, and Blink cancels a non-scaling stroke against
+  // the CTM INSIDE the `<svg>` alone — which was the identity, because the
+  // overlay was laid out at the raster's own pixel size. `getComputedStyle`
+  // reported `non-scaling-stroke` and the outline was painted `2 * zoom` px
+  // wide anyway: 1.700 px at 0.8499, 6.557 at 3.2783, 25.291 at 12.6457 —
+  // at that last one a handle's outline is WIDER than the 25.9 px handle it
+  // outlines. `MapCanvas` now applies the zoom as the drawn SIZE of the stack
+  // (the image and the overlay fill it) and the pan as the only transform, so
+  // the zoom lives in the overlay's own viewBox mapping, which is exactly the
+  // mapping the cancellation is defined against.
+  //
+  // Asserted as CONSTANT — not as a ratio and not as a range both behaviours
+  // would satisfy. `2 * zoom` is off by 0.3 px at the fitted zoom and by 23 px
+  // at 12.6x, so the old behaviour fails every one of these.
   const strokeOf = async (locator: Locator): Promise<number> => {
     const geometry = await locator.evaluate((element) => element.getBoundingClientRect().width);
     const visual = await locator.boundingBox();
@@ -415,34 +486,59 @@ test("screen-constant-handles: the drawn geometry holds its size across a zoom, 
     }
     return visual.width - geometry;
   };
+  // The hovered handle, at the two zooms already measured above.
+  expect(visualBefore - geometryBefore.width).toBeCloseTo(2, 2);
+  expect(visualAfter - geometryAfter.width).toBeCloseTo(2, 2);
+  // Stated as the ratio a reviewer would see: the outline is the SAME weight
+  // after a zoom that magnified the picture 3.86x. (It used to be 3.86x
+  // heavier — that is what `magnification` here would have been.)
+  expect((visualAfter - geometryAfter.width) / (visualBefore - geometryBefore.width)).toBeCloseTo(
+    1,
+    2,
+  );
+  expect(magnification).toBeGreaterThan(3);
+
+  // The distinct weights must SURVIVE the fix: the two rings are declared 2
+  // and 1.5, and a repair that flattened every stroke to one number would be
+  // a visual regression that a constant-stroke assertion alone cannot see. So
+  // both are measured, at three zooms spanning 14.9x, and each holds its own
+  // declared value.
+  await editor.getByRole("button", { name: "Fit" }).click();
+  await settle(editor);
   const homeAt = await clientOf(editor, home);
   await page.mouse.click(homeAt.x, homeAt.y);
   await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0000");
   await settle(editor);
-  const outerStroke = await strokeOf(editor.locator('[data-point-id="0000"] circle:nth-of-type(1)'));
-  const ringStroke = await strokeOf(editor.locator('[data-point-id="0000"] circle:nth-of-type(2)'));
-  expect(ringStroke / outerStroke).toBeCloseTo(2 / 1.5, 3);
-
-  // Now the finding. `MapCanvas.module.css` declares
-  // `vector-effect: non-scaling-stroke` on exactly these glyphs, to keep a
-  // 2-unit outline two SCREEN pixels wide at every zoom. It does not do that
-  // here: the zoom is an ancestor CSS transform on `.stack`, which Blink does
-  // not account for when it cancels a non-scaling stroke, so the outline is
-  // painted at 2 RASTER units and scales with the picture like everything
-  // else. Asserted as MEASURED — `stroke === 2 * zoom` — rather than relaxed
-  // to something both behaviours would satisfy. When the rule is made
-  // effective (drawing the overlay at the zoomed size instead of transforming
-  // it, or carrying the zoom into the stroke width), this assertion is the one
-  // that says so, and it should then become a constant 2 px.
-  expect(ringStroke).toBeCloseTo(2 * fitted, 2);
-  expect(visualBefore - geometryBefore.width).toBeCloseTo(2 * zoomBefore, 2);
-  expect(visualAfter - geometryAfter.width).toBeCloseTo(2 * zoomAfter, 2);
-  // Stated as the growth a reviewer would see: the outline is 3.86x heavier
-  // after the same zoom that left the geometry untouched.
-  expect((visualAfter - geometryAfter.width) / (visualBefore - geometryBefore.width)).toBeCloseTo(
-    magnification,
-    2,
-  );
+  const outer = editor.locator('[data-point-id="0000"] circle:nth-of-type(1)');
+  const inner = editor.locator('[data-point-id="0000"] circle:nth-of-type(2)');
+  const sampled: { readonly zoom: number; readonly outer: number; readonly inner: number }[] = [];
+  // Three samples spanning 14.9x, stopping short of MAX_ZOOM: `zoomInAbout`
+  // waits for each notch to CHANGE the zoom, so a sample past the clamp would
+  // wait for a change that cannot come.
+  for (const notches of [0, 3, 3]) {
+    if (notches > 0) {
+      await zoomInAbout(page, editor, home, notches);
+    }
+    sampled.push({
+      zoom: await zoomOf(editor),
+      outer: await strokeOf(outer),
+      inner: await strokeOf(inner),
+    });
+  }
+  const first = sampled.at(0);
+  const last = sampled.at(-1);
+  if (first === undefined || last === undefined) {
+    throw new Error("no stroke samples were taken");
+  }
+  expect(last.zoom / first.zoom).toBeGreaterThan(10);
+  for (const sample of sampled) {
+    expect(sample.inner).toBeCloseTo(2, 2);
+    expect(sample.outer).toBeCloseTo(1.5, 2);
+    // Distinct, and distinct in the declared proportion — not merely both
+    // "about two pixels".
+    expect(sample.inner / sample.outer).toBeCloseTo(2 / 1.5, 3);
+    expect(sample.inner - sample.outer).toBeCloseTo(0.5, 2);
+  }
 
   expect(errors).toEqual([]);
 });
@@ -788,5 +884,66 @@ test("heading-knob-rotates: a station's knob writes its yaw, and a path point ha
   await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0013");
   await page.mouse.move(pathAt.x, pathAt.y);
   await expect(drawn(editor, "[data-knob-for]")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Labels: the map-renderer's rule, in a real browser's text metrics.
+// ---------------------------------------------------------------------------
+
+test("station-labels-never-overprint: a name with no room is dropped, and zooming in brings it back", async ({
+  page,
+}) => {
+  const errors = trackErrors(page);
+  const editor = await openEditor(page);
+  await settle(editor);
+
+  // The map opens fitted, and at that zoom thirteen station names are longer
+  // than the distances between the stations: `entrancein` and `entranceout`
+  // used to print on top of each other as "entranceinceout", with `keisoku`,
+  // `entranceinsmall` and `entranceoutsmall` lying across the lines and each
+  // other. A label that cannot find clear space is now not drawn at all.
+  const fitted = await labelBoxes(editor);
+  const fittedZoom = await zoomOf(editor);
+  expect(collidingPairs(fitted), {
+    message: `at zoom ${fittedZoom.toFixed(4)} these station labels overprint each other`,
+  } as never).toEqual([]);
+  // Not vacuous in either direction: some names are drawn, and some are held
+  // back. (If every one of the thirteen fitted, this assertion would be
+  // measuring a map that never had the problem.)
+  expect(fitted.length).toBeGreaterThan(1);
+  expect(fitted.length).toBeLessThan(13);
+
+  // Zooming in is what an operator does to read a crowded area, and it is the
+  // gesture the rule answers: the same names, further apart, so more of them
+  // fit. Strictly more, and still none of them touching.
+  await zoomInAbout(page, editor, LABEL_CROWD, 3);
+  const closer = await labelBoxes(editor);
+  expect(await zoomOf(editor)).toBeGreaterThan(fittedZoom);
+  expect(closer.length).toBeGreaterThan(fitted.length);
+  expect(collidingPairs(closer)).toEqual([]);
+  // And zooming in only ever ADDS: a name that was readable does not vanish
+  // because the picture grew under it.
+  const closerIds = new Set(closer.map((label) => label.id));
+  expect(fitted.filter((label) => !closerIds.has(label.id))).toEqual([]);
+
+  // The selected station's name is drawn whatever it collides with — the
+  // operator named that one. `entrancein` (0007) is one of the names the
+  // fitted view holds back, and it is held back by `entranceout` (0001),
+  // which the priority order places first. Selecting it inverts exactly that
+  // pair: the chosen name appears and the one that had displaced it gives way.
+  await editor.getByRole("button", { name: "Fit" }).click();
+  await settle(editor);
+  const before = await labelBoxes(editor);
+  expect(before.map((label) => label.id)).toContain("0001");
+  expect(before.map((label) => label.id)).not.toContain("0007");
+  await editor.getByRole("button", { name: "◉ entrancein", exact: true }).click();
+  await expect(editor.getByTestId("mc-selection")).toHaveText("selection: handle:0007");
+  await settle(editor);
+  const after = await labelBoxes(editor);
+  expect(after.map((label) => label.id)).toContain("0007");
+  expect(after.map((label) => label.id)).not.toContain("0001");
+  expect(collidingPairs(after)).toEqual([]);
+
   expect(errors).toEqual([]);
 });
