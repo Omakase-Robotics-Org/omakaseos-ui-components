@@ -341,22 +341,51 @@ describe("aui package pass-through accounting — no undeclared PascalCase re-ex
 });
 
 // ---------------------------------------------------------------------------
-// "./direct-manipulation" — kernel-no-components.
+// kernel-no-components entries, accounted for from the classification table
+// itself rather than one hard-coded name.
 // ---------------------------------------------------------------------------
 
-describe("direct-manipulation kernel — exports zero PascalCase (component-shaped) values", () => {
-  it("has no runtime PascalCase value export (its PascalCase names are all `export type`, erased at runtime)", async () => {
-    const kernel: Record<string, unknown> = await import("../src/direct-manipulation");
-    const pascalValueExports = Object.keys(kernel).filter((name) => PASCAL_NAME.test(name));
-    expect(pascalValueExports, {
+describe("kernel-no-components entries — each exports zero PascalCase (component-shaped) values", () => {
+  const kernelKeys = Object.keys(EXPORTS_CLASSIFICATION).filter(
+    (key) => EXPORTS_CLASSIFICATION[key] === "kernel-no-components",
+  );
+
+  it("knows where every kernel-no-components barrel lives (no unchecked classification)", () => {
+    const unmapped = kernelKeys.filter((key) => !(key in KERNEL_BARREL_IMPORT));
+    expect(unmapped, {
       message:
-        `src/direct-manipulation/index.ts now exports a runtime PascalCase value: ` +
-        `${pascalValueExports.join(", ")}. This entry is classified "kernel-no-components" in ` +
-        "package.json's exports map (non-visual headless kernel) — if this is a genuine " +
-        "component, reclassify the exports entry in this spec (and give it a story surface) " +
-        "instead of letting a component-shaped export hide inside the kernel.",
+        `These exports entries are classified "kernel-no-components" but have no barrel in ` +
+        `KERNEL_BARREL_IMPORT: ${unmapped.join(", ")}. The classification promises the entry ` +
+        "exports no components; without a barrel to import, nothing checks that promise.",
+    } as never).toEqual([]);
+    // Bidirectional: a barrel whose entry lost the classification fails too.
+    const stale = Object.keys(KERNEL_BARREL_IMPORT).filter((key) => !kernelKeys.includes(key));
+    expect(stale, {
+      message:
+        `These KERNEL_BARREL_IMPORT entries are no longer classified "kernel-no-components": ` +
+        `${stale.join(", ")}. Remove them, or restore the classification.`,
     } as never).toEqual([]);
   });
+
+  it.each(kernelKeys)(
+    "%s has no runtime PascalCase value export (its PascalCase names are all `export type`, erased at runtime)",
+    async (key) => {
+      const load = KERNEL_BARREL_IMPORT[key];
+      if (load === undefined) {
+        throw new Error(`storybook-coverage.spec.ts: no barrel import declared for ${key}.`);
+      }
+      const kernel = await load();
+      const pascalValueExports = Object.keys(kernel).filter((name) => PASCAL_NAME.test(name));
+      expect(pascalValueExports, {
+        message:
+          `The barrel behind "${key}" now exports a runtime PascalCase value: ` +
+          `${pascalValueExports.join(", ")}. This entry is classified "kernel-no-components" in ` +
+          "package.json's exports map (non-visual headless kernel) — if this is a genuine " +
+          "component, reclassify the exports entry in this spec (and give it a story surface) " +
+          "instead of letting a component-shaped export hide inside the kernel.",
+      } as never).toEqual([]);
+    },
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -369,6 +398,18 @@ const EXPORTS_CLASSIFICATION: Record<string, ExportsClassification> = {
   ".": "component-root",
   "./aui": "component-aui",
   "./direct-manipulation": "kernel-no-components",
+  "./map-canvas": "kernel-no-components",
+};
+
+/**
+ * Where each `kernel-no-components` entry's source barrel lives, so the
+ * zero-components promise below is checked for EVERY such entry rather than
+ * for one hard-coded favourite. A classification nobody verifies is a claim,
+ * not a guard — adding a kernel here without adding its barrel path fails.
+ */
+const KERNEL_BARREL_IMPORT: Record<string, () => Promise<Record<string, unknown>>> = {
+  "./direct-manipulation": () => import("../src/direct-manipulation"),
+  "./map-canvas": () => import("../src/map-canvas"),
 };
 
 function classifyExportsKey(key: string): ExportsClassification | undefined {

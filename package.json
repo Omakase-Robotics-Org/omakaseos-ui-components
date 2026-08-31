@@ -13,6 +13,7 @@
     "./aliases/robot-inspection-web.css": "./aliases/robot-inspection-web.css",
     "./tokens.css": "./src/tokens.css",
     "./direct-manipulation": "./src/direct-manipulation/index.ts",
+    "./map-canvas": "./src/map-canvas/index.ts",
     "./aui": {
       "types": "./dist/aui/index.d.ts",
       "import": "./dist/aui/index.js"
