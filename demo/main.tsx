@@ -93,6 +93,7 @@ import type {
 
 import "./hosts.css";
 import { DirectManipulationDemo } from "./direct-manipulation-demo";
+import { MapCanvasDemoPanel } from "./map-canvas-demo";
 
 function MonitorPanel() {
   return (
@@ -1827,6 +1828,7 @@ function App() {
         <TooltipDemoPanel host="status-webui" index={0} />
         <AsyncMultiComboboxDemoPanel host="status-webui" />
         <DirectManipulationDemo />
+        <MapCanvasDemoPanel host="status-webui" />
       </section>
       <section className="host host--omks-web">
         <h1>host: @omks-robo/web (light)</h1>
@@ -1846,6 +1848,7 @@ function App() {
         <TooltipDemoPanel host="omks-web" index={1} />
         <AsyncMultiComboboxDemoPanel host="omks-web" />
         <DirectManipulationDemo />
+        <MapCanvasDemoPanel host="omks-web" />
       </section>
       {/* The third host (v0.15). It renders the SAME panel set as the two
           above, including the chat and stage layers it has no screen for
@@ -1871,6 +1874,7 @@ function App() {
         <TooltipDemoPanel host="robot-inspection-web" index={2} />
         <AsyncMultiComboboxDemoPanel host="robot-inspection-web" />
         <DirectManipulationDemo />
+        <MapCanvasDemoPanel host="robot-inspection-web" />
       </section>
     </div>
   );
