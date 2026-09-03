@@ -1,0 +1,21 @@
+/* BrandLogo — the Omakase suite's brand mark.
+ *
+ * `--logo-size` is kept as a component-local custom property rather than
+ * bound to a `--ds-*` token, the same reasoning CONTRIBUTING.md states for
+ * StatusGlyph's `--glyph-diameter`: this is the mark's own intrinsic
+ * geometry (a fixed 28px square, matching the source
+ * `robot-operations-web-service` render exactly), not a host density
+ * decision a `--ds-space-*` or `--ds-avatar-size-*` step would express —
+ * none of those steps denotes "the brand mark's own size", and borrowing
+ * one anyway would tie the logo's footprint to an unrelated scale (avatar
+ * tiles, spacing rhythm) that could move for reasons that have nothing to
+ * do with the mark. */
+
+.logo {
+  --logo-size: 28px;
+
+  display: block;
+  width: var(--logo-size);
+  height: var(--logo-size);
+  flex-shrink: 0;
+}

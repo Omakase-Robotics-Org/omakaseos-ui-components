@@ -75,6 +75,7 @@ const preview: Preview = {
     options: {
       storySort: {
         order: [
+          "Brand",
           "Status",
           "Form",
           "Navigation",

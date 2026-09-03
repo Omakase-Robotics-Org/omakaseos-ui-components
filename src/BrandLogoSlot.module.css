@@ -1,0 +1,45 @@
+/* BrandLogoSlot — mount rules for the brand logo (SoT).
+ *
+ * The two paddings below are the only host-facing values the source
+ * `BrandLogoSlot.module.css` carried, and both map cleanly onto the
+ * library's existing `--ds-space-*` spacing scale by VALUE (src/tokens.css):
+ * source's `padding-bottom: 12px` -> `var(--ds-space-lg)` (12px), source's
+ * `padding-left: 8px` -> `var(--ds-space-md)` (8px). Neither the source file
+ * nor the source `BrandLogo.module.css` ever referenced a host-private
+ * token (`--omks-*` or otherwise) — the source app's brand SoT
+ * (`modules/brand/tokens.ts`) only supplies colors and product naming, and
+ * BrandLogo/BrandLogoSlot's own CSS consumed none of those — so this
+ * mapping is a pure literal-to-token promotion, not a token-to-token
+ * rewrite. */
+
+.slot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Vertical-stack variants own the whole gap BELOW the logo. The
+   ancestor surface's own top inset owns the gap above; if this slot
+   also padded top, the two would compound and read as one over-airy
+   channel. */
+.slot[data-variant="inline"],
+.slot[data-variant="centered"] {
+  padding-bottom: var(--ds-space-lg);
+}
+
+/* Inline variant — logo x-center matches a 20px icon column below
+   (parent-inset 12 + row-padding 12 + icon-half 10 = 34px; this
+   slot: parent-inset 12 + slot-padding-left 8 + logo-half 14 = 34px). */
+.slot[data-variant="inline"] {
+  padding-left: var(--ds-space-md);
+}
+
+/* Centered variant — narrow rails with no icon column to line up
+   with. */
+.slot[data-variant="centered"] {
+  justify-content: center;
+}
+
+/* Header variant — wide horizontal header row. No inline padding,
+   no bottom gutter: the header row owns its own paddings, and the
+   flex parent handles spacing between items via its own `gap`. */
