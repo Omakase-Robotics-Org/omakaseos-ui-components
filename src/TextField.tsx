@@ -3,7 +3,10 @@
  *
  * Keeps label, help, and error wiring in Field while Input remains the native
  * control shell. It does not add validation or a second input implementation;
- * callers own the controlled value and validation decision.
+ * callers own the controlled value and validation decision. `autoComplete`
+ * and `required` are forwarded verbatim as native attribute declarations
+ * (autofill hinting / HTML5 required-field validation) — the library does
+ * not interpret or enforce them itself.
  */
 import type { ChangeEvent } from "react";
 import { Field } from "./Field";
@@ -20,6 +23,8 @@ export function TextField(props: {
   help?: string;
   error?: string;
   autoFocus?: boolean;
+  autoComplete?: string;
+  required?: boolean;
   inputSize?: InputSize;
 }) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +40,8 @@ export function TextField(props: {
           value={props.value}
           placeholder={props.placeholder}
           autoFocus={props.autoFocus ?? false}
+          autoComplete={props.autoComplete}
+          required={props.required}
           inputSize={props.inputSize}
           invalid={props.error !== undefined}
           onChange={handleChange}

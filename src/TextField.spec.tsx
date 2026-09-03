@@ -47,4 +47,28 @@ describe("TextField", () => {
     expect(input).toHaveAttribute("type", "text");
     expect(input).toHaveAttribute("data-size", "lg");
   });
+
+  it("forwards autoComplete and required to the rendered input", () => {
+    render(
+      <TextField
+        label="Email"
+        value=""
+        onChange={() => {}}
+        autoComplete="username"
+        required
+      />,
+    );
+    const input = screen.getByLabelText("Email");
+
+    expect(input).toHaveAttribute("autocomplete", "username");
+    expect(input).toBeRequired();
+  });
+
+  it("omits autoComplete and required when not provided", () => {
+    render(<TextField label="Email" value="" onChange={() => {}} />);
+    const input = screen.getByLabelText("Email");
+
+    expect(input).not.toHaveAttribute("autocomplete");
+    expect(input).not.toBeRequired();
+  });
 });
