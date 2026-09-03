@@ -86,7 +86,26 @@
  *
  * L2 (BatteryBadge, ConnectionBadge) and L3 (RobotStatePanel, ServicePanel)
  * remain deferred until the contract is proven across both consuming apps.
+ *
+ * v0.22:     BrandLogo, BrandLogoSlot — the suite's brand mark and its
+ *            mount-rhythm wrapper, promoted from
+ *            `robot-operations-web-service`'s `packages/web/src/modules/
+ *            brand/` (the only host that carried it; R04 P0,
+ *            `ui-brand-upstream`). The artwork is inlined as an SVG
+ *            component rather than an imported asset file (see
+ *            `BrandLogo.tsx`'s file header for why); `BrandLogoSlot`'s two
+ *            gutters are promoted from raw px onto the existing
+ *            `--ds-space-*` scale (see `BrandLogoSlot.module.css`'s file
+ *            header) — the only host-facing values either file carried.
  */
+
+// Brand — the suite's identity mark. Distinct from every layer below: it
+// carries no state, tone, or interaction, only fixed identity.
+export { BrandLogo } from "./BrandLogo";
+export type { BrandLogoProps } from "./BrandLogo";
+
+export { BrandLogoSlot } from "./BrandLogoSlot";
+export type { BrandLogoSlotVariant, BrandLogoSlotProps } from "./BrandLogoSlot";
 
 // Status-monitor primitives
 export { StatusBadge } from "./StatusBadge";
