@@ -1,0 +1,206 @@
+/**
+ * @file Alias map: omakase-iam-web (`--iam-*`) tokens → --ds-* tokens.
+ *
+ * Drop this once into the consuming app, AFTER the stylesheet that declares
+ * its `--iam-*` brand variables. Library components read --ds-* and resolve
+ * through these aliases without touching the app's brand SoT.
+ *
+ * ## What this host is
+ *
+ * omakase-iam's hosted web — the staff login and console the provider-side
+ * OIDC issuer serves. A SINGLE dark, fully desaturated theme. There is no
+ * light mode and no `[data-theme]` switch — the palette is three greys of
+ * surface, three of ink, and one warm-silver accent, and status is carried
+ * by SHAPE, LINE STYLE and OPACITY rather than by hue (see `StatusGlyph` /
+ * `RankChip` / `SegmentedMeter`). That is why every `--ds-tone-*-fg` below
+ * resolves to a grey: on this host "danger" is not red, it is the register a
+ * filled disc with an ✕ in it renders in.
+ *
+ * The brand SoT is omakase-iam's own `src/web/styles/brand.css`, which
+ * declares the same `--iam-*` set and values as robot-inspection-web's
+ * `--ri-*` (this alias mirrors `aliases/robot-inspection-web.css`
+ * declaration-for-declaration, `--ri-` swapped for `--iam-` — one host, one
+ * brand SoT per alias, same palette shape).
+ *
+ * ## The mapping is the whole file
+ *
+ * Every declaration resolves through `var(--iam-*)`; there are no bare
+ * literals at all (`spec/alias-purity.spec.ts` freezes that — its entry for
+ * this file is the empty list). A colour written here instead of in the host
+ * palette would make this file a second source of truth for what a surface
+ * looks like. The host palette is therefore expected to declare the full
+ * `--iam-*` set the README's "omakase-iam-web" snippet lists; a missing one
+ * falls through to the library default in `src/tokens.css`, which is LIGHT
+ * — i.e. visibly wrong on this host rather than quietly plausible.
+ *
+ * ## Deliberate non-mappings
+ *
+ * Spacing (`--ds-space-*`), control sizing (`--ds-control-*`), type scale
+ * (`--ds-font-size-*`, `--ds-line-height-*`), `--ds-disabled-opacity` and
+ * `--ds-transition-fast` are NOT redeclared: the host palette does not own
+ * density or the type ramp, so the library fallbacks apply — the same
+ * stance the other aliases take.
+ *
+ * `--ds-z-overlay` and `--ds-radius-dialog` are also not redeclared, for the
+ * same reason `robot-inspection-web.css` leaves them unmapped: the host
+ * palette owns no stacking-layer scale and no Dialog-specific corner, so
+ * there is no `--iam-*` var to trace either to. Inventing one here would be a
+ * geometry decision made in the alias rather than the host palette — the
+ * guard's empty frozen-list is exactly what exists to catch that. The
+ * library defaults in `src/tokens.css` apply here until this host's palette
+ * grows the corresponding `--iam-*` var to trace them to.
+ */
+:root {
+  /* Surfaces & foreground.
+   *
+   * Three surface steps: --iam-surface-0 is the page ground the app paints
+   * on <body>, so the library's surface vocabulary starts one step in — a
+   * card is surface-1 and a recess inside it is surface-2. (Ground -> card
+   * -> recess is the same ordering the other hosts map, and it is why
+   * --ds-surface is not surface-0: a Card painted in the page ground would
+   * have no edge but its border.) */
+  --ds-surface: var(--iam-surface-1);
+  --ds-surface-inset: var(--iam-surface-2);
+  --ds-surface-hover: var(--iam-surface-hover);
+  --ds-surface-active: var(--iam-surface-active);
+
+  /* Two rules, not one border and a guessed weaker one: --iam-rule is the
+   * visible edge between surfaces, --iam-hairline the whisper INSIDE one.
+   * This host separates panes with hairlines and almost no shadow, so
+   * --ds-border-subtle carries a lot of the layout here. */
+  --ds-border: var(--iam-rule);
+  --ds-border-subtle: var(--iam-hairline);
+  --ds-border-strong: var(--iam-text-muted);
+
+  --ds-text: var(--iam-text);
+  --ds-text-secondary: var(--iam-text-muted);
+  --ds-text-muted: var(--iam-text-muted);
+  --ds-text-disabled: var(--iam-text-dim);
+  /* The accent is a near-white silver, so the ink on top of it inverts to the
+   * page ground. The host names that inversion itself (--iam-on-accent)
+   * rather than the alias assuming "the darkest surface": which colour is
+   * legible on the accent is a palette decision. */
+  --ds-text-on-accent: var(--iam-on-accent);
+  /* Desaturated controls map to muted ink and adjacent host surface steps. */
+  --ds-control-ink: var(--iam-text-muted);
+  --ds-control-ink-hover: var(--iam-text);
+  --ds-control-bg: var(--iam-surface-2);
+  --ds-control-bg-hover: var(--iam-surface-hover);
+
+  /* Tones — the desaturated register set. The host palette names them by the
+   * reading they report (ok / ng / pending / na / idle), and this file is
+   * where that vocabulary meets the library's semantic one:
+   *
+   *   ok      -> success   a check was taken and passed
+   *   ng      -> danger    a check was taken and failed
+   *   pending -> warning   a check is open and wants attention
+   *   na      -> neutral   the check does not apply here
+   *   idle    -> idle      nobody has looked yet
+   *
+   * `info` has no such reading behind it — it is the app's "here is a fact"
+   * register — so the palette declares it directly. */
+  --ds-tone-success-fg: var(--iam-tone-ok-fg);
+  --ds-tone-success-bg: var(--iam-tone-ok-bg);
+  --ds-tone-danger-fg: var(--iam-tone-ng-fg);
+  --ds-tone-danger-bg: var(--iam-tone-ng-bg);
+  --ds-tone-warning-fg: var(--iam-tone-pending-fg);
+  --ds-tone-warning-bg: var(--iam-tone-pending-bg);
+  --ds-tone-neutral-fg: var(--iam-tone-na-fg);
+  --ds-tone-neutral-bg: var(--iam-tone-na-bg);
+  --ds-tone-idle-fg: var(--iam-tone-idle-fg);
+  --ds-tone-idle-bg: var(--iam-tone-idle-bg);
+  --ds-tone-info-fg: var(--iam-tone-info-fg);
+  --ds-tone-info-bg: var(--iam-tone-info-bg);
+
+  /* Accent — the app's one non-grey decision, and it is still a grey: warm
+   * silver. It fills primary buttons, the checked control, the filled rank
+   * chip, and the focus outline. */
+  --ds-accent: var(--iam-accent);
+  --ds-accent-hover: var(--iam-accent-hover);
+  --ds-accent-soft: var(--iam-accent-soft);
+  /* The host's focus ring is the accent at full strength (a 1px silver
+   * outline, offset) rather than a translucent halo: on a near-black ground a
+   * halo does not read. Width is bridged to match the host's 1px
+   * `:focus-visible` rule — narrower than the library's 2px default, which
+   * this host does not want. */
+  --ds-focus-ring-color: var(--iam-accent);
+  --ds-focus-ring-width: var(--iam-focus-ring-width);
+
+  /* Radii — generous, and the reason --ds-radius-chip exists as a level of
+   * its own: controls round at 12px here, which on a 24px chip would be a
+   * pill. */
+  --ds-radius-chip: var(--iam-radius-chip);
+  --ds-radius-control: var(--iam-radius-control);
+  --ds-radius-card: var(--iam-radius-card);
+  --ds-radius-lg: var(--iam-radius-lg);
+  --ds-radius-pill: var(--iam-radius-pill);
+
+  /* Shadows — this host separates surfaces with hairlines, so a card has no
+   * shadow at all (--iam-shadow-card is `none`) and only a floating layer
+   * lifts. Mapping both keeps a component that reads --ds-shadow-card flat
+   * here instead of inheriting the library's light-host lift. */
+  --ds-shadow-card: var(--iam-shadow-card);
+  --ds-shadow-overlay: var(--iam-shadow-overlay);
+  /* Tooltip is inverted against this host's own dark surface — its
+     near-white ink (--iam-text) as the chip's ground, its darkest surface
+     step (--iam-surface-0, the page ground) as the ink on top of it. Value
+     matches what this palette already uses for "ink on a light surface"
+     (--iam-on-accent is the page ground, the ink the accent — also
+     near-white — already sits on), traced here to the surface step directly
+     rather than the accent-specific token. */
+  --ds-tooltip-bg: var(--iam-text);
+  --ds-tooltip-fg: var(--iam-surface-0);
+  /* Dialog's ::backdrop reads --ds-scrim. The host palette already names
+     this exact register --iam-scrim (used below for the stage tile's name
+     strip and the caption background) — a direct trace, not a derivation. */
+  --ds-scrim: var(--iam-scrim);
+
+  /* Typography — the host owns both stacks (like robot-inspection-web).
+   * Figures render tabular in the primitives that state counts. */
+  --ds-font-sans: var(--iam-font-sans);
+  --ds-font-mono: var(--iam-font-mono);
+
+  /* Chat bubbles (v0.4) — this host has no conversation surface today, but a
+   * primitive it does not use must still not render as a white block on a
+   * near-black page if a future screen mounts one. The accent wash carries
+   * the outgoing turn (as on the other hosts), the incoming turn lands on
+   * the recess, and the two full-width registers step down from there. */
+  --ds-bubble-radius: var(--iam-radius-control);
+  --ds-bubble-bg-user: var(--iam-accent-soft);
+  --ds-bubble-fg-user: var(--iam-text);
+  --ds-bubble-bg-assistant: var(--iam-surface-2);
+  --ds-bubble-fg-assistant: var(--iam-text);
+  --ds-bubble-bg-system: var(--iam-hairline);
+  --ds-bubble-fg-system: var(--iam-text-muted);
+  --ds-bubble-bg-tool: var(--iam-tone-pending-bg);
+  --ds-bubble-fg-tool: var(--iam-text);
+  --ds-bubble-meta-fg: var(--iam-text-muted);
+  --ds-caret-color: var(--iam-text-muted);
+
+  /* Stage primitives (v0.5) — same reasoning as the bubbles above. The stage
+   * ground is the page ground, tiles are cards, avatar slots are recesses,
+   * and the name strip / caption sit on the palette's scrim. */
+  --ds-stage-bg: var(--iam-surface-0);
+  --ds-stage-tile-bg: var(--iam-surface-1);
+  --ds-stage-tile-avatar-bg: var(--iam-surface-2);
+  --ds-stage-tile-name-bg: var(--iam-scrim);
+  --ds-stage-tile-radius: var(--iam-radius-card);
+  --ds-stage-speaking-ring: var(--iam-accent);
+  --ds-caption-bg: var(--iam-scrim);
+  --ds-caption-fg: var(--iam-text);
+  --ds-caption-speaker-fg: var(--iam-text-muted);
+
+  /* Table — hover wash / zebra tint / decorative-icon ink trace to this
+   * host's existing --iam-* vocabulary. --ds-table-cell-pad-y(-compact) and
+   * --ds-table-gutter-x are DELIBERATELY left unmapped: this host declares
+   * no spacing scale at all (see "Deliberate non-mappings" above, which
+   * already applies to --ds-space-*), so there is no --iam-* var to trace a
+   * table cell padding or surface gutter to. Per alias-purity's empty
+   * frozen-literal list for this file, a bare pixel value belongs in the
+   * host palette, not invented here — so Table.module.css's cell-pad-y /
+   * cell-pad-y-compact / gutter-x fall through to src/tokens.css's library
+   * defaults on this host. */
+  --ds-hover-wash: var(--iam-surface-hover);
+  --ds-table-zebra: color-mix(in srgb, var(--iam-surface-2) 55%, transparent);
+  --ds-text-subtle: var(--iam-text-dim);
+}

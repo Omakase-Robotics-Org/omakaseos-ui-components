@@ -2,9 +2,9 @@
  * @file Storybook preview configuration.
  *
  * Loads the library's neutral tokens once, and the demo harness's host
- * CSS so every story can swap between the three consuming hosts
- * (status_server_webui / @omks-robo/web / robot-inspection-web) via a
- * Storybook toolbar.
+ * CSS so every story can swap between the four consuming hosts
+ * (status_server_webui / @omks-robo/web / robot-inspection-web /
+ * omakase-iam-web) via a Storybook toolbar.
  *
  * The decorator wraps the story in a `<div class="host host--...">`
  * element matching one of the harness's host scopes; demo/hosts.css
@@ -13,7 +13,7 @@
  * through the chosen host's brand SoT without per-story wiring.
  *
  * Host id -> class / theme is a total Record rather than a ternary chain, so
- * a fourth host is a compile error here instead of a story that silently
+ * a fifth host is a compile error here instead of a story that silently
  * renders under the wrong palette.
  */
 import type { Preview, Decorator } from "@storybook/react";
@@ -25,6 +25,7 @@ const HOST_NAMES = {
   "status-server-webui": "status_server_webui (dark)",
   "omks-robo-web": "@omks-robo/web (light)",
   "robot-inspection-web": "robot-inspection-web (dark, desaturated)",
+  "omakase-iam-web": "omakase-iam-web (dark, desaturated)",
 } as const;
 
 type HostId = keyof typeof HOST_NAMES;
@@ -33,6 +34,7 @@ const HOST_SCOPES: Record<HostId, { className: string; theme?: "dark" }> = {
   "status-server-webui": { className: "host host--status-webui", theme: "dark" },
   "omks-robo-web": { className: "host host--omks-web" },
   "robot-inspection-web": { className: "host host--robot-inspection-web", theme: "dark" },
+  "omakase-iam-web": { className: "host host--omakase-iam-web", theme: "dark" },
 };
 
 const withHost: Decorator = (Story, context) => {
@@ -61,6 +63,7 @@ const preview: Preview = {
           { value: "omks-robo-web", title: HOST_NAMES["omks-robo-web"] },
           { value: "status-server-webui", title: HOST_NAMES["status-server-webui"] },
           { value: "robot-inspection-web", title: HOST_NAMES["robot-inspection-web"] },
+          { value: "omakase-iam-web", title: HOST_NAMES["omakase-iam-web"] },
         ],
         dynamicTitle: true,
       },

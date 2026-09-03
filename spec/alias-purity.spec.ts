@@ -85,6 +85,11 @@ const FROZEN_LITERALS: Record<string, string[]> = {
   // later means a colour decision moved INTO the alias — the thing this file
   // exists to catch.
   "robot-inspection-web.css": [],
+  // omakase-iam-web mirrors robot-inspection-web declaration-for-declaration
+  // (same fully-desaturated dark theme, `--ri-` swapped for `--iam-`), so it
+  // carries the same empty frozen list for the same reason: the host palette
+  // (`--iam-*`) owns every value.
+  "omakase-iam-web.css": [],
 };
 
 type Declaration = { prop: string; value: string };

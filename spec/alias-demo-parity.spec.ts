@@ -12,7 +12,12 @@
  * alone would silently make the demo show something the alias does not
  * promise, or vice versa. This spec is that guard.
  *
- * ## Scope: robot-inspection-web only
+ * `.host--omakase-iam-web` (v0.22) carries the same claim: its own header
+ * comment states it mirrors `aliases/omakase-iam-web.css`
+ * declaration-for-declaration, the same way `.host--robot-inspection-web`
+ * mirrors its alias — so it is checked by the same loop below.
+ *
+ * ## Scope: full-parity hosts only
  *
  * The other two demo blocks (`.host--omks-web`, `.host--status-webui`) are
  * NOT scoped copies of their aliases — they are deliberately simplified
@@ -20,9 +25,9 @@
  * `--ri-*`-equivalent raw variable the real host apps own, and predate the
  * "alias is SoT, demo is a scoped copy" convention this host was authored
  * under). Asserting parity for them would be asserting something the repo
- * never claimed. Only `robot-inspection-web.css` / `.host--robot-inspection-web`
- * carry the "same mappings" claim in their own header comments, so only that
- * pair is checked here.
+ * never claimed. Only the alias / demo-block pairs that carry the "same
+ * mappings" claim in their own header comments (`robot-inspection-web`,
+ * `omakase-iam-web`) are checked here.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -68,37 +73,49 @@ function selectorBlock(css: string, selector: string): string {
   return match[1];
 }
 
-describe("alias <-> demo parity — robot-inspection-web", () => {
-  const aliasCss = readFileSync(resolve(repoRoot, "aliases/robot-inspection-web.css"), "utf8");
-  const demoCss = readFileSync(resolve(repoRoot, "demo/hosts.css"), "utf8");
-  const demoBlock = selectorBlock(demoCss, ".host--robot-inspection-web");
+/**
+ * Alias / demo-block pairs whose demo block claims byte-identical parity
+ * with its alias (each pair's own header comment states the claim; see the
+ * file header above for why the other two hosts are excluded).
+ */
+const FULL_PARITY_HOSTS: ReadonlyArray<{ name: string; aliasFile: string; selector: string }> = [
+  { name: "robot-inspection-web", aliasFile: "aliases/robot-inspection-web.css", selector: ".host--robot-inspection-web" },
+  { name: "omakase-iam-web", aliasFile: "aliases/omakase-iam-web.css", selector: ".host--omakase-iam-web" },
+];
 
-  const aliasDecls = dsDeclarations(aliasCss);
-  // The demo block also declares the raw `--ri-*` palette (its own SoT copy
-  // of what the consuming app would define) plus a few non-custom-property
-  // rules (`background`, `color`, `font-family`) that render the block
-  // itself, not part of the --ds-* mapping contract. Only the --ds-*
-  // declarations are the claim this spec checks.
-  const demoDsDecls = dsDeclarations(demoBlock);
+for (const host of FULL_PARITY_HOSTS) {
+  describe(`alias <-> demo parity — ${host.name}`, () => {
+    const aliasCss = readFileSync(resolve(repoRoot, host.aliasFile), "utf8");
+    const demoCss = readFileSync(resolve(repoRoot, "demo/hosts.css"), "utf8");
+    const demoBlock = selectorBlock(demoCss, host.selector);
 
-  it("parser sanity — both sides found a non-trivial --ds-* surface", () => {
-    expect(aliasDecls.length).toBeGreaterThan(20);
-    expect(demoDsDecls.length).toBeGreaterThan(20);
+    const aliasDecls = dsDeclarations(aliasCss);
+    // The demo block also declares the raw host-brand palette (its own SoT
+    // copy of what the consuming app would define) plus a few
+    // non-custom-property rules (`background`, `color`, `font-family`) that
+    // render the block itself, not part of the --ds-* mapping contract. Only
+    // the --ds-* declarations are the claim this spec checks.
+    const demoDsDecls = dsDeclarations(demoBlock);
+
+    it("parser sanity — both sides found a non-trivial --ds-* surface", () => {
+      expect(aliasDecls.length).toBeGreaterThan(20);
+      expect(demoDsDecls.length).toBeGreaterThan(20);
+    });
+
+    it("the demo's --ds-* declarations are byte-identical (per-value) to the alias's", () => {
+      expect(asSortedPairs(demoDsDecls)).toEqual(asSortedPairs(aliasDecls));
+    });
+
+    it("neither side declares a --ds-* property the other omits", () => {
+      const aliasProps = new Set(aliasDecls.map((d) => d.prop));
+      const demoProps = new Set(demoDsDecls.map((d) => d.prop));
+      const onlyInAlias = [...aliasProps].filter((p) => !demoProps.has(p)).sort();
+      const onlyInDemo = [...demoProps].filter((p) => !aliasProps.has(p)).sort();
+      expect(onlyInAlias).toEqual([]);
+      expect(onlyInDemo).toEqual([]);
+    });
   });
-
-  it("the demo's --ds-* declarations are byte-identical (per-value) to the alias's", () => {
-    expect(asSortedPairs(demoDsDecls)).toEqual(asSortedPairs(aliasDecls));
-  });
-
-  it("neither side declares a --ds-* property the other omits", () => {
-    const aliasProps = new Set(aliasDecls.map((d) => d.prop));
-    const demoProps = new Set(demoDsDecls.map((d) => d.prop));
-    const onlyInAlias = [...aliasProps].filter((p) => !demoProps.has(p)).sort();
-    const onlyInDemo = [...demoProps].filter((p) => !aliasProps.has(p)).sort();
-    expect(onlyInAlias).toEqual([]);
-    expect(onlyInDemo).toEqual([]);
-  });
-});
+}
 
 /**
  * "Accent/focus family" — the set of --ds-* properties that fall back
@@ -108,8 +125,8 @@ describe("alias <-> demo parity — robot-inspection-web", () => {
  * reports/demo-omks-web-accent-gap/README.md and, for the sibling gap this
  * one was found alongside, reports/demo-status-webui-accent-gap/README.md).
  *
- * Unlike the byte-identical parity above (robot-inspection-web only), this
- * is a SUBSET guard that applies to ALL THREE hosts, including the two
+ * Unlike the byte-identical parity above (the FULL_PARITY_HOSTS pair), this
+ * is a SUBSET guard that applies to ALL FOUR hosts, including the two
  * "simplified pseudo-brand palette" demo blocks the header comment above
  * exempts from full parity: whatever accent/focus properties an alias
  * declares, its demo block must declare too, even if the rest of the block
@@ -133,6 +150,11 @@ describe("alias <-> demo parity — accent/focus subset (all hosts)", () => {
       name: "robot-inspection-web",
       aliasFile: "aliases/robot-inspection-web.css",
       selector: ".host--robot-inspection-web",
+    },
+    {
+      name: "omakase-iam-web",
+      aliasFile: "aliases/omakase-iam-web.css",
+      selector: ".host--omakase-iam-web",
     },
   ];
 

@@ -11,6 +11,7 @@
     "./aliases/status-server-webui.css": "./aliases/status-server-webui.css",
     "./aliases/omks-robo-web.css": "./aliases/omks-robo-web.css",
     "./aliases/robot-inspection-web.css": "./aliases/robot-inspection-web.css",
+    "./aliases/omakase-iam-web.css": "./aliases/omakase-iam-web.css",
     "./tokens.css": "./src/tokens.css",
     "./direct-manipulation": "./src/direct-manipulation/index.ts",
     "./map-canvas": "./src/map-canvas/index.ts",

@@ -5,6 +5,7 @@ Shared React component library for omakase-robotics web UIs:
 - [`omakaseos_service`](https://github.com/omakase-robotics/omakaseos_service) `packages/web` — the multi-tenant dashboard.
 - [`omakaseos/status_server_webui`](https://github.com/omakase-ai/omakaseos) — the on-robot diagnostic UI.
 - `robot-inspection-web` — the acceptance-inspection app (v0.15).
+- `omakase-iam-web` — omakase-iam's hosted web, staff login and console (v0.22).
 
 The library carries **only the visual primitives** these UIs share, and
 intentionally carries **no brand colors of its own**. Each consuming app
@@ -12,13 +13,14 @@ provides a small alias CSS file that maps its existing tokens onto the
 library's neutral `--ds-*` token names. Several apps consume one contract; the
 library's job is to keep that contract honest.
 
-### The three hosts
+### The four hosts
 
 | Host | Alias | Look | Notes |
 | --- | --- | --- | --- |
 | `omks-robo-web` | `aliases/omks-robo-web.css` | Light, sans, airy | The dashboard's brand SoT is `packages/web/src/brand/tokens.ts` |
 | `status-server-webui` | `aliases/status-server-webui.css` | Dark (with a light override), mono, dense | The robot console's SoT is rssa `src/styles/variables.css`; has a `[data-theme]` switch |
 | `robot-inspection-web` | `aliases/robot-inspection-web.css` | Dark, **fully desaturated**, generous corners | One theme only, by design. Status is carried by shape / line style / opacity, not hue — see "Shape-carried status" below |
+| `omakase-iam-web` | `aliases/omakase-iam-web.css` | Dark, **fully desaturated**, generous corners | omakase-iam's hosted web (login / console, v0.22). One theme only, by design — mirrors `robot-inspection-web`'s mapping, `--ri-*` swapped for `--iam-*` |
 
 > **Catalog (Storybook):** every primitive is browsable in the published
 > Storybook at
@@ -113,6 +115,9 @@ import "@omakase-robotics/ui-components/aliases/status-server-webui.css";
 
 // robot-inspection-web (dark, desaturated — v0.15)
 import "@omakase-robotics/ui-components/aliases/robot-inspection-web.css";
+
+// omakase-iam-web (dark, desaturated — v0.22)
+import "@omakase-robotics/ui-components/aliases/omakase-iam-web.css";
 
 // AUI surface (v0.6): pre-built Tailwind v4 + shadcn theme stylesheet,
 // scoped under `.aui-root`. Required only when the consumer mounts an
@@ -451,6 +456,81 @@ The demo harness reproduces this palette under
 `.host--robot-inspection-web` in `demo/hosts.css`, which is where to look for
 a working copy.
 
+### The `omakase-iam-web` host palette
+
+`aliases/omakase-iam-web.css` (v0.22) mirrors `aliases/robot-inspection-web.css`
+declaration-for-declaration — the same fully-desaturated dark theme, `--ri-`
+swapped for `--iam-` — because omakase-iam's hosted web (its staff login and
+console) ships the same kind of single dark, no-hue theme by design. It was
+authored under the same `spec/alias-purity.spec.ts` guard and therefore also
+has **no literals at all**. A consuming app declares the `--iam-*` set below
+once (before importing the alias), and nothing else:
+
+```css
+/* omakase-iam-web brand SoT. One dark, fully desaturated theme — there is
+   no light variant and no [data-theme] switch. */
+:root {
+  color-scheme: dark;
+
+  --iam-surface-0: #0a0b0c;
+  --iam-surface-1: #131518;
+  --iam-surface-2: #1b1e22;
+  --iam-surface-hover: #202429;
+  --iam-surface-active: #262b31;
+
+  --iam-hairline: rgba(255, 255, 255, 0.06);
+  --iam-rule: rgba(255, 255, 255, 0.14);
+
+  --iam-text: #f2f3f5;
+  --iam-text-muted: #9aa0a6;
+  --iam-text-dim: #5b6067;
+
+  --iam-accent: #e5e7eb;
+  --iam-accent-hover: #f7f8fa;
+  --iam-accent-soft: rgba(229, 231, 235, 0.12);
+  --iam-on-accent: #0a0b0c;
+
+  --iam-focus-ring-width: 1px;
+
+  --iam-tone-ok-fg: #f2f3f5;
+  --iam-tone-ok-bg: rgba(242, 243, 245, 0.10);
+  --iam-tone-ng-fg: #f2f3f5;
+  --iam-tone-ng-bg: rgba(242, 243, 245, 0.18);
+  --iam-tone-pending-fg: #c1c5cb;
+  --iam-tone-pending-bg: rgba(255, 255, 255, 0.06);
+  --iam-tone-na-fg: #8a9099;
+  --iam-tone-na-bg: rgba(255, 255, 255, 0.04);
+  --iam-tone-idle-fg: #5b6067;
+  --iam-tone-idle-bg: rgba(255, 255, 255, 0.02);
+  --iam-tone-info-fg: #f2f3f5;
+  --iam-tone-info-bg: rgba(255, 255, 255, 0.08);
+
+  --iam-scrim: rgba(0, 0, 0, 0.72);
+
+  --iam-radius-chip: 6px;
+  --iam-radius-control: 12px;
+  --iam-radius-card: 18px;
+  --iam-radius-lg: 22px;
+  --iam-radius-pill: 999px;
+
+  --iam-font-sans: "Inter", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --iam-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+
+  --iam-shadow-card: none;
+  --iam-shadow-overlay: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+```
+
+The same "missing var falls through to the LIGHT library default" and
+"density / type ramp / focus-ring-width" rules that apply to
+`robot-inspection-web` above apply here unchanged — see that section, which
+this palette's rationale is identical to.
+
+The demo harness reproduces this palette under `.host--omakase-iam-web` in
+`demo/hosts.css`, which is where to look for a working copy (not currently
+wired into the live e2e demo's App() section — reachable via the Storybook
+"Host theme" toolbar).
+
 ### The aui surface (v0.6, CSS Modules since v0.9)
 
 The aui surface is the **only** layer that does not bind to `--ds-*`.
@@ -567,7 +647,7 @@ this repo directly, the following files are intentionally surfaced as
 - `README.md` (this file) — the layered surface map.
 - Each component's `src/<Name>.tsx` JSDoc header — the per-component
   contract (purpose, props, the two-app constraints).
-- `aliases/{omks-robo-web,status-server-webui,robot-inspection-web}.css` —
+- `aliases/{omks-robo-web,status-server-webui,robot-inspection-web,omakase-iam-web}.css` —
   the brand-bridge mapping for each consuming host.
 
 If a task touches a domain primitive, owner ranking should resolve to one

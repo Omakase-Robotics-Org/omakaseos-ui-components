@@ -378,6 +378,137 @@
   font-family: var(--ri-font-sans);
 }
 
+/* ---- omakase-iam-web host: dark, desaturated, single-theme ----
+ *
+ * omakase-iam's hosted-web `--iam-*` palette, reproduced verbatim (the values
+ * a consuming app copies out of README's snippet), followed by the SAME
+ * --ds-* mappings aliases/omakase-iam-web.css declares. The alias is the SoT;
+ * this block is its scoped copy, exactly as `.host--robot-inspection-web`
+ * above is for its own alias — this palette mirrors that one
+ * declaration-for-declaration (`--ri-` swapped for `--iam-`), see that
+ * alias's own file header.
+ *
+ * Like robot-inspection-web there is no light variant and no [data-theme]
+ * switch: this app ships one dark theme by design. Not currently wired into
+ * the live demo harness below (`.host--omakase-iam-web` has no App() section
+ * — see demo/main.tsx); it is reachable today via the Storybook "Host theme"
+ * toolbar (.storybook/preview.ts). */
+.host--omakase-iam-web {
+  --iam-surface-0: #0a0b0c;
+  --iam-surface-1: #131518;
+  --iam-surface-2: #1b1e22;
+  --iam-surface-hover: #202429;
+  --iam-surface-active: #262b31;
+  --iam-hairline: rgba(255, 255, 255, 0.06);
+  --iam-rule: rgba(255, 255, 255, 0.14);
+  --iam-text: #f2f3f5;
+  --iam-text-muted: #9aa0a6;
+  --iam-text-dim: #5b6067;
+  --iam-accent: #e5e7eb;
+  --iam-accent-hover: #f7f8fa;
+  --iam-accent-soft: rgba(229, 231, 235, 0.12);
+  --iam-on-accent: #0a0b0c;
+  --iam-focus-ring-width: 1px;
+  --iam-tone-ok-fg: #f2f3f5;
+  --iam-tone-ok-bg: rgba(242, 243, 245, 0.1);
+  --iam-tone-ng-fg: #f2f3f5;
+  --iam-tone-ng-bg: rgba(242, 243, 245, 0.18);
+  --iam-tone-pending-fg: #c1c5cb;
+  --iam-tone-pending-bg: rgba(255, 255, 255, 0.06);
+  --iam-tone-na-fg: #8a9099;
+  --iam-tone-na-bg: rgba(255, 255, 255, 0.04);
+  --iam-tone-idle-fg: #5b6067;
+  --iam-tone-idle-bg: rgba(255, 255, 255, 0.02);
+  --iam-tone-info-fg: #f2f3f5;
+  --iam-tone-info-bg: rgba(255, 255, 255, 0.08);
+  --iam-scrim: rgba(0, 0, 0, 0.72);
+  --iam-radius-chip: 6px;
+  --iam-radius-control: 12px;
+  --iam-radius-card: 18px;
+  --iam-radius-lg: 22px;
+  --iam-radius-pill: 999px;
+  --iam-font-sans: "Inter", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --iam-font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --iam-shadow-card: none;
+  --iam-shadow-overlay: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  --ds-surface: var(--iam-surface-1);
+  --ds-surface-inset: var(--iam-surface-2);
+  --ds-surface-hover: var(--iam-surface-hover);
+  --ds-surface-active: var(--iam-surface-active);
+  --ds-border: var(--iam-rule);
+  --ds-border-subtle: var(--iam-hairline);
+  --ds-border-strong: var(--iam-text-muted);
+  --ds-text: var(--iam-text);
+  --ds-text-secondary: var(--iam-text-muted);
+  --ds-text-muted: var(--iam-text-muted);
+  --ds-text-disabled: var(--iam-text-dim);
+  --ds-text-on-accent: var(--iam-on-accent);
+  --ds-control-ink: var(--iam-text-muted);
+  --ds-control-ink-hover: var(--iam-text);
+  --ds-control-bg: var(--iam-surface-2);
+  --ds-control-bg-hover: var(--iam-surface-hover);
+  --ds-tone-success-fg: var(--iam-tone-ok-fg);
+  --ds-tone-success-bg: var(--iam-tone-ok-bg);
+  --ds-tone-danger-fg: var(--iam-tone-ng-fg);
+  --ds-tone-danger-bg: var(--iam-tone-ng-bg);
+  --ds-tone-warning-fg: var(--iam-tone-pending-fg);
+  --ds-tone-warning-bg: var(--iam-tone-pending-bg);
+  --ds-tone-neutral-fg: var(--iam-tone-na-fg);
+  --ds-tone-neutral-bg: var(--iam-tone-na-bg);
+  --ds-tone-idle-fg: var(--iam-tone-idle-fg);
+  --ds-tone-idle-bg: var(--iam-tone-idle-bg);
+  --ds-tone-info-fg: var(--iam-tone-info-fg);
+  --ds-tone-info-bg: var(--iam-tone-info-bg);
+  --ds-accent: var(--iam-accent);
+  --ds-accent-hover: var(--iam-accent-hover);
+  --ds-accent-soft: var(--iam-accent-soft);
+  --ds-focus-ring-color: var(--iam-accent);
+  --ds-focus-ring-width: var(--iam-focus-ring-width);
+  --ds-radius-chip: var(--iam-radius-chip);
+  --ds-radius-control: var(--iam-radius-control);
+  --ds-radius-card: var(--iam-radius-card);
+  --ds-radius-lg: var(--iam-radius-lg);
+  --ds-radius-pill: var(--iam-radius-pill);
+  --ds-shadow-card: var(--iam-shadow-card);
+  --ds-shadow-overlay: var(--iam-shadow-overlay);
+  --ds-scrim: var(--iam-scrim);
+  --ds-tooltip-bg: var(--iam-text);
+  --ds-tooltip-fg: var(--iam-surface-0);
+  --ds-font-sans: var(--iam-font-sans);
+  --ds-font-mono: var(--iam-font-mono);
+
+  --ds-bubble-radius: var(--iam-radius-control);
+  --ds-bubble-bg-user: var(--iam-accent-soft);
+  --ds-bubble-fg-user: var(--iam-text);
+  --ds-bubble-bg-assistant: var(--iam-surface-2);
+  --ds-bubble-fg-assistant: var(--iam-text);
+  --ds-bubble-bg-system: var(--iam-hairline);
+  --ds-bubble-fg-system: var(--iam-text-muted);
+  --ds-bubble-bg-tool: var(--iam-tone-pending-bg);
+  --ds-bubble-fg-tool: var(--iam-text);
+  --ds-bubble-meta-fg: var(--iam-text-muted);
+  --ds-caret-color: var(--iam-text-muted);
+
+  --ds-stage-bg: var(--iam-surface-0);
+  --ds-stage-tile-bg: var(--iam-surface-1);
+  --ds-stage-tile-avatar-bg: var(--iam-surface-2);
+  --ds-stage-tile-name-bg: var(--iam-scrim);
+  --ds-stage-tile-radius: var(--iam-radius-card);
+  --ds-stage-speaking-ring: var(--iam-accent);
+  --ds-caption-bg: var(--iam-scrim);
+  --ds-caption-fg: var(--iam-text);
+  --ds-caption-speaker-fg: var(--iam-text-muted);
+
+  --ds-hover-wash: var(--iam-surface-hover);
+  --ds-table-zebra: color-mix(in srgb, var(--iam-surface-2) 55%, transparent);
+  --ds-text-subtle: var(--iam-text-dim);
+
+  background: var(--iam-surface-0);
+  color: var(--iam-text);
+  font-family: var(--iam-font-sans);
+}
+
 /* Two columns, three hosts: the third wraps onto row 2 at the SAME column
  * width the first two have. Deliberately not `repeat(3, 1fr)` — narrowing
  * every column would change the layout the existing hosts' overflow and
